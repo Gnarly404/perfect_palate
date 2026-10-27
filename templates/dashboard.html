@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">        
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <title>Perfect Palate - Dashboard</title>
+<h2 class="sr-only">Perfect Palate dashboard with greeting, meal plan, quick actions and recipe statistics</h2>
+</head>
+<body>
+<style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+    --b:#426e86;--bd:#2a4d63;--bl:rgba(66,110,134,.08);
+    --a:#e2ba2e;--ad:#b8941f;--al:rgba(226,186,46,.11);
+    --tx:#1c2b35;--mu:#6e7e88;
+    --off:#faf8f4;--card:#fff;
+    --sh:0 6px 28px rgba(42,77,99,.11),0 1px 4px rgba(42,77,99,.06);
+    --shh:0 18px 48px rgba(42,77,99,.2);
+    }
+    body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
+    .dash{max-width:1320px;margin:0 auto;background:var(--off);overflow:hidden}
+
+    /* NAV */
+    .nav{background:var(--b);height:56px;display:flex;align-items:center;padding:0 1.8rem;gap:.8rem}
+    .nav-logo{display:flex;align-items:center;gap:.5rem}
+    .nav-lm{width:26px;height:26px}
+    .nav-lt{font-family:'Cormorant Garamond',serif;font-size:1.08rem;font-weight:600;color:#fff;letter-spacing:.8px}
+    .nav-links{display:flex;gap:.1rem;margin-left:auto}
+    .nav-links a{font-size:.65rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.6);text-decoration:none;padding:.38rem .8rem;border-radius:6px;transition:.18s}
+    .nav-links a:hover,.nav-links a.on{color:var(--a);background:rgba(226,186,46,.1)}
+    .nav-user{width:30px;height:30px;border-radius:50%;background:rgba(226,186,46,.25);border:1.5px solid rgba(226,186,46,.5);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;color:var(--a);margin-left:.5rem;cursor:pointer}
+    .nav-logout{width:30px;height:30px;border-radius:50%;background:rgba(66,110,134,.06);border:1.5px solid rgba(66,110,134,.18);display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--b);margin-left:.4rem;cursor:pointer;text-decoration:none;transition:.18s}
+    .nav-logout:hover{background:var(--b);color:#fff}
+
+    /* HERO */
+    .hero{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;padding:2.2rem 2rem 1.5rem;position:relative;overflow:hidden}
+    .hero-deco{position:absolute;top:-20px;right:48%;width:180px;height:180px;opacity:.05;pointer-events:none}
+
+    .hero-left{display:flex;flex-direction:column;justify-content:center;gap:1rem;opacity:0;transform:translateX(-20px)}
+    .hero-eyebrow{font-size:.62rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--a);display:flex;align-items:center;gap:.55rem}
+    .hero-eyebrow::before{content:'';display:block;width:28px;height:2px;background:var(--a)}
+    .hero-greeting{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:300;line-height:.95;letter-spacing:-.5px}
+    .hero-greeting em{font-style:italic;color:var(--b)}
+    .hero-greeting strong{display:block;font-weight:600;color:var(--bd)}
+    .hero-tagline{font-size:.78rem;color:var(--mu);line-height:1.6;max-width:300px}
+    .hero-pills{display:flex;gap:.5rem;flex-wrap:wrap}
+    .hero-pill{display:flex;align-items:center;gap:.4rem;background:#fff;border:1.5px solid rgba(66,110,134,.13);border-radius:50px;padding:.35rem .8rem;font-size:.68rem;font-weight:700;color:var(--mu);box-shadow:var(--sh)}
+    .hero-pill i{color:var(--b);font-size:.65rem}
+    .hero-pill b{color:var(--b)}
+    .hero-btns{display:flex;gap:.6rem;align-items:center}
+    .hbtn-p{background:var(--b);color:#fff;border:none;border-radius:50px;padding:.6rem 1.3rem;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:.4rem}
+    .hbtn-p:hover{background:var(--bd);transform:translateY(-2px);box-shadow:0 6px 20px rgba(66,110,134,.3)}
+    .hbtn-s{background:transparent;color:var(--b);border:1.5px solid rgba(66,110,134,.25);border-radius:50px;padding:.58rem 1.1rem;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:.4rem}
+    .hbtn-s:hover{border-color:var(--b);background:var(--bl)}
+
+    /* FEATURED RECIPE CARD */
+    .feat-card{border-radius:20px;overflow:hidden;box-shadow:var(--shh);cursor:pointer;position:relative;opacity:0;transform:translateY(20px) scale(.97);transition:transform .35s ease,box-shadow .35s ease}
+    .feat-card:hover{transform:translateY(-5px) scale(1.01);box-shadow:0 28px 64px rgba(42,77,99,.25)}
+    .feat-img{height:280px;display:flex;align-items:center;justify-content:center;font-size:5.5rem;position:relative;background:linear-gradient(145deg,#2a4d63,#1a3040)}
+    .feat-grain{position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");opacity:.6;pointer-events:none}
+    .feat-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(26,48,64,.95) 0%,rgba(26,48,64,.2) 55%,transparent 100%)}
+    .feat-badge{position:absolute;top:1rem;right:1rem;background:rgba(226,186,46,.22);border:1px solid rgba(226,186,46,.5);border-radius:50px;padding:.22rem .7rem;font-size:.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--a)}
+    .feat-content{position:absolute;bottom:0;left:0;right:0;padding:1.3rem 1.4rem}
+    .feat-label{font-size:.58rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:rgba(226,186,46,.8);margin-bottom:.4rem}
+    .feat-title{font-family:'Cormorant Garamond',serif;font-size:1.75rem;font-weight:600;color:#fff;line-height:1.05;margin-bottom:.6rem}
+    .feat-meta{display:flex;align-items:center;gap:1rem}
+    .feat-meta span{font-size:.65rem;font-weight:700;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:.3rem}
+    .feat-meta i{font-size:.62rem}
+    .feat-cook{margin-left:auto;background:linear-gradient(135deg,var(--a),var(--ad));color:#1c2b35;border:none;border-radius:50px;padding:.45rem 1rem;font-family:'Syne',sans-serif;font-size:.65rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:.2s}
+    .feat-cook:hover{filter:brightness(1.08);transform:scale(1.04)}
+
+    /* STATS */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;padding:0 2rem 1.6rem;opacity:0;transform:translateY(18px)}
+    .stat-card{background:var(--card);border-radius:16px;padding:1.1rem 1.3rem;box-shadow:var(--sh);position:relative;overflow:hidden;cursor:default;transition:.25s}
+    .stat-card:hover{transform:translateY(-3px);box-shadow:var(--shh)}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .stat-card.s1::before{background:var(--b)}
+    .stat-card.s2::before{background:var(--a)}
+    .stat-card.s3::before{background:#2d6a4f}
+    .stat-card.s4::before{background:#8b3a52}
+    .stat-deco{position:absolute;top:.7rem;right:.9rem;font-size:1.8rem;opacity:.09}
+    .stat-label{font-size:.62rem;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--mu);margin-bottom:.4rem}
+    .stat-val{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:600;line-height:1;color:var(--tx)}
+    .stat-card.s1 .stat-val{color:var(--b)}
+    .stat-card.s2 .stat-val{color:var(--ad)}
+    .stat-card.s3 .stat-val{color:#2d6a4f}
+    .stat-card.s4 .stat-val{color:#8b3a52}
+    .stat-sub{font-size:.68rem;color:var(--mu);margin-top:.3rem}
+
+    /* QUICK ACTIONS */
+    .actions-section{padding:0 2rem 1.8rem}
+    .section-label{font-size:.6rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--mu);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+    .section-label::after{content:'';flex:1;height:1px;background:rgba(66,110,134,.12)}
+    .actions-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.9rem;opacity:0;transform:translateY(22px)}
+    .action-card{border-radius:18px;padding:1.2rem 1rem;cursor:pointer;transition:.28s ease;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;gap:.6rem;box-shadow:var(--sh)}
+    .action-card:hover{transform:translateY(-5px);box-shadow:var(--shh)}
+
+    .action-card.ac1{background:var(--b);border-top-right-radius:40px;border-bottom-left-radius:40px}
+    .action-card.ac2{background:var(--card);border:1.5px solid rgba(66,110,134,.14);border-top-left-radius:40px;border-bottom-right-radius:40px}
+    .action-card.ac3{background:var(--b);border-top-right-radius:40px;border-bottom-left-radius:40px}
+    .action-card.ac4{background:var(--card);border:1.5px solid rgba(226,186,46,.35);border-top-left-radius:40px;border-bottom-right-radius:40px}
+    .action-card.ac5{background:var(--card);border:1.5px solid rgba(66,110,134,.14);border-top-right-radius:40px;border-bottom-left-radius:40px}
+
+    .action-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+    .ac1 .action-icon,.ac3 .action-icon{background:rgba(255,255,255,.15);color:#fff}
+    .ac2 .action-icon{background:var(--bl);color:var(--b)}
+    .ac4 .action-icon{background:var(--al);color:var(--ad)}
+    .ac5 .action-icon{background:var(--bl);color:var(--b)}
+
+    .action-title{font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;line-height:1.15}
+    .ac1 .action-title,.ac3 .action-title{color:#fff}
+    .action-title{color:var(--tx)}
+    .action-sub{font-size:.62rem;line-height:1.4}
+    .ac1 .action-sub,.ac3 .action-sub{color:rgba(255,255,255,.62)}
+    .action-sub{color:var(--mu)}
+    .action-arrow{margin-top:auto;font-size:.72rem}
+    .ac1 .action-arrow,.ac3 .action-arrow{color:rgba(255,255,255,.4)}
+    .action-arrow{color:rgba(66,110,134,.35)}
+
+    /* BOTTOM ROW */
+    .bottom-row{display:grid;grid-template-columns:1.1fr 1fr;gap:1.5rem;padding:0 2rem 2.5rem}
+
+    /* MEAL PLAN */
+    .meal-section{opacity:0;transform:translateY(18px)}
+    .meal-slots{display:flex;flex-direction:column;gap:.65rem;margin-top:.8rem}
+    .meal-slot{background:var(--card);border-radius:14px;padding:.9rem 1.1rem;box-shadow:var(--sh);display:flex;align-items:center;gap:.9rem;cursor:pointer;transition:.22s;position:relative;overflow:hidden}
+    .meal-slot:hover{transform:translateX(3px);box-shadow:var(--shh)}
+    .meal-slot::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0}
+    .meal-slot.ms-b::before{background:#f4c430}
+    .meal-slot.ms-l::before{background:var(--b)}
+    .meal-slot.ms-d::before{background:#8b3a52}
+    .meal-slot-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+    .ms-b .meal-slot-icon{background:rgba(244,196,48,.12);color:#b8941f}
+    .ms-l .meal-slot-icon{background:var(--bl);color:var(--b)}
+    .ms-d .meal-slot-icon{background:rgba(139,58,82,.08);color:#8b3a52}
+    .meal-slot-info{flex:1}
+    .meal-slot-type{font-size:.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--mu)}
+    .meal-slot-name{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;color:var(--tx);margin-top:.15rem}
+    .meal-slot-name.empty{color:var(--mu);font-style:italic;font-weight:400;font-size:.8rem;font-family:'Syne',sans-serif}
+    .meal-slot-add{width:26px;height:26px;border-radius:50%;border:1.5px dashed rgba(66,110,134,.25);display:flex;align-items:center;justify-content:center;color:rgba(66,110,134,.4);font-size:.75rem;transition:.2s}
+    .meal-slot:hover .meal-slot-add{border-color:var(--b);color:var(--b);background:var(--bl)}
+    .meal-slot-time{font-size:.62rem;color:var(--mu);font-weight:700}
+
+    /* RECENT STRIP */
+    .recent-section{opacity:0;transform:translateY(18px)}
+    .recent-cards{display:flex;flex-direction:column;gap:.65rem;margin-top:.8rem}
+    .mini-card{background:var(--card);border-radius:14px;display:flex;overflow:hidden;box-shadow:var(--sh);cursor:pointer;transition:.22s}
+    .mini-card:hover{transform:translateY(-3px);box-shadow:var(--shh)}
+    .mini-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:var(--a);transition:width .2s ease}
+    .mini-img{width:72px;height:72px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0}
+    .mini-body{padding:.7rem .85rem;flex:1;display:flex;flex-direction:column;justify-content:center;gap:.2rem}
+    .mini-cat{font-size:.58rem;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--a)}
+    .mini-title{font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;color:var(--tx);line-height:1.2}
+    .mini-meta{font-size:.62rem;color:var(--mu);font-weight:600;display:flex;align-items:center;gap:.5rem}
+    .mini-meta i{color:var(--b);font-size:.58rem}
+    .mini-arrow{width:28px;display:flex;align-items:center;justify-content:center;color:rgba(66,110,134,.28);font-size:.7rem;flex-shrink:0;padding-right:.4rem}
+
+    @media (max-width: 1024px){
+      .hero{grid-template-columns:1fr;padding:1.8rem 1.4rem 1.2rem}
+      .stats-row{grid-template-columns:repeat(2,1fr);padding:0 1.4rem 1.4rem}
+      .actions-grid{grid-template-columns:repeat(3,1fr);padding:0 1.4rem}
+      .bottom-row{grid-template-columns:1fr;padding:0 1.4rem 2rem}
+    }
+    @media (max-width: 640px){
+      .nav-links{gap:.6rem;font-size:.68rem}
+      .hero{padding:1.4rem 1rem 1rem}
+      .stats-row{grid-template-columns:1fr 1fr;padding:0 1rem 1.2rem;gap:.6rem}
+      .actions-grid{grid-template-columns:repeat(2,1fr);padding:0 1rem;gap:.6rem}
+      .bottom-row{padding:0 1rem 1.6rem}
+      .hero-btns{flex-direction:column;align-items:stretch}
+    }
+    </style>
+
+    <div class="dash">
+
+    <svg class="hero-deco" viewBox="0 0 180 180" fill="none" style="position:absolute;top:50px;right:45%;z-index:0;opacity:.05;pointer-events:none;width:180px;height:180px">
+        <g stroke="#426e86" stroke-width="1.5">
+        <circle cx="90" cy="90" r="9"/>
+        <line x1="90" y1="81" x2="90" y2="15"/><ellipse cx="90" cy="48" rx="12" ry="22"/>
+        <line x1="90" y1="99" x2="90" y2="165"/><ellipse cx="90" cy="132" rx="12" ry="22"/>
+        <line x1="82" y1="85" x2="23" y2="50"/><ellipse cx="52" cy="67" rx="12" ry="22" transform="rotate(-60 52 67)"/>
+        <line x1="98" y1="95" x2="157" y2="130"/><ellipse cx="128" cy="112" rx="12" ry="22" transform="rotate(-60 128 112)"/>
+        <line x1="82" y1="95" x2="23" y2="130"/><ellipse cx="52" cy="112" rx="12" ry="22" transform="rotate(60 52 112)"/>
+        <line x1="98" y1="85" x2="157" y2="50"/><ellipse cx="128" cy="67" rx="12" ry="22" transform="rotate(60 128 67)"/>
+        </g>
+        <circle cx="90" cy="90" r="4" fill="#e2ba2e" opacity=".5"/>
+    </svg>
+
+    <nav class="nav">
+        <div class="nav-logo">
+        <svg class="nav-lm" viewBox="0 0 26 26" fill="none">
+            <circle cx="13" cy="13" r="12" stroke="rgba(226,186,46,.45)" stroke-width="1"/>
+            <path d="M13 3 C13 3 7 7 7 13 C7 19 13 23 13 23 C13 23 19 19 19 13 C19 7 13 3 13 3Z" fill="rgba(226,186,46,.18)" stroke="#e2ba2e" stroke-width="1"/>
+            <circle cx="13" cy="13" r="2.8" fill="#e2ba2e"/>
+        </svg>
+        <span class="nav-lt">Perfect Palate</span>
+        </div>
+        <div class="nav-links">
+        <a href="{{ url_for('dashboard') }}" class="on">Dashboard</a>
+        <a href="{{ url_for('recommendations.recommendations') }}">Recipes</a>
+        <a href="{{ url_for('meal_planner.meal_planner') }}">Meal Plan</a>
+        <a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>
+        <a href="{{ url_for('meal_planner.shopping_list') }}">Shopping</a>
+        </div>
+        <div class="nav-user" title="Profile" onclick="window.location.href='{{ url_for('preferences') }}'" style="cursor:pointer">KM</div>
+        <a href="{{ url_for('logout') }}" class="nav-logout" title="Log out"><i class="fa-solid fa-right-from-bracket"></i></a>
+    </nav>
+
+    <div class="hero">
+        <div class="hero-left" id="hLeft">
+        <div class="hero-eyebrow" id="hEye"></div>
+        <h1 class="hero-greeting">
+            <em id="hGreet"></em>
+            <strong>Karibu, Chef.</strong>
+        </h1>
+        <p class="hero-tagline">Your kitchen, your rules. {{ total_recipes }} recipes are waiting — personalised to your health profile and dietary preferences.</p>
+        <div class="hero-pills">
+            <span class="hero-pill"><i class="fa-solid fa-star"></i><b>{{ total_recipes }}</b> recipes</span>
+            <span class="hero-pill"><i class="fa-solid fa-heart"></i><b>{{ favorites_count }}</b> favourites</span>
+            <span class="hero-pill"><i class="fa-solid fa-calendar-check"></i><b>{{ meals_planned }}</b> meals planned today</span>
+        </div>
+        <div class="hero-btns">
+            <button class="hbtn-p" onclick="window.location.href='{{ url_for('recommendations.recommendations') }}'"><i class="fa-solid fa-star"></i> Browse Recipes</button>
+            <button class="hbtn-s" onclick="window.location.href='{{ url_for('recommendations.recommendations') }}'"><i class="fa-solid fa-fire"></i> Cook Mode</button>
+        </div>
+        </div>
+
+        <div class="feat-card" id="featCard">
+        <div class="feat-img"{% if featured_recipe and featured_recipe.img %} style="background-image:url('{{ featured_recipe.img }}');background-size:cover;background-position:center"{% endif %}>
+            {% if not featured_recipe or not featured_recipe.img %}{{ featured_recipe.em if featured_recipe else '🍽️' }}{% endif %}
+            <div class="feat-grain"></div>
+            <div class="feat-overlay"></div>
+            <span class="feat-badge">Today's Pick</span>
+        </div>
+        <div class="feat-content">
+            <div class="feat-label">Recipe of the Day</div>
+            <div class="feat-title">{{ featured_recipe.t if featured_recipe else 'No recipes yet' }}</div>
+            <div class="feat-meta">
+            {% if featured_recipe %}
+            <span><i class="fa-regular fa-clock"></i>{{ featured_recipe.tm }}</span>
+            <span><i class="fa-solid fa-users"></i>{{ featured_recipe.sv }} servings</span>
+            <span><i class="fa-solid fa-tag"></i>{{ featured_recipe.c }}</span>
+            {% endif %}
+            <button class="feat-cook" onclick="window.location.href='{{ url_for('recommendations.recommendations') }}'"><i class="fa-solid fa-fire"></i> Cook Now</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <div class="stats-row" id="statsRow">
+        <div class="stat-card s1">
+        <div class="stat-deco"><i class="fa-solid fa-book-open"></i></div>
+        <div class="stat-label">Total Recipes</div>
+        <div class="stat-val" id="sv1">0</div>
+        <div class="stat-sub">Kenyan &amp; East African</div>
+        </div>
+        <div class="stat-card s2">
+        <div class="stat-deco"><i class="fa-solid fa-heart"></i></div>
+        <div class="stat-label">Favourites Saved</div>
+        <div class="stat-val" id="sv2">0</div>
+        <div class="stat-sub">In your collection</div>
+        </div>
+        <div class="stat-card s3">
+        <div class="stat-deco"><i class="fa-solid fa-calendar-days"></i></div>
+        <div class="stat-label">Meals This Week</div>
+        <div class="stat-val" id="sv3">0</div>
+        <div class="stat-sub">Breakfast, lunch &amp; dinner</div>
+        </div>
+        <div class="stat-card s4">
+        <div class="stat-deco"><i class="fa-solid fa-fire"></i></div>
+        <div class="stat-label">Recipes Cooked</div>
+        <div class="stat-val" id="sv4">0</div>
+        <div class="stat-sub">All time</div>
+        </div>
+    </div>
+
+    <div class="actions-section">
+        <div class="section-label">Quick Access</div>
+        <div class="actions-grid" id="actGrid">
+        <div class="action-card ac1" onclick="window.location.href='{{ url_for('recommendations.recommendations') }}'">
+            <div class="action-icon"><i class="fa-solid fa-star"></i></div>
+            <div class="action-title">Recipes</div>
+            <div class="action-sub">Browse &amp; discover dishes</div>
+            <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+        <div class="action-card ac2" onclick="window.location.href='{{ url_for('meal_planner.favorites') }}'">
+            <div class="action-icon"><i class="fa-solid fa-heart"></i></div>
+            <div class="action-title">Favourites</div>
+            <div class="action-sub">Your saved recipes</div>
+            <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+        <div class="action-card ac3" onclick="window.location.href='{{ url_for('meal_planner.shopping_list') }}'">
+            <div class="action-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+            <div class="action-title">Shopping</div>
+            <div class="action-sub">Grocery list builder</div>
+            <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+        <div class="action-card ac4" onclick="window.location.href='{{ url_for('meal_planner.meal_planner') }}'">
+            <div class="action-icon"><i class="fa-solid fa-calendar-days"></i></div>
+            <div class="action-title">Meal Plan</div>
+            <div class="action-sub">Schedule your week</div>
+            <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+        <div class="action-card ac5" onclick="window.location.href='{{ url_for('preferences') }}'">
+            <div class="action-icon"><i class="fa-solid fa-sliders"></i></div>
+            <div class="action-title">Preferences</div>
+            <div class="action-sub">Diet &amp; health settings</div>
+            <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+        </div>
+    </div>
+
+    <div class="bottom-row">
+        <div class="meal-section" id="mealSec">
+        <div class="section-label">Today's Meal Plan</div>
+        <div class="meal-slots">
+            <div class="meal-slot ms-b" onclick="window.location.href='{{ url_for('meal_planner.meal_planner') }}'">
+            <div class="meal-slot-icon"><i class="fa-solid fa-sun"></i></div>
+            <div class="meal-slot-info">
+                <div class="meal-slot-type">Breakfast</div>
+                <div class="meal-slot-name">Mkate wa Ufuta</div>
+            </div>
+            <div class="meal-slot-time">7:30 AM</div>
+            <i class="fa-solid fa-chevron-right" style="color:rgba(66,110,134,.25);font-size:.65rem"></i>
+            </div>
+            <div class="meal-slot ms-l" onclick="window.location.href='{{ url_for('meal_planner.meal_planner') }}'">
+            <div class="meal-slot-icon"><i class="fa-solid fa-cloud-sun"></i></div>
+            <div class="meal-slot-info">
+                <div class="meal-slot-type">Lunch</div>
+                <div class="meal-slot-name">Kachumbari</div>
+            </div>
+            <div class="meal-slot-time">1:00 PM</div>
+            <i class="fa-solid fa-chevron-right" style="color:rgba(66,110,134,.25);font-size:.65rem"></i>
+            </div>
+            <div class="meal-slot ms-d" onclick="window.location.href='{{ url_for('meal_planner.meal_planner') }}'">
+            <div class="meal-slot-icon"><i class="fa-solid fa-moon"></i></div>
+            <div class="meal-slot-info">
+                <div class="meal-slot-type">Dinner</div>
+                <div class="meal-slot-name">Pilau ya Nyama</div>
+            </div>
+            <div class="meal-slot-time">7:00 PM</div>
+            <i class="fa-solid fa-chevron-right" style="color:rgba(66,110,134,.25);font-size:.65rem"></i>
+            </div>
+            <div class="meal-slot ms-l" style="opacity:.55" onclick="window.location.href='{{ url_for('meal_planner.meal_planner') }}'">
+            <div class="meal-slot-icon" style="background:rgba(66,110,134,.06)"><i class="fa-solid fa-plus" style="color:rgba(66,110,134,.4)"></i></div>
+            <div class="meal-slot-info">
+                <div class="meal-slot-type">Snack</div>
+                <div class="meal-slot-name empty">No snack planned — add one</div>
+            </div>
+            <div class="meal-slot-add"><i class="fa-solid fa-plus"></i></div>
+            </div>
+        </div>
+        </div>
+
+        <div class="recent-section" id="recSec">
+        <div class="section-label">Recommended For You</div>
+        <div class="recent-cards">
+            {% for r in recommended_recipes %}
+            <div class="mini-card" style="position:relative" onclick="window.location.href='{{ url_for('recommendations.recommendations') }}'">
+            <div class="mini-img"{% if r.img %} style="background-image:url('{{ r.img }}');background-size:cover;background-position:center"{% else %} style="background:{{ r.g }}"{% endif %}>{% if not r.img %}{{ r.em }}{% endif %}</div>
+            <div class="mini-body">
+                <div class="mini-cat">{{ r.c }}</div>
+                <div class="mini-title">{{ r.t }}</div>
+                <div class="mini-meta"><i class="fa-regular fa-clock"></i>{{ r.tm }} <i class="fa-solid fa-users" style="margin-left:.2rem"></i>{{ r.sv }} servings</div>
+            </div>
+            <div class="mini-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+            {% endfor %}
+        </div>
+        </div>
+    </div>
+
+    </div>
+
+    <script>
+    function getGreet(){const h=new Date().getHours();return h<12?'Good morning,':h<17?'Good afternoon,':'Good evening,'}
+    function getDate(){return new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}).toUpperCase()}
+    document.getElementById('hGreet').textContent=getGreet();
+    document.getElementById('hEye').textContent=getDate();
+
+    function countUp(el,target,dur){
+    const s=Date.now();
+    (function tick(){
+        const p=Math.min((Date.now()-s)/dur,1);
+        el.textContent=Math.round(p*target);
+        if(p<1)requestAnimationFrame(tick);
+    })();
+    }
+
+    const tl=gsap.timeline({defaults:{ease:'power3.out'}});
+    tl.to('#hLeft',{x:0,opacity:1,duration:.8,delay:.15})
+    .to('#featCard',{y:0,opacity:1,scale:1,duration:.75},'-=.5')
+    .to('#statsRow',{y:0,opacity:1,duration:.6,
+        onComplete:()=>{
+        countUp(document.getElementById('sv1'),196,900);
+        countUp(document.getElementById('sv2'),12,700);
+        countUp(document.getElementById('sv3'),9,600);
+        countUp(document.getElementById('sv4'),34,800);
+        }
+    },'-=.3')
+    .to('#actGrid',{y:0,opacity:1,duration:.55},'-=.2')
+    .to('.action-card',{opacity:1,y:0,stagger:.06,duration:.4},'-=.3')
+    .to('#mealSec',{y:0,opacity:1,duration:.5},'-=.15')
+    .to('#recSec',{y:0,opacity:1,duration:.5},'-=.35')
+    .to('.meal-slot',{x:0,opacity:1,stagger:.08,duration:.38,
+        from:{x:-15,opacity:0}
+    },'-=.3')
+    .to('.mini-card',{y:0,opacity:1,stagger:.07,duration:.35,
+        from:{y:12,opacity:0}
+    },'-=.4');
+
+    gsap.set('.action-card',{opacity:0,y:16});
+    gsap.set('.meal-slot',{x:-15,opacity:0});
+    gsap.set('.mini-card',{y:12,opacity:0});
+
+    document.querySelectorAll('.action-card').forEach(c=>{
+    c.addEventListener('mouseenter',()=>gsap.to(c,{scale:1.03,duration:.2,ease:'power2.out'}));
+    c.addEventListener('mouseleave',()=>gsap.to(c,{scale:1,duration:.2,ease:'power2.out'}));
+    });
+    document.querySelectorAll('.mini-card').forEach(c=>{
+    c.addEventListener('mouseenter',()=>gsap.to(c,{x:4,duration:.2,ease:'power2.out'}));
+    c.addEventListener('mouseleave',()=>gsap.to(c,{x:0,duration:.2,ease:'power2.out'}));
+    });
+</script>
+
+{% include '_footer.html' %}
+</body>
+</html>

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <h2 class="sr-only">Perfect Palate dietary preferences and health conditions setup page</h2>
+    <title>Perfect Palate - Preferences</title>
+</head>
+<body>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --b:#426e86;--bd:#2a4d63;--bl:rgba(66,110,134,.07);--bs:rgba(66,110,134,.14);
+  --a:#e2ba2e;--ad:#b8941f;--al:rgba(226,186,46,.09);--as:rgba(226,186,46,.3);
+  --g:#2d6a4f;--gl:rgba(45,106,79,.07);--gs:rgba(45,106,79,.25);
+  --tx:#1c2b35;--mu:#6e7e88;--off:#faf8f4;--card:#fff;
+  --sh:0 4px 20px rgba(42,77,99,.09),0 1px 4px rgba(42,77,99,.05);
+  --shh:0 14px 40px rgba(42,77,99,.17);
+}
+body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
+.pg{max-width:1320px;margin:0 auto;background:var(--off);min-height:100vh}
+
+.nav{background:var(--b);height:56px;display:flex;align-items:center;padding:0 1.8rem;gap:.8rem}
+.nav-logo{display:flex;align-items:center;gap:.5rem}
+.nav-lt{font-family:'Cormorant Garamond',serif;font-size:1.08rem;font-weight:600;color:#fff;letter-spacing:.8px}
+.nav-links{display:flex;gap:.1rem;margin-left:auto}
+.nav-links a{font-size:.65rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.6);text-decoration:none;padding:.38rem .8rem;border-radius:6px;transition:.18s}
+.nav-links a:hover,.nav-links a.on{color:var(--a);background:rgba(226,186,46,.1)}
+
+.page-head{padding:2rem 2rem 1.4rem;position:relative;overflow:hidden}
+.pg-eyebrow{font-size:.62rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--a);display:flex;align-items:center;gap:.55rem;margin-bottom:.6rem;opacity:0}
+.pg-eyebrow::before{content:'';display:block;width:28px;height:2px;background:var(--a)}
+.pg-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,4vw,2.8rem);font-weight:300;line-height:.95;letter-spacing:-.5px;opacity:0}
+.pg-title em{font-style:italic;color:var(--b)}
+.pg-title strong{font-weight:600;color:var(--bd)}
+.pg-sub{font-size:.78rem;color:var(--mu);margin-top:.7rem;line-height:1.6;max-width:480px;opacity:0}
+.pg-deco{position:absolute;top:-10px;right:1.5rem;opacity:.05;pointer-events:none;width:140px;height:140px}
+
+.body-wrap{display:grid;grid-template-columns:220px 1fr;gap:1.5rem;padding:0 2rem 2rem;align-items:start}
+
+.sidebar{display:flex;flex-direction:column;gap:1rem;opacity:0;transform:translateX(-16px)}
+.s-card{background:var(--card);border-radius:18px;padding:1.3rem;box-shadow:var(--sh)}
+
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:.8rem}
+.prog-svg{width:110px;height:110px}
+.prog-bg{fill:none;stroke:rgba(66,110,134,.1);stroke-width:7}
+.prog-fill{fill:none;stroke:var(--b);stroke-width:7;stroke-linecap:round;
+  stroke-dasharray:283;stroke-dashoffset:283;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .6s cubic-bezier(.4,0,.2,1)}
+.prog-num{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;fill:var(--tx);dominant-baseline:central}
+.prog-sub{font-family:'Syne',sans-serif;font-size:.52rem;font-weight:700;fill:var(--mu);letter-spacing:1px;dominant-baseline:central}
+.ring-label{font-size:.68rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);text-align:center}
+
+.divider{height:1px;background:rgba(66,110,134,.08);margin:.2rem 0}
+
+.match-card{text-align:center}
+.match-label{font-size:.6rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:.3rem}
+.match-num{font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-weight:600;color:var(--b);line-height:1}
+.match-sub{font-size:.65rem;color:var(--mu);margin-top:.2rem}
+.match-bar{height:3px;background:rgba(66,110,134,.1);border-radius:2px;margin-top:.7rem;overflow:hidden}
+.match-fill{height:100%;background:linear-gradient(90deg,var(--b),var(--a));border-radius:2px;width:100%;transition:width .5s ease}
+
+.active-list{display:flex;flex-direction:column;gap:.4rem}
+.active-list-label{font-size:.6rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:.2rem}
+.active-pill{display:flex;align-items:center;gap:.4rem;font-size:.68rem;font-weight:700;color:var(--b);background:var(--bl);border:1px solid var(--bs);border-radius:50px;padding:.28rem .65rem;animation:pillIn .2s ease}
+.active-pill i{font-size:.6rem}
+.active-empty{font-size:.7rem;color:var(--mu);font-style:italic}
+@keyframes pillIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+
+.save-sidebar{background:linear-gradient(135deg,var(--b),var(--bd));border-radius:14px;padding:1.1rem;cursor:pointer;transition:.2s;border:none;width:100%;display:flex;align-items:center;justify-content:center;gap:.5rem;font-family:'Syne',sans-serif;font-size:.75rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#fff;box-shadow:0 6px 20px rgba(42,77,99,.25)}
+.save-sidebar:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(42,77,99,.35)}
+.save-sidebar:active{transform:translateY(0);box-shadow:0 4px 12px rgba(42,77,99,.2)}
+
+.pref-main{display:flex;flex-direction:column;gap:1.4rem;opacity:0;transform:translateY(18px)}
+
+.pref-section{background:var(--card);border-radius:20px;overflow:hidden;box-shadow:var(--sh)}
+.pref-sec-head{padding:1.1rem 1.3rem .9rem;display:flex;align-items:center;gap:.9rem;border-bottom:1px solid rgba(66,110,134,.07)}
+.pref-sec-num{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;line-height:1;opacity:.18}
+.sec-h .pref-sec-num{color:var(--b)}
+.sec-a .pref-sec-num{color:var(--ad)}
+.sec-d .pref-sec-num{color:var(--g)}
+.pref-sec-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.sec-h .pref-sec-icon{background:var(--bl);color:var(--b)}
+.sec-a .pref-sec-icon{background:var(--al);color:var(--ad)}
+.sec-d .pref-sec-icon{background:var(--gl);color:var(--g)}
+.pref-sec-info{flex:1}
+.pref-sec-title{font-size:.65rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:.2rem}
+.sec-h .pref-sec-title{color:var(--b)}
+.sec-a .pref-sec-title{color:var(--ad)}
+.sec-d .pref-sec-title{color:var(--g)}
+.pref-sec-desc{font-size:.7rem;color:var(--mu);line-height:1.4}
+.pref-sec-count{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--mu)}
+
+.pref-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;padding:1rem 1.1rem 1.1rem}
+
+.pref-item{border:1.5px solid rgba(66,110,134,.12);border-radius:14px;padding:.85rem 1rem;cursor:pointer;
+  display:flex;align-items:center;gap:.8rem;
+  background:var(--card);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease;
+  position:relative;overflow:hidden;user-select:none}
+.pref-item:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(42,77,99,.1)}
+.pref-item.sel-h{border-color:rgba(66,110,134,.4);background:var(--bl)}
+.pref-item.sel-a{border-color:rgba(226,186,46,.45);background:var(--al)}
+.pref-item.sel-d{border-color:rgba(45,106,79,.35);background:var(--gl)}
+
+.pref-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0;transform:scaleY(0);transform-origin:bottom;transition:transform .22s ease}
+.pref-item.sel-h::before{background:var(--b);transform:scaleY(1)}
+.pref-item.sel-a::before{background:var(--a);transform:scaleY(1)}
+.pref-item.sel-d::before{background:var(--g);transform:scaleY(1)}
+
+.pref-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.82rem;flex-shrink:0;transition:.18s}
+.sec-h .pref-icon{background:rgba(66,110,134,.08);color:var(--b)}
+.sec-a .pref-icon{background:rgba(226,186,46,.1);color:var(--ad)}
+.sec-d .pref-icon{background:rgba(45,106,79,.08);color:var(--g)}
+.sel-h .pref-icon{background:rgba(66,110,134,.15)}
+.sel-a .pref-icon{background:rgba(226,186,46,.18)}
+.sel-d .pref-icon{background:rgba(45,106,79,.14)}
+
+.pref-info{flex:1;min-width:0}
+.pref-name{font-size:.78rem;font-weight:700;color:var(--tx);line-height:1.2}
+.pref-hint{font-size:.62rem;color:var(--mu);margin-top:.18rem;line-height:1.35}
+
+.pref-check{width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(66,110,134,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.18s;font-size:.6rem;color:transparent}
+.sel-h .pref-check{background:var(--b);border-color:var(--b);color:#fff}
+.sel-a .pref-check{background:var(--a);border-color:var(--a);color:#1c2b35}
+.sel-d .pref-check{background:var(--g);border-color:var(--g);color:#fff}
+
+.footer-bar{background:var(--card);border-top:1px solid rgba(66,110,134,.1);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:.5rem;box-shadow:0 -4px 20px rgba(42,77,99,.06)}
+.footer-info{display:flex;flex-direction:column;gap:.2rem}
+.footer-info-main{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--tx)}
+.footer-info-sub{font-size:.65rem;color:var(--mu)}
+.acc-actions{display:flex;gap:.75rem;padding:0 1.1rem 1rem}
+.acc-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.65rem 1rem;border-radius:10px;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;transition:.18s;border:1.5px solid transparent}
+.acc-logout{background:rgba(66,110,134,.08);border-color:rgba(66,110,134,.2);color:var(--b)}
+.acc-logout:hover{background:var(--b);color:#fff}
+.acc-delete{background:rgba(200,60,50,.08);border-color:rgba(200,60,50,.25);color:#a83c32}
+.acc-delete:hover{background:#a83c32;color:#fff}
+.acc-warn{font-size:.68rem;color:var(--mu);padding:0 1.1rem 1.1rem;line-height:1.5}
+.footer-btns{display:flex;gap:.7rem;align-items:center}
+.btn-reset{background:transparent;border:1.5px solid rgba(66,110,134,.2);border-radius:50px;padding:.55rem 1.1rem;font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--mu);cursor:pointer;transition:.18s}
+.btn-reset:hover{border-color:var(--b);color:var(--b)}
+.btn-save{background:var(--b);border:none;border-radius:50px;padding:.6rem 1.6rem;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#fff;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:.45rem;box-shadow:0 4px 16px rgba(42,77,99,.25)}
+.btn-save:hover{background:var(--bd);transform:translateY(-2px);box-shadow:0 8px 24px rgba(42,77,99,.3)}
+.btn-save.saved{background:#2d6a4f;box-shadow:0 4px 16px rgba(45,106,79,.25)}
+
+@media (max-width: 1024px){
+  .body-wrap{grid-template-columns:1fr;padding:0 1.4rem 2rem}
+  .pref-grid{grid-template-columns:1fr}
+}
+@media (max-width: 640px){
+  .nav-links{gap:.5rem;font-size:.66rem;flex-wrap:wrap}
+  .body-wrap{padding:0 1rem 1.6rem}
+  .footer-bar{padding:1rem;flex-direction:column;align-items:stretch}
+  .acc-actions{flex-direction:column}
+}
+</style>
+
+<div class="pg">
+
+  <nav class="nav">
+    <div class="nav-logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <circle cx="13" cy="13" r="12" stroke="rgba(226,186,46,.45)" stroke-width="1"/>
+        <path d="M13 3C13 3 7 7 7 13C7 19 13 23 13 23C13 23 19 19 19 13C19 7 13 3 13 3Z" fill="rgba(226,186,46,.18)" stroke="#e2ba2e" stroke-width="1"/>
+        <circle cx="13" cy="13" r="2.8" fill="#e2ba2e"/>
+      </svg>
+      <span class="nav-lt">Perfect Palate</span>
+    </div>
+    <div class="nav-links">
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('recommendations.recommendations') }}">Recipes</a>
+      <a href="{{ url_for('meal_planner.meal_planner') }}">Meal Plan</a>
+      <a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>
+      <a href="{{ url_for('preferences') }}" class="on">Preferences</a>
+    </div>
+  </nav>
+
+  <div class="page-head">
+    <svg class="pg-deco" viewBox="0 0 140 140" fill="none">
+      <g stroke="#426e86" stroke-width="1.4">
+        <circle cx="70" cy="70" r="8"/>
+        <line x1="70" y1="62" x2="70" y2="10"/><ellipse cx="70" cy="36" rx="11" ry="20"/>
+        <line x1="70" y1="78" x2="70" y2="130"/><ellipse cx="70" cy="104" rx="11" ry="20"/>
+        <line x1="63" y1="66" x2="18" y2="41"/><ellipse cx="40" cy="53" rx="11" ry="20" transform="rotate(-60 40 53)"/>
+        <line x1="77" y1="74" x2="122" y2="99"/><ellipse cx="100" cy="87" rx="11" ry="20" transform="rotate(-60 100 87)"/>
+        <line x1="63" y1="74" x2="18" y2="99"/><ellipse cx="40" cy="87" rx="11" ry="20" transform="rotate(60 40 87)"/>
+        <line x1="77" y1="66" x2="122" y2="41"/><ellipse cx="100" cy="53" rx="11" ry="20" transform="rotate(60 100 53)"/>
+      </g>
+      <circle cx="70" cy="70" r="3.5" fill="#e2ba2e" opacity=".6"/>
+    </svg>
+    <div class="pg-eyebrow" id="pgEye">Profile Setup</div>
+    <h1 class="pg-title" id="pgTitle">Tell us <em>about</em> <strong>yourself</strong></h1>
+    <p class="pg-sub" id="pgSub">Select your health conditions, allergies, and dietary preferences. We use these to filter and rank your recipe recommendations every time.</p>
+  </div>
+
+  <div class="body-wrap">
+
+    <div class="sidebar" id="sidebar">
+      <div class="s-card">
+        <div class="ring-wrap">
+          <svg class="prog-svg" viewBox="0 0 100 100">
+            <circle class="prog-bg" cx="50" cy="50" r="45"/>
+            <circle class="prog-fill" cx="50" cy="50" r="45" id="progFill"/>
+            <text class="prog-num" x="50" y="46" text-anchor="middle" id="progNum">0</text>
+            <text class="prog-sub" x="50" y="61" text-anchor="middle">OF 12 SET</text>
+          </svg>
+          <div class="ring-label">Profile Completeness</div>
+        </div>
+      </div>
+
+      <div class="s-card match-card">
+        <div class="match-label">Recipes matched</div>
+        <div class="match-num" id="matchNum">196</div>
+        <div class="match-sub">tailored to your profile</div>
+        <div class="match-bar"><div class="match-fill" id="matchFill"></div></div>
+      </div>
+
+      <div class="s-card">
+        <div class="active-list-label">Active Filters</div>
+        <div class="active-list" id="activeList">
+          <span class="active-empty">No preferences set yet</span>
+        </div>
+      </div>
+
+      <button class="save-sidebar" onclick="savePrefs()">
+        <i class="fa-solid fa-floppy-disk"></i>
+        Save Preferences
+      </button>
+    </div>
+
+    <div class="pref-main" id="prefMain">
+
+      <div class="pref-section sec-h">
+        <div class="pref-sec-head">
+          <span class="pref-sec-num">01</span>
+          <div class="pref-sec-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+          <div class="pref-sec-info">
+            <div class="pref-sec-title">Health Conditions</div>
+            <div class="pref-sec-desc">Recipes with incompatible flags will be excluded from your feed</div>
+          </div>
+          <div class="pref-sec-count" id="hCount">0 / 4</div>
+        </div>
+        <div class="pref-grid">
+          <div class="pref-item" data-key="BloodPressure" data-type="h" data-label="Blood Pressure" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Blood Pressure</div>
+              <div class="pref-hint">Shows low-sodium, heart-friendly recipes</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+          <div class="pref-item" data-key="BloodSugar" data-type="h" data-label="Blood Sugar" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-droplet"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Blood Sugar</div>
+              <div class="pref-hint">Filters low-glycaemic index dishes</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+          <div class="pref-item" data-key="HighCholesterol" data-type="h" data-label="High Cholesterol" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">High Cholesterol</div>
+              <div class="pref-hint">Prioritises lean, low-fat preparations</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+          <div class="pref-item" data-key="Diabetes" data-type="h" data-label="Diabetes" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-syringe"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Diabetes</div>
+              <div class="pref-hint">Low-sugar, balanced carbohydrate dishes</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pref-section sec-a">
+        <div class="pref-sec-head">
+          <span class="pref-sec-num">02</span>
+          <div class="pref-sec-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="pref-sec-info">
+            <div class="pref-sec-title">Allergies</div>
+            <div class="pref-sec-desc">Recipes containing these ingredients are removed entirely</div>
+          </div>
+          <div class="pref-sec-count" id="aCount">0 / 4</div>
+        </div>
+        <div class="pref-grid">
+          <div class="pref-item" data-key="Meat" data-type="a" data-label="Meat Allergy" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-drumstick-bite"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Meat</div>
+              <div class="pref-hint">Excludes all red meat and poultry dishes</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+          <div class="pref-item" data-key="Eggs" data-type="a" data-label="Eggs Allergy" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-egg"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Eggs</div>
+              <div class="pref-hint">Removes recipes with egg as an ingredient</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+          <div class="pref-item" data-key="Fish" data-type="a" data-label="Fish Allergy" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-fish"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Fish &amp; Seafood</div>
+              <div class="pref-hint">Filters out all fish and seafood dishes</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+          <div class="pref-item" data-key="Peanuts" data-type="a" data-label="Peanuts Allergy" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-seedling"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Peanuts</div>
+              <div class="pref-hint">Removes peanut-containing preparations</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pref-section sec-d">
+        <div class="pref-sec-head">
+          <span class="pref-sec-num">03</span>
+          <div class="pref-sec-icon"><i class="fa-solid fa-leaf"></i></div>
+          <div class="pref-sec-info">
+            <div class="pref-sec-title">Dietary Preferences</div>
+            <div class="pref-sec-desc">Matching recipes are ranked higher — no hard exclusions</div>
+          </div>
+          <div class="pref-sec-count" id="dCount">0 / 4</div>
+        </div>
+        <div class="pref-grid">
+          <div class="pref-item" data-key="GlutenFree" data-type="d" data-label="Gluten-Free" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-bread-slice"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Gluten-Free</div>
+              <div class="pref-hint">Elevates wheat-free recipes in your feed</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+          <div class="pref-item" data-key="LactoseFree" data-type="d" data-label="Lactose-Free" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-mug-saucer"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Lactose-Free</div>
+              <div class="pref-hint">Prioritises dairy-free preparations</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+          <div class="pref-item" data-key="Vegan" data-type="d" data-label="Vegan" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-leaf"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Vegan</div>
+              <div class="pref-hint">Surfaces plant-only recipes first</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+          <div class="pref-item" data-key="Vegetarian" data-type="d" data-label="Vegetarian" onclick="toggle(this)">
+            <div class="pref-icon"><i class="fa-solid fa-carrot"></i></div>
+            <div class="pref-info">
+              <div class="pref-name">Vegetarian</div>
+              <div class="pref-hint">Ranks meat-free dishes higher for you</div>
+            </div>
+            <div class="pref-check"><i class="fa-solid fa-check"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pref-section sec-acc">
+        <div class="pref-sec-head">
+          <span class="pref-sec-num">04</span>
+          <div class="pref-sec-icon"><i class="fa-solid fa-user-gear"></i></div>
+          <div class="pref-sec-info">
+            <div class="pref-sec-title">Account</div>
+            <div class="pref-sec-desc">Signed in as {{ session.email }}</div>
+          </div>
+        </div>
+        <div class="acc-actions">
+          <button class="acc-btn acc-logout" onclick="window.location.href='{{ url_for('logout') }}'">
+            <i class="fa-solid fa-right-from-bracket"></i> Log Out
+          </button>
+          <button class="acc-btn acc-delete" onclick="confirmDeleteAccount()">
+            <i class="fa-solid fa-trash-can"></i> Delete Account
+          </button>
+        </div>
+        <p class="acc-warn">Deleting your account permanently removes your profile, saved preferences, and favourites from our database. This can't be undone.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <div class="footer-info">
+      <div class="footer-info-main" id="footerMain">0 preferences selected</div>
+      <div class="footer-info-sub">Changes apply immediately to your recipe recommendations</div>
+    </div>
+    <div class="footer-btns">
+      <button class="btn-reset" onclick="resetAll()"><i class="fa-solid fa-rotate-left"></i> Reset all</button>
+      <button class="btn-save" id="saveBtn" onclick="savePrefs()"><i class="fa-solid fa-floppy-disk"></i> Save Preferences</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const REDUCE={BloodPressure:38,BloodSugar:32,HighCholesterol:44,Diabetes:48,Meat:14,Eggs:20,Fish:17,Peanuts:11};
+const ICONS={BloodPressure:'fa-heart-pulse',BloodSugar:'fa-droplet',HighCholesterol:'fa-fire-flame-curved',Diabetes:'fa-syringe',Meat:'fa-drumstick-bite',Eggs:'fa-egg',Fish:'fa-fish',Peanuts:'fa-seedling',GlutenFree:'fa-bread-slice',LactoseFree:'fa-mug-saucer',Vegan:'fa-leaf',Vegetarian:'fa-carrot'};
+let selected={},matchVal=196,dirty=false;
+
+function toggle(el){
+  const key=el.dataset.key,type=el.dataset.type;
+  const isSel=el.classList.contains('sel-'+type);
+  if(isSel){
+    el.classList.remove('sel-'+type);
+    delete selected[key];
+  } else {
+    el.classList.add('sel-'+type);
+    selected[key]=el.dataset.label;
+    gsap.fromTo(el,{scale:.97},{scale:1,duration:.2,ease:'back.out(2)'});
+  }
+  updateAll();dirty=true;
+}
+
+function updateAll(){
+  const total=Object.keys(selected).length;
+  const hSel=document.querySelectorAll('.sec-h .pref-item.sel-h').length;
+  const aSel=document.querySelectorAll('.sec-a .pref-item.sel-a').length;
+  const dSel=document.querySelectorAll('.sec-d .pref-item.sel-d').length;
+
+  document.getElementById('hCount').textContent=`${hSel} / 4`;
+  document.getElementById('aCount').textContent=`${aSel} / 4`;
+  document.getElementById('dCount').textContent=`${dSel} / 4`;
+
+  const dash=283;
+  const offset=dash-(dash*(total/12));
+  document.getElementById('progFill').style.strokeDashoffset=offset;
+  document.getElementById('progNum').textContent=total;
+
+  let newMatch=196;
+  Object.keys(selected).forEach(k=>{if(REDUCE[k])newMatch-=REDUCE[k];});
+  newMatch=Math.max(newMatch,24);
+  gsap.to({v:matchVal},{v:newMatch,duration:.55,ease:'power2.out',
+    onUpdate:function(){document.getElementById('matchNum').textContent=Math.round(this.targets()[0].v);}});
+  matchVal=newMatch;
+  document.getElementById('matchFill').style.width=(newMatch/196*100)+'%';
+
+  const fl=document.getElementById('activeList');
+  if(total===0){
+    fl.innerHTML='<span class="active-empty">No preferences set yet</span>';
+  } else {
+    fl.innerHTML=Object.entries(selected).map(([k,v])=>
+      `<div class="active-pill"><i class="fa-solid ${ICONS[k]}"></i>${v}</div>`
+    ).join('');
+  }
+
+  const t=total===1?'1 preference':total+' preferences';
+  document.getElementById('footerMain').textContent=`${t} selected`;
+}
+
+function resetAll(){
+  document.querySelectorAll('.pref-item').forEach(el=>{
+    el.className='pref-item';
+  });
+  selected={};dirty=false;
+  gsap.fromTo('.pref-grid',{opacity:.6},{opacity:1,duration:.3});
+  updateAll();
+}
+
+function savePrefs(){
+  if(!dirty&&Object.keys(selected).length===0)return;
+  const btn=document.getElementById('saveBtn');
+
+  const health=[],allergies=[],dietary=[];
+  document.querySelectorAll('.pref-item').forEach(el=>{
+    const t=el.dataset.type;
+    if(el.classList.contains('sel-'+t)){
+      if(t==='h')health.push(el.dataset.key);
+      else if(t==='a')allergies.push(el.dataset.key);
+      else if(t==='d')dietary.push(el.dataset.key);
+    }
+  });
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+
+  fetch('{{ url_for("preferences") }}',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({health_conditions:health,allergies:allergies,dietary_restrictions:dietary})
+  })
+    .then(res => res.json().catch(() => ({})).then(data => ({ ok: res.ok, data })))
+    .then(({ ok }) => {
+      btn.disabled = false;
+      btn.classList.add('saved');
+      btn.innerHTML='<i class="fa-solid fa-check"></i> Saved!';
+      gsap.fromTo(btn,{scale:.95},{scale:1,duration:.25,ease:'back.out(2)'});
+      setTimeout(()=>{
+        btn.classList.remove('saved');
+        btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Preferences';
+        dirty=false;
+      },2200);
+
+      if (ok && window.Swal) {
+        const total = health.length + allergies.length + dietary.length;
+        Swal.fire({
+          icon: 'success',
+          title: 'Preferences saved!',
+          html: total
+            ? `Your recipes are now filtered for <b>${total}</b> saved preference${total===1?'':'s'}. Head to your <b>Recipes</b> page to see what's safe for you, or check your <b>Dashboard</b> for today's personalised pick.`
+            : `You haven't selected any preferences yet, so we'll show you every recipe. Come back here any time to personalise your recommendations.`,
+          confirmButtonText: 'Browse Recipes',
+          showDenyButton: true,
+          denyButtonText: 'Go to Dashboard',
+          showCancelButton: true,
+          cancelButtonText: 'Stay here',
+          confirmButtonColor: '#426e86',
+          denyButtonColor: '#2a4d63'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = "{{ url_for('recommendations.recommendations') }}";
+          } else if (result.isDenied) {
+            window.location.href = "{{ url_for('dashboard') }}";
+          }
+        });
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Preferences';
+      if (window.Swal) {
+        Swal.fire({ icon: 'error', title: 'Could not save', text: 'Please check your connection and try again.' });
+      }
+    });
+}
+
+function confirmDeleteAccount(){
+  const step1 = confirm('This permanently deletes your account, preferences, and favourites from the database. This cannot be undone.\n\nContinue?');
+  if(!step1) return;
+
+  const typed = prompt('Type DELETE to confirm.');
+  if(typed !== 'DELETE'){
+    if(typed !== null) alert('Account not deleted — you must type DELETE exactly.');
+    return;
+  }
+
+  fetch('{{ url_for("delete_account") }}', { method: 'POST' })
+    .then(res => res.json().then(data => ({ ok: res.ok, data })))
+    .then(({ ok, data }) => {
+      if(ok && data.status === 'ok'){
+        window.location.href = data.redirect;
+      } else {
+        alert(data.message || 'Could not delete account. Please try again.');
+      }
+    })
+    .catch(() => alert('Network error — could not delete account.'));
+}
+
+const tl=gsap.timeline({defaults:{ease:'power3.out'}});
+tl.to('#pgEye',{opacity:1,x:0,duration:.65,delay:.1,from:{x:-20,opacity:0}})
+  .to('#pgTitle',{opacity:1,y:0,duration:.8,from:{y:25,opacity:0}},'-=.4')
+  .to('#pgSub',{opacity:1,y:0,duration:.6,from:{y:15,opacity:0}},'-=.4')
+  .to('#sidebar',{opacity:1,x:0,duration:.7},'-=.3')
+  .to('#prefMain',{opacity:1,y:0,duration:.6},'-=.5')
+  .from('.pref-section',{opacity:0,y:20,stagger:.1,duration:.5},'-=.3')
+  .from('.pref-item',{opacity:0,y:10,stagger:.04,duration:.35},'-=.35');
+
+gsap.to('.pg-deco',{rotation:360,duration:60,repeat:-1,ease:'none',transformOrigin:'70px 70px'});
+</script>  
+{% include '_footer.html' %}
+</body>
+</html>

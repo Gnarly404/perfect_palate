@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">   
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <h2 class="sr-only">Perfect Palate recipe browser and Cook Mode interface</h2>
+    <title>Perfect Palate - Recommendations</title>
+</head>
+<body>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --b:#426e86;--bd:#2a4d63;--bl:rgba(66,110,134,.09);
+  --a:#e2ba2e;--ad:#b8941f;--al:rgba(226,186,46,.13);
+  --tx:#1c2b35;--mu:#6e7e88;
+  --off:rgba(250,248,244,1);
+  --cook-bg:#0d1a22;--cook-s:rgba(255,255,255,.055);
+}
+body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overflow-x:hidden}
+.pp-app{min-height:600px;max-width:1320px;margin:0 auto;background:var(--off);border-radius:16px;overflow:hidden;position:relative}
+
+/* NAV */
+.pp-nav{background:var(--b);height:56px;display:flex;align-items:center;padding:0 1.8rem;gap:.8rem;position:relative;z-index:10}
+.pp-logo{display:flex;align-items:center;gap:.55rem}
+.pp-logo-mark{width:28px;height:28px}
+.pp-logo-text{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:#fff;letter-spacing:.8px}
+.pp-navlinks{display:flex;gap:.1rem;margin-left:auto}
+.pp-navlinks a{font-size:.66rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.62);text-decoration:none;padding:.38rem .8rem;border-radius:6px;transition:.18s}
+.pp-navlinks a:hover,.pp-navlinks a.on{color:var(--a);background:rgba(226,186,46,.1)}
+
+/* HERO */
+.pp-hero{padding:2.8rem 2rem 1.6rem;display:grid;grid-template-columns:1fr auto;align-items:end;gap:1rem;position:relative;overflow:hidden}
+.pp-hero-eyebrow{font-size:.65rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--a);display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;opacity:0}
+.pp-hero-eyebrow::before{content:'';display:block;width:32px;height:2px;background:var(--a)}
+.pp-hero-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,6vw,4.2rem);font-weight:300;line-height:.9;letter-spacing:-1px;opacity:0}
+.pp-hero-h1 em{font-style:italic;color:var(--b)}
+.pp-hero-h1 strong{display:block;font-weight:600;color:var(--bd)}
+.pp-hero-sub{margin-top:1rem;display:flex;gap:1.5rem;align-items:center;opacity:0}
+.pp-hero-sub span{font-size:.75rem;color:var(--mu);font-weight:600}
+.pp-hero-sub b{color:var(--b);font-size:1rem}
+.pp-hero-sep{width:1px;height:18px;background:rgba(66,110,134,.2)}
+.pp-hero-sub i{font-style:italic;font-family:'Cormorant Garamond',serif;font-size:.95rem;color:var(--mu)}
+
+/* Star anise SVG */
+.pp-star-wrap{width:140px;height:140px;opacity:0;flex-shrink:0}
+
+/* CONTROLS */
+.pp-controls{padding:0 2rem 1.6rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;opacity:0}
+.pp-search{position:relative;flex:1;max-width:320px;min-width:160px}
+.pp-search i{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--mu);font-size:.75rem;pointer-events:none}
+.pp-search input{width:100%;background:#fff;border:1.5px solid rgba(66,110,134,.14);border-radius:50px;padding:.58rem .9rem .58rem 2.3rem;font-family:'Syne',sans-serif;font-size:.78rem;color:var(--tx);outline:none;transition:.2s;box-shadow:0 2px 10px rgba(66,110,134,.06)}
+.pp-search input:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(226,186,46,.1)}
+.pp-search input::placeholder{color:var(--mu)}
+.pp-filters{display:flex;gap:.38rem;overflow-x:auto;scrollbar-width:none}
+.pp-filters::-webkit-scrollbar{display:none}
+.pp-personal-banner{margin:0 2rem 1.2rem;padding:.7rem 1.1rem;background:rgba(66,110,134,.08);border:1.5px solid rgba(66,110,134,.18);border-radius:12px;display:flex;align-items:center;gap:.6rem;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;color:var(--b)}
+.pp-personal-banner i{color:var(--a)}
+.pp-personal-clear{margin-left:auto;background:none;border:1.5px solid rgba(66,110,134,.25);border-radius:50px;padding:.32rem .8rem;font-family:'Syne',sans-serif;font-size:.65rem;font-weight:800;color:var(--b);cursor:pointer;transition:.18s;white-space:nowrap}
+.pp-personal-clear:hover{background:var(--b);color:#fff}
+.pp-fpill{flex-shrink:0;padding:.36rem 1rem;border-radius:50px;border:1.5px solid rgba(66,110,134,.14);background:#fff;font-family:'Syne',sans-serif;font-size:.67rem;font-weight:700;letter-spacing:.5px;color:var(--mu);cursor:pointer;transition:.18s;white-space:nowrap}
+.pp-fpill.on,.pp-fpill:hover{background:var(--b);color:#fff;border-color:var(--b);box-shadow:0 4px 12px rgba(66,110,134,.28)}
+
+/* GRID */
+.pp-grid{padding:0 2rem 2.5rem;display:grid;grid-template-columns:repeat(12,1fr);gap:1.2rem}
+.rc{grid-column:span 4}.rc.w{grid-column:span 8}.rc.m{grid-column:span 6}
+
+/* CARD */
+.pp-card{background:#fff;border-radius:18px;overflow:hidden;cursor:pointer;position:relative;display:flex;flex-direction:column;
+  box-shadow:0 8px 32px rgba(42,77,99,.12),0 1px 4px rgba(42,77,99,.06);
+  transition:transform .32s cubic-bezier(.25,.46,.45,.94),box-shadow .32s ease;
+  opacity:0;transform:translateY(40px)}
+.pp-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--a);transform:scaleY(0);transform-origin:bottom;transition:transform .28s ease;z-index:5}
+.pp-card:hover{transform:translateY(-7px)!important;box-shadow:0 24px 60px rgba(42,77,99,.2),0 4px 12px rgba(42,77,99,.1)}
+.pp-card:hover::after{transform:scaleY(1)}
+
+/* Card image */
+.pp-cimg{position:relative;overflow:hidden}
+.pp-cimg{height:250px}.rc.w .pp-cimg{height:340px}.rc.m .pp-cimg{height:290px}
+.pp-cimg-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;transition:transform .45s ease}
+.rc.w .pp-cimg-bg{font-size:5.5rem}.pp-cimg-bg{font-size:3.8rem}
+.pp-card:hover .pp-cimg-bg{transform:scale(1.07)}
+.pp-cimg-grad{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(42,77,99,0) 20%,rgba(42,77,99,.78) 100%)}
+.pp-cnum{position:absolute;top:.8rem;left:1rem;font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:700;color:rgba(255,255,255,.2);line-height:1;user-select:none}
+.pp-ctags{position:absolute;bottom:.7rem;right:.7rem;display:flex;gap:.3rem;flex-wrap:wrap;justify-content:flex-end}
+.pp-ctag{font-family:'Syne',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:.18rem .5rem;border-radius:20px;backdrop-filter:blur(6px)}
+.pp-ctag.vg{background:rgba(30,90,55,.75);color:#b0ecc8}
+.pp-ctag.veg{background:rgba(60,110,50,.75);color:#c8f0b8}
+.pp-ctag.gf{background:rgba(200,160,20,.75);color:#3d2e00}
+.pp-ctag.sp{background:rgba(160,40,20,.75);color:#ffcfc5}
+.pp-ctag.bp{background:rgba(50,90,120,.75);color:#c5e5ff}
+.pp-ctag.dia{background:rgba(120,70,140,.75);color:#eccdf5}
+.pp-cwover{position:absolute;bottom:.8rem;left:1rem;right:5.5rem;font-family:'Cormorant Garamond',serif;font-size:1.55rem;font-weight:600;color:#fff;line-height:1.1;display:none}
+.rc.w .pp-cwover{display:block}
+
+/* Card body */
+.pp-cbody{padding:1rem 1.2rem .85rem;display:flex;flex-direction:column;gap:.38rem;flex:1}
+.pp-ccat{font-size:.6rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--a)}
+.pp-ctitle{font-family:'Cormorant Garamond',serif;font-size:1.18rem;font-weight:600;color:var(--tx);line-height:1.15}
+.rc.w .pp-ctitle{display:none}
+.pp-cdesc{font-size:.72rem;color:var(--mu);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;flex:1}
+.pp-cmeta{display:flex;gap:.9rem;font-size:.65rem;font-weight:700;color:var(--mu)}
+.pp-cmeta span{display:flex;align-items:center;gap:.28rem}
+.pp-cmeta i{color:var(--b);font-size:.62rem}
+
+/* Card footer */
+.pp-cfoot{display:flex;gap:.45rem;align-items:center;padding:.65rem 1.2rem;border-top:1px solid rgba(66,110,134,.06);background:rgba(250,248,244,.7)}
+.pp-btnv{flex:1;background:var(--b);color:#fff;border:none;border-radius:50px;padding:.48rem .9rem;font-family:'Syne',sans-serif;font-size:.67rem;font-weight:700;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;transition:.18s;display:flex;align-items:center;justify-content:center;gap:.35rem}
+.pp-btnv:hover{background:var(--bd)}
+.pp-btnc{background:linear-gradient(135deg,var(--a),var(--ad));color:#1c2b35;border:none;border-radius:50px;padding:.48rem .85rem;font-family:'Syne',sans-serif;font-size:.67rem;font-weight:800;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;transition:.18s;white-space:nowrap;display:flex;align-items:center;gap:.3rem}
+.pp-btnc:hover{filter:brightness(1.07);transform:scale(1.03)}
+.pp-btni{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(66,110,134,.16);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s;font-size:.7rem;color:var(--b);flex-shrink:0}
+.pp-btni:hover{background:var(--b);color:#fff;border-color:var(--b)}
+.pp-btni.fav{color:#c0392b;border-color:#e8b0a8;background:#fff5f4}
+
+/* DECORATIVE FLOATS */
+.pp-deco{position:absolute;pointer-events:none;z-index:0}
+
+/* DETAIL PANEL */
+.pp-detail{display:none;background:#fff;border-radius:0;min-height:500px}
+.pp-detail-head{background:var(--b);padding:1.5rem 2rem;display:flex;gap:1.2rem;align-items:flex-start;position:relative}
+.pp-detail-emoji{font-size:4rem;width:80px;height:80px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:3px solid rgba(226,186,46,.35)}
+.pp-detail-info{flex:1}
+.pp-detail-cat{font-size:.6rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--a);margin-bottom:.4rem}
+.pp-detail-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:#fff;line-height:1.05}
+.pp-detail-desc{font-size:.88rem;color:rgba(255,255,255,.68);margin-top:.35rem;font-style:italic}
+.pp-detail-close{position:absolute;top:1rem;right:1rem;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:.2s}
+.pp-detail-close:hover{background:rgba(255,255,255,.25)}
+.pp-detail-body{padding:1.5rem 2rem;display:grid;grid-template-columns:1fr 1.5fr;gap:2rem}
+.pp-sec-label{font-size:.6rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--b);border-bottom:2px solid var(--a);padding-bottom:.35rem;margin-bottom:.8rem;display:inline-block}
+.pp-ing-list{list-style:none;display:flex;flex-direction:column;gap:.42rem}
+.pp-ing-list li{font-size:.9rem;color:var(--tx);display:flex;align-items:flex-start;gap:.45rem;line-height:1.4}
+.pp-ing-list li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--a);flex-shrink:0;margin-top:.4rem}
+.pp-steps-list{list-style:none;display:flex;flex-direction:column;gap:.7rem}
+.pp-steps-list li{display:flex;gap:.65rem;font-size:.9rem;line-height:1.65;color:var(--tx)}
+.pp-snum{min-width:21px;height:21px;border-radius:50%;background:var(--b);color:#fff;font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.12rem}
+.pp-detail-foot{padding:1rem 2rem;border-top:1px solid rgba(66,110,134,.08);background:var(--off);display:flex;gap:.75rem}
+
+/* COOK MODE */
+.pp-cook{display:none;background:var(--cook-bg);min-height:600px;flex-direction:column}
+.pp-cook-bar{display:flex;gap:.75rem;padding:.85rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.06)}
+.pp-cook-topbtn{flex:1;background:rgba(255,255,255,.055);border:1.5px solid rgba(255,255,255,.11);border-radius:8px;color:rgba(255,255,255,.65);font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:.58rem .5rem;cursor:pointer;transition:.18s;display:flex;align-items:center;justify-content:center;gap:.45rem}
+.pp-cook-topbtn:hover{background:rgba(255,255,255,.09);color:#fff}
+.pp-cook-topbtn.on{border-color:var(--a);color:var(--a)}
+.pp-read-btn.reading{border-color:#e25c4a;color:#ffb3a8;background:rgba(226,92,74,.1)}
+.pp-cook-body{flex:1;padding:1rem 1.2rem;display:flex;flex-direction:column;gap:.85rem;overflow-y:auto;max-height:420px}
+.pp-cook-body::-webkit-scrollbar{width:3px}
+.pp-cook-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
+.pp-cook-rcard{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:.9rem 1.1rem;display:flex;gap:.9rem;align-items:center}
+.pp-cook-thumb{width:50px;height:50px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;background:var(--bd)}
+.pp-cook-rtitle{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:#fff}
+.pp-cook-rmeta{font-size:.68rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.38);margin-top:.18rem}
+.pp-cook-tags{display:flex;gap:.3rem;margin-top:.42rem}
+.pp-cook-tag{font-size:.58rem;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:.15rem .5rem;border-radius:20px;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.6)}
+.pp-step{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1rem 1.1rem;position:relative;transition:.2s}
+.pp-step.cur{border-color:rgba(226,186,46,.38);background:rgba(226,186,46,.05)}
+.pp-step-lbl{font-size:.55rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--mu);position:absolute;top:-7px;left:1rem;background:var(--cook-bg);padding:0 .35rem}
+.pp-step.cur .pp-step-lbl{color:var(--a)}
+.pp-step-txt{font-family:'Syne',sans-serif;font-size:.92rem;line-height:1.7;color:rgba(255,255,255,.8)}
+.pp-step-txt .hi{color:var(--a);font-weight:700}
+.pp-timer{display:inline-flex;align-items:center;gap:.55rem;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.11);border-radius:50px;padding:.38rem .85rem;margin-top:.7rem;cursor:pointer;transition:.18s;font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;color:rgba(255,255,255,.65)}
+.pp-timer:hover,.pp-timer.run{border-color:var(--a);color:var(--a);background:rgba(226,186,46,.07)}
+.pp-tbox{width:12px;height:12px;border-radius:2px;border:1.5px solid rgba(255,255,255,.28);flex-shrink:0;transition:.18s}
+.pp-timer.run .pp-tbox{border-color:var(--a);background:var(--a)}
+.pp-chef{background:rgba(66,110,134,.12);border:1px solid rgba(66,110,134,.2);border-radius:14px;padding:.9rem 1.1rem;display:flex;gap:.7rem;align-items:flex-start}
+.pp-chef-av{width:28px;height:28px;border-radius:50%;background:var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.8rem}
+.pp-chef p{font-family:'Cormorant Garamond',serif;font-size:.98rem;font-style:italic;color:rgba(255,255,255,.55);line-height:1.6}
+.pp-cook-prog{display:flex;align-items:center;gap:.85rem;padding:.6rem 1.2rem;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
+.pp-prog-txt{font-size:.65rem;font-weight:700;color:rgba(255,255,255,.35);white-space:nowrap}
+.pp-prog-bar{flex:1;height:2px;background:rgba(255,255,255,.09);border-radius:2px}
+.pp-prog-fill{height:100%;background:var(--a);border-radius:2px;width:0%;transition:width .45s ease}
+.pp-cook-foot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;padding:.85rem 1.2rem}
+.pp-cook-nav{background:rgba(255,255,255,.055);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;color:rgba(255,255,255,.65);font-family:'Syne',sans-serif;font-size:.67rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:.62rem .5rem;cursor:pointer;transition:.18s;display:flex;align-items:center;justify-content:center;gap:.38rem}
+.pp-cook-nav:hover{background:rgba(255,255,255,.1);color:#fff}
+.pp-cook-nav.nxt{border-color:rgba(66,110,134,.5);color:rgba(180,210,230,.9)}
+.pp-cook-nav.nxt:hover{background:var(--b);color:#fff;border-color:var(--b)}
+
+/* TOAST */
+.pp-toasts{position:absolute;bottom:1.2rem;right:1.2rem;z-index:100;display:flex;flex-direction:column;gap:.4rem}
+.pp-toast{background:var(--b);color:#fff;padding:.6rem 1rem;border-radius:8px;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;box-shadow:0 6px 20px rgba(42,77,99,.3);max-width:220px;animation:tin .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes tin{from{opacity:0;transform:translateX(20px) scale(.9)}to{opacity:1;transform:none}}
+
+@media (max-width: 1024px){
+  .pp-hero{padding:2rem 1.4rem 1.2rem;grid-template-columns:1fr}
+  .pp-controls{padding:0 1.4rem 1.2rem}
+  .pp-filters{padding:0}
+  .pp-grid{padding:0 1.4rem 2rem;grid-template-columns:repeat(6,1fr)}
+  .rc{grid-column:span 3}.rc.w{grid-column:span 6}.rc.m{grid-column:span 6}
+  .pp-detail-body{grid-template-columns:1fr;padding:1.4rem}
+  .pp-personal-banner{margin:0 1.4rem 1.2rem}
+}
+@media (max-width: 640px){
+  .pp-navlinks{gap:.5rem;font-size:.66rem;flex-wrap:wrap}
+  .pp-hero{padding:1.6rem 1rem 1rem}
+  .pp-controls{padding:0 1rem 1rem;flex-direction:column;align-items:stretch}
+  .pp-search{max-width:none}
+  .pp-grid{padding:0 1rem 1.6rem;grid-template-columns:1fr;gap:1rem}
+  .rc,.rc.w,.rc.m{grid-column:span 1}
+  .pp-detail-body{padding:1rem}
+  .pp-personal-banner{margin:0 1rem 1rem;flex-wrap:wrap}
+}
+</style>
+
+<div class="pp-app" id="ppApp">
+
+  <svg class="pp-deco" style="top:60px;right:30px;width:220px;height:220px;opacity:.07" viewBox="0 0 180 180" fill="none">
+    <g id="sa" stroke="#426e86" stroke-width="1.8" fill="none">
+      <circle cx="90" cy="90" r="9"/>
+      <line x1="90" y1="81" x2="90" y2="16"/><ellipse cx="90" cy="48" rx="13" ry="22"/>
+      <line x1="90" y1="99" x2="90" y2="164"/><ellipse cx="90" cy="131" rx="13" ry="22"/>
+      <line x1="82" y1="85" x2="24" y2="51"/><ellipse cx="53" cy="68" rx="13" ry="22" transform="rotate(-60 53 68)"/>
+      <line x1="98" y1="95" x2="156" y2="129"/><ellipse cx="127" cy="112" rx="13" ry="22" transform="rotate(-60 127 112)"/>
+      <line x1="82" y1="95" x2="24" y2="129"/><ellipse cx="53" cy="112" rx="13" ry="22" transform="rotate(60 53 112)"/>
+      <line x1="98" y1="85" x2="156" y2="51"/><ellipse cx="127" cy="68" rx="13" ry="22" transform="rotate(60 127 68)"/>
+    </g>
+    <circle cx="90" cy="90" r="4" fill="#e2ba2e" opacity=".5"/>
+  </svg>
+  <svg class="pp-deco" style="bottom:80px;left:10px;width:140px;height:200px;opacity:.06;transform:rotate(-12deg)" viewBox="0 0 80 120" fill="none">
+    <g stroke="#426e86" stroke-width="1.2">
+      <path d="M40 110 Q22 85 20 58 Q18 28 32 20 Q48 12 56 30 Q66 55 40 110Z"/>
+      <path d="M32 38 Q37 34 43 38"/><path d="M27 56 Q33 50 40 54"/><path d="M30 74 Q37 68 42 72"/>
+      <path d="M32 20 Q34 8 42 4"/><path d="M42 4 Q52 10 50 22"/>
+    </g>
+  </svg>
+
+  <nav class="pp-nav">
+    <div class="pp-logo">
+      <svg class="pp-logo-mark" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="13" stroke="rgba(226,186,46,.45)" stroke-width="1"/>
+        <path d="M14 4 C14 4 8 8 8 14 C8 20 14 24 14 24 C14 24 20 20 20 14 C20 8 14 4 14 4Z" fill="rgba(226,186,46,.18)" stroke="#e2ba2e" stroke-width="1"/>
+        <circle cx="14" cy="14" r="3" fill="#e2ba2e"/>
+      </svg>
+      <span class="pp-logo-text">Perfect Palate</span>
+    </div>
+    <div class="pp-navlinks">
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('recommendations.recommendations') }}" class="on">Recipes</a>
+      <a href="{{ url_for('meal_planner.meal_planner') }}">Meal Plan</a>
+      <a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>
+      <a href="{{ url_for('meal_planner.shopping_list') }}">Shopping</a>
+      <a href="{{ url_for('logout') }}" title="Log out"><i class="fa-solid fa-right-from-bracket"></i></a>
+    </div>
+  </nav>
+
+  <div id="vRecipes">
+    <div class="pp-hero">
+      <div>
+        <div class="pp-hero-eyebrow" id="heye">Personalised For You</div>
+        <h1 class="pp-hero-h1" id="hh1">Your <em>Curated</em><strong>Recipes</strong></h1>
+        <div class="pp-hero-sub" id="hsub">
+          <span><b id="recCount">9</b> recipes matched</span>
+          <div class="pp-hero-sep"></div>
+          <i>Kenyan &amp; East African Cuisine</i>
+        </div>
+      </div>
+      <svg class="pp-star-wrap" id="starSvg" viewBox="0 0 140 140" fill="none">
+        <g stroke="#426e86" stroke-width="1.6" fill="none">
+          <circle cx="70" cy="70" r="8"/>
+          <line x1="70" y1="62" x2="70" y2="10"/><ellipse cx="70" cy="36" rx="11" ry="20"/>
+          <line x1="70" y1="78" x2="70" y2="130"/><ellipse cx="70" cy="104" rx="11" ry="20"/>
+          <line x1="63" y1="66" x2="19" y2="41"/><ellipse cx="41" cy="53" rx="11" ry="20" transform="rotate(-60 41 53)"/>
+          <line x1="77" y1="74" x2="121" y2="99"/><ellipse cx="99" cy="87" rx="11" ry="20" transform="rotate(-60 99 87)"/>
+          <line x1="63" y1="74" x2="19" y2="99"/><ellipse cx="41" cy="87" rx="11" ry="20" transform="rotate(60 41 87)"/>
+          <line x1="77" y1="66" x2="121" y2="41"/><ellipse cx="99" cy="53" rx="11" ry="20" transform="rotate(60 99 53)"/>
+        </g>
+        <circle cx="70" cy="70" r="3.5" fill="#e2ba2e" opacity=".7"/>
+      </svg>
+    </div>
+
+    <div class="pp-controls" id="ctrls">
+      <div class="pp-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Search recipes, ingredients…" oninput="doFilter()" id="srch">
+      </div>
+      <div class="pp-filters">
+        <button class="pp-fpill on" onclick="setCat('all',this)">All</button>
+        <button class="pp-fpill" onclick="setCat('Main Dish',this)">Main Dish</button>
+        <button class="pp-fpill" onclick="setCat('Vegetarian',this)">Vegetarian</button>
+        <button class="pp-fpill" onclick="setCat('Seafood',this)">Seafood</button>
+        <button class="pp-fpill" onclick="setCat('Breakfast',this)">Breakfast</button>
+        <button class="pp-fpill" onclick="setCat('Dessert',this)">Dessert</button>
+        <button class="pp-fpill" onclick="setCat('Salad',this)">Salad</button>
+        <button class="pp-fpill" onclick="setCat('Beverage',this)">Beverage</button>
+        <button class="pp-fpill" onclick="setCat('Appetizer',this)">Appetizer</button>
+        <button class="pp-fpill" onclick="setCat('Snack',this)">Snack</button>
+        <button class="pp-fpill" onclick="setCat('Bread',this)">Bread</button>
+        <button class="pp-fpill" onclick="setCat('Soup',this)">Soup</button>
+      </div>
+    </div>
+
+    <div class="pp-personal-banner" id="personalBanner" style="display:none">
+      <i class="fa-solid fa-heart-circle-check"></i>
+      <span id="personalBannerText">Showing recipes safe for your saved preferences</span>
+      <button class="pp-personal-clear" onclick="clearPersonalization()">Show all recipes ✕</button>
+    </div>
+
+    <div class="pp-grid" id="ppGrid"></div>
+  </div>
+
+  <div class="pp-detail" id="vDetail">
+    <div class="pp-detail-head">
+      <div class="pp-detail-emoji" id="dtEmoji"></div>
+      <div class="pp-detail-info">
+        <div class="pp-detail-cat" id="dtCat"></div>
+        <div class="pp-detail-title" id="dtTitle"></div>
+        <div class="pp-detail-desc" id="dtDesc"></div>
+      </div>
+      <button class="pp-detail-close" onclick="showView('recipes')">✕</button>
+    </div>
+    <div class="pp-detail-body">
+      <div>
+        <div class="pp-sec-label">Ingredients</div>
+        <ul class="pp-ing-list" id="dtIng"></ul>
+      </div>
+      <div>
+        <div class="pp-sec-label">Instructions</div>
+        <ol class="pp-steps-list" id="dtSteps"></ol>
+      </div>
+    </div>
+    <div class="pp-detail-foot">
+      <button class="pp-btnv" onclick="showView('recipes')"><i class="fa-solid fa-arrow-left"></i> Back</button>
+      <button class="pp-btnc" id="dtCookBtn">🔥 Start Cook Mode</button>
+    </div>
+  </div>
+
+  <div class="pp-cook" id="vCook">
+    <div class="pp-cook-bar">
+      <button class="pp-cook-topbtn on"><i class="fa-solid fa-fire"></i> Cook Mode</button>
+      <button class="pp-cook-topbtn pp-read-btn" onclick="doReadAloud()"><i class="fa-solid fa-volume-high"></i> Read Aloud</button>
+      <button class="pp-cook-topbtn" onclick="if(window.speechSynthesis)window.speechSynthesis.cancel();isReading=false;showView('recipes')">✕ Exit</button>
+    </div>
+    <div class="pp-cook-body" id="cookBody"></div>
+    <div class="pp-cook-prog">
+      <span class="pp-prog-txt" id="pTxt">0 / 0</span>
+      <div class="pp-prog-bar"><div class="pp-prog-fill" id="pFill"></div></div>
+      <span class="pp-prog-txt" id="pPct">0%</span>
+    </div>
+    <div class="pp-cook-foot">
+      <button class="pp-cook-nav" onclick="cNav(-1)"><i class="fa-solid fa-chevron-left"></i> Back</button>
+      <button class="pp-cook-nav pp-read-btn" onclick="doReadAloud()"><i class="fa-regular fa-comment"></i> Read Aloud</button>
+      <button class="pp-cook-nav nxt" onclick="cNav(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  </div>
+
+  <div class="pp-toasts" id="toasts"></div>
+</div>
+
+<script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    let RX = {{ recipes_json | safe }};
+
+    const TAG_L={vg:'Vegan',veg:'Vegetarian',gf:'Gluten-Free',sp:'Spicy',bp:'Blood Pressure',dia:'Diabetic-Friendly'};
+    let activeCat='all',curCook=null,curStep=0,timers={};
+
+    function buildGrid(data){
+    const g=document.getElementById('ppGrid');
+    g.innerHTML='';
+    const layouts=['rc w','rc','rc','rc','rc','rc','rc w','rc','rc'];
+    data.forEach((r,i)=>{
+        const cls=(r.wide?'rc w':'rc');
+        const d=document.createElement('div');
+        d.className=`${cls} pp-card`;
+        d.dataset.cat=r.c;d.dataset.t=r.t.toLowerCase();
+        const tagH=r.tg.map(t=>`<span class="pp-ctag ${t}">${TAG_L[t]}</span>`).join('');
+        d.innerHTML=`
+        <div class="pp-cimg">
+            <div class="pp-cimg-bg" style="${r.img?`background-image:url('${r.img}');background-size:cover;background-position:center`:`background:${r.g}`}">${r.img?'':r.em}</div>
+            <div class="pp-cimg-grad"></div>
+            <div class="pp-cnum">0${i+1}</div>
+            <div class="pp-ctags">${tagH}</div>
+            <div class="pp-cwover">${r.t}</div>
+        </div>
+        <div class="pp-cbody">
+            <div class="pp-ccat">${r.c}</div>
+            <div class="pp-ctitle">${r.t}</div>
+            <div class="pp-cdesc">${r.d}</div>
+            <div class="pp-cmeta">
+            <span><i class="fa-regular fa-clock"></i>${r.tm}</span>
+            <span><i class="fa-solid fa-users"></i>${r.sv} servings</span>
+            </div>
+        </div>
+        <div class="pp-cfoot">
+            <button class="pp-btnv" onclick="openDetail(${r.id})"><i class="fa-solid fa-book-open"></i> View</button>
+            <button class="pp-btnc" onclick="startCook(${r.id})">🔥 Cook</button>
+            <button class="pp-btni" onclick="toggleFav(this,${r.id})" title="Favourite"><i class="fa-solid fa-heart"></i></button>
+        </div>`;
+        g.appendChild(d);
+    });
+    animCards();
+    }
+
+    function animCards(){
+    gsap.fromTo('.pp-card',{y:45,opacity:0},{y:0,opacity:1,duration:.65,stagger:.07,ease:'power3.out',
+        scrollTrigger:{trigger:'#ppGrid',start:'top 88%',once:true}});
+    }
+
+    function initAnims(){
+    gsap.to('#sa',{rotation:360,duration:50,repeat:-1,ease:'none',transformOrigin:'90px 90px'});
+    gsap.fromTo('#heye',{x:-25,opacity:0},{x:0,opacity:1,duration:.75,delay:.1,ease:'power3.out'});
+    gsap.fromTo('#hh1',{y:35,opacity:0},{y:0,opacity:1,duration:.9,delay:.25,ease:'power3.out'});
+    gsap.fromTo('#hsub',{y:18,opacity:0},{y:0,opacity:1,duration:.65,delay:.48,ease:'power3.out'});
+    gsap.fromTo('#starSvg',{rotation:-25,opacity:0,scale:.8},{rotation:0,opacity:1,scale:1,duration:1.1,delay:.3,ease:'power3.out'});
+    gsap.to('#starSvg',{rotation:360,duration:55,repeat:-1,ease:'none',delay:1.1,transformOrigin:'70px 70px'});
+    gsap.fromTo('#ctrls',{y:16,opacity:0},{y:0,opacity:1,duration:.65,delay:.6,ease:'power3.out'});
+    }
+
+    function setCat(cat,btn){
+    activeCat=cat;
+    document.querySelectorAll('.pp-fpill').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');doFilter();
+    }
+    function doFilter(){
+    const q=document.getElementById('srch').value.toLowerCase();
+    const cards=document.querySelectorAll('.pp-card');let v=0;
+    cards.forEach(c=>{
+        const ok=(activeCat==='all'||c.dataset.cat===activeCat)&&(!q||c.dataset.t.includes(q));
+        if(ok){gsap.to(c,{opacity:1,scale:1,y:0,duration:.28,ease:'power2.out'});c.style.display='';v++;}
+        else{gsap.to(c,{opacity:0,scale:.94,duration:.18,ease:'power2.in',onComplete:()=>c.style.display='none'});}
+    });
+    document.getElementById('recCount').textContent=v;
+    }
+
+    function showView(v){
+    document.getElementById('vRecipes').style.display=v==='recipes'?'block':'none';
+    const d=document.getElementById('vDetail');
+    d.style.display=v==='detail'?'block':'none';
+    const c=document.getElementById('vCook');
+    c.style.display=v==='cook'?'flex':'none';
+    if(v==='recipes')ScrollTrigger.refresh();
+    if(v!=='cook'){Object.values(timers).forEach(clearInterval);timers={};}
+    }
+
+    function openDetail(id){
+    const r=RX.find(x=>x.id===id);if(!r)return;
+    const dtEl=document.getElementById('dtEmoji');
+    if(r.img){dtEl.textContent='';dtEl.style.backgroundImage=`url('${r.img}')`;dtEl.style.backgroundSize='cover';dtEl.style.backgroundPosition='center';}
+    else{dtEl.textContent=r.em;dtEl.style.backgroundImage='';dtEl.style.background=r.g;}
+    document.getElementById('dtCat').textContent=r.c;
+    document.getElementById('dtTitle').textContent=r.t;
+    document.getElementById('dtDesc').textContent=r.d;
+    document.getElementById('dtIng').innerHTML=r.ing.split(',').map(i=>`<li>${i.trim()}</li>`).join('');
+    document.getElementById('dtSteps').innerHTML=r.st.split(/\d+\.\s+/).filter(Boolean).map((s,i)=>
+        `<li><span class="pp-snum">${i+1}</span><span>${s.trim()}</span></li>`).join('');
+    document.getElementById('dtCookBtn').onclick=()=>startCook(id);
+    showView('detail');
+    gsap.fromTo('#vDetail',{opacity:0,y:20},{opacity:1,y:0,duration:.38,ease:'power3.out'});
+    }
+
+    function startCook(id){
+    const r=RX.find(x=>x.id===id);if(!r)return;
+    if(window.speechSynthesis)window.speechSynthesis.cancel();
+    isReading=false;
+    curCook=r;curStep=0;
+    const steps=r.st.split(/\d+\.\s+/).filter(Boolean);
+    const ings=r.ing.split(',').map(i=>i.split('(')[0].trim().toLowerCase());
+    let html=`<div class="pp-cook-rcard">
+        <div class="pp-cook-thumb"${r.img?` style="background-image:url('${r.img}');background-size:cover;background-position:center"`:''}>${r.img?'':r.em}</div>
+        <div><div class="pp-cook-rtitle">${r.t}</div>
+        <div class="pp-cook-rmeta">${r.c} · ${r.tm} · ${r.sv} servings</div>
+        <div class="pp-cook-tags">${r.tg.map(t=>`<span class="pp-cook-tag">${TAG_L[t]}</span>`).join('')}</div></div></div>`;
+    steps.forEach((s,i)=>{
+        let hi=s;
+        ings.forEach(ing=>{if(ing.length>3){const re=new RegExp(`(${ing.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}[s]?)`, 'gi');hi=hi.replace(re,'<span class="hi">$1</span>');}});
+        const tm=s.match(/(\d+)\s*(min|minute|second|sec)/i);
+        const timerH=tm?`<div class="pp-timer" id="tm${i}" onclick="doTimer(${i},${tm[2].startsWith('sec')?parseInt(tm[1]):parseInt(tm[1])*60})"><div class="pp-tbox"></div><span id="td${i}">${tm[2].startsWith('sec')?tm[1]+'s':tm[1]+' min'}</span><span>start timer</span></div>`:'';
+        html+=`<div class="pp-step${i===0?' cur':''}" id="ps${i}"><div class="pp-step-lbl">STEP ${i+1}</div><div class="pp-step-txt">${hi}</div>${timerH}</div>`;
+    });
+    html+=`<div class="pp-chef"><div class="pp-chef-av">🍴</div><p>Mise en place — gather and prep everything before you start. This is how professional kitchens work, and it makes the process meditative rather than stressful.</p></div>`;
+    document.getElementById('cookBody').innerHTML=html;
+    updProg(0,steps.length);
+    showView('cook');
+    gsap.fromTo('#vCook',{opacity:0},{opacity:1,duration:.4,ease:'power2.out'});
+    gsap.fromTo('.pp-step',{x:-18,opacity:0},{x:0,opacity:1,duration:.45,stagger:.06,delay:.2,ease:'power2.out'});
+    }
+
+    function cNav(dir,fromReader){
+    if(!curCook)return;
+    if(isReading&&!fromReader){
+        window.speechSynthesis.cancel();
+        isReading=false;
+        setReadButtons(false);
+    }
+    const steps=curCook.st.split(/\d+\.\s+/).filter(Boolean);
+    const ns=Math.max(0,Math.min(steps.length-1,curStep+dir));
+    document.getElementById(`ps${curStep}`)?.classList.remove('cur');
+    document.getElementById(`ps${ns}`)?.classList.add('cur');
+    document.getElementById(`ps${ns}`)?.scrollIntoView({behavior:'smooth',block:'center'});
+    curStep=ns;updProg(ns,steps.length);
+    }
+    function updProg(s,t){
+    const p=t>0?Math.round(s/t*100):0;
+    document.getElementById('pTxt').textContent=`${s} / ${t}`;
+    document.getElementById('pPct').textContent=`${p}%`;
+    document.getElementById('pFill').style.width=p+'%';
+    }
+    function doTimer(idx,secs){
+    const d=document.getElementById(`td${idx}`),b=document.getElementById(`tm${idx}`);
+    if(timers[idx]){clearInterval(timers[idx]);delete timers[idx];b.classList.remove('run');b.querySelector('span:last-child').textContent='start timer';return;}
+    let rem=secs;b.classList.add('run');b.querySelector('span:last-child').textContent='tap to pause';
+    timers[idx]=setInterval(()=>{
+        rem--;d.textContent=rem>=60?Math.floor(rem/60)+' min '+(rem%60?rem%60+'s':''):rem+'s';
+        if(rem<=0){clearInterval(timers[idx]);delete timers[idx];b.classList.remove('run');d.textContent='Done!';b.querySelector('span:last-child').textContent='✓';toast('⏰ Timer complete!');}
+    },1000);
+    }
+    let isReading = false;
+    let cachedVoices = [];
+
+    function loadVoices(){
+    cachedVoices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+    }
+    if(window.speechSynthesis){
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    function pickHumanVoice(){
+    if(!cachedVoices.length) loadVoices();
+    return cachedVoices.find(v=>/natural|neural|premium|enhanced/i.test(v.name))
+        || cachedVoices.find(v=>!v.localService && /^en/i.test(v.lang))
+        || cachedVoices.find(v=>/^en/i.test(v.lang))
+        || cachedVoices[0]
+        || null;
+    }
+
+    function setReadButtons(reading){
+    document.querySelectorAll('.pp-read-btn').forEach(b=>{
+        b.innerHTML = reading
+        ? '<i class="fa-solid fa-stop"></i> Stop Reading'
+        : (b.classList.contains('pp-cook-nav') ? '<i class="fa-regular fa-comment"></i> Read Aloud' : '<i class="fa-solid fa-volume-high"></i> Read Aloud');
+        b.classList.toggle('reading', reading);
+    });
+    }
+
+    function doReadAloud(){
+    if(!curCook||!window.speechSynthesis)return;
+
+    if(isReading){
+        window.speechSynthesis.cancel();
+        isReading=false;
+        setReadButtons(false);
+        return;
+    }
+
+    isReading=true;
+    setReadButtons(true);
+    speakStepThenAdvance();
+    }
+
+    function speakStepThenAdvance(){
+    if(!curCook||!isReading)return;
+    const steps=curCook.st.split(/\d+\.\s+/).filter(Boolean);
+
+    if(curStep>=steps.length){
+        isReading=false;
+        setReadButtons(false);
+        toast('👨‍🍳 That was the last step — enjoy your meal!');
+        return;
+    }
+
+    const u=new SpeechSynthesisUtterance(`Step ${curStep+1}. ${steps[curStep]}`);
+    const voice=pickHumanVoice();
+    if(voice){u.voice=voice;u.lang=voice.lang;}
+    u.rate=.96;
+    u.pitch=1.03;
+
+    u.onend=()=>{
+        if(!isReading)return; // stopped mid-step
+        if(curStep<steps.length-1){
+        cNav(1,true);
+        // A real pause between steps -- not one continuous run-on take.
+        setTimeout(()=>{ if(isReading) speakStepThenAdvance(); },900);
+        } else {
+        isReading=false;
+        setReadButtons(false);
+        toast('👨‍🍳 That was the last step — enjoy your meal!');
+        }
+    };
+    u.onerror=()=>{ isReading=false; setReadButtons(false); };
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+    }
+    function toggleFav(btn,id){
+    btn.classList.toggle('fav');
+    const nowFav=btn.classList.contains('fav');
+    toast(nowFav?'❤️ Saved to Favourites':'Removed from Favourites');
+    fetch(`/planner/favorite/${id}`,{
+        method: nowFav ? 'POST' : 'DELETE',
+        headers:{'Content-Type':'application/json'}
+    }).catch(()=>{});
+    }
+    function toast(msg){
+    const w=document.getElementById('toasts'),el=document.createElement('div');
+    el.className='pp-toast';el.textContent=msg;w.appendChild(el);
+    setTimeout(()=>{gsap.to(el,{opacity:0,x:15,duration:.25,onComplete:()=>el.remove()});},2600);
+    }
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')showView('recipes');});
+    showView('recipes');
+
+    let FULL_RX = RX;
+
+    function clearPersonalization(){
+    RX = FULL_RX;
+    buildGrid(RX);
+    document.getElementById('recCount').textContent=RX.length;
+    document.getElementById('personalBanner').style.display='none';
+    }
+
+    function applyPersonalization(){
+    fetch('/recipes/personalized')
+        .then(r=>r.ok?r.json():null)
+        .then(data=>{
+        if(!data||!data.has_preferences||!data.recipes||!data.recipes.length)return;
+        RX = data.recipes;
+        buildGrid(RX);
+        document.getElementById('recCount').textContent=RX.length;
+        document.getElementById('personalBannerText').textContent=
+            `Showing ${RX.length} of ${FULL_RX.length} recipes safe for your saved preferences`;
+        document.getElementById('personalBanner').style.display='flex';
+        })
+        .catch(()=>{});
+    }
+
+    buildGrid(RX);
+    document.getElementById('recCount').textContent=RX.length;
+    applyPersonalization();
+    initAnims();
+</script>
+ 
+{% include '_footer.html' %}
+</body>
+</html>

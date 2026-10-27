@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">      
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <h2 class="sr-only">Perfect Palate weekly meal planner showing breakfast lunch dinner and snack slots for each day with add and remove functionality</h2>
+    <title>Perfect Palate - Meal Planner</title> 
+</head>
+<body>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --b:#426e86;--bd:#2a4d63;--bl:rgba(66,110,134,.07);
+  --a:#e2ba2e;--ad:#b8941f;--al:rgba(226,186,46,.08);
+  --tx:#1c2b35;--mu:#6e7e88;--off:#faf8f4;--card:#fff;
+  --br:rgba(66,110,134,.1);
+  --sh:0 4px 20px rgba(42,77,99,.09);
+  --shh:0 12px 36px rgba(42,77,99,.18);
+  --mc-b:#e2ba2e;--mc-l:#426e86;--mc-d:#2a4d63;--mc-s:#2d6a4f;
+}
+body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
+#vMain{max-width:1320px;margin:0 auto}
+
+.nav{background:var(--b);height:56px;display:flex;align-items:center;padding:0 1.6rem;gap:.8rem}
+.nav-logo{display:flex;align-items:center;gap:.5rem}
+.nav-lt{font-family:'Cormorant Garamond',serif;font-size:1.08rem;font-weight:600;color:#fff;letter-spacing:.8px}
+.nav-links{display:flex;gap:.1rem;margin-left:auto}
+.nav-links a{font-size:.65rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.6);text-decoration:none;padding:.38rem .75rem;border-radius:6px;transition:.18s}
+.nav-links a.on,.nav-links a:hover{color:var(--a);background:rgba(226,186,46,.1)}
+
+.pg-head{padding:1.8rem 1.8rem 1.2rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;position:relative;overflow:hidden}
+.pg-deco{position:absolute;top:-10px;right:1rem;width:110px;height:110px;opacity:.05;pointer-events:none}
+.pg-titles{opacity:0}
+.pg-eye{font-size:.62rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--a);display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+.pg-eye::before{content:'';display:block;width:24px;height:2px;background:var(--a)}
+.pg-h1{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:300;line-height:.95;letter-spacing:-.5px}
+.pg-h1 em{font-style:italic;color:var(--b)}
+.pg-h1 strong{font-weight:600;color:var(--bd)}
+
+.week-nav{display:flex;align-items:center;gap:.75rem;opacity:0;flex-shrink:0}
+.wn-btn{background:var(--card);border:1.5px solid rgba(66,110,134,.18);border-radius:50px;padding:.45rem .9rem;font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;color:var(--b);cursor:pointer;transition:.18s;display:flex;align-items:center;gap:.35rem;box-shadow:var(--sh)}
+.wn-btn:hover{background:var(--b);color:#fff;border-color:var(--b)}
+.wn-label{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--tx);white-space:nowrap}
+
+.stats-band{display:grid;grid-template-columns:repeat(4,1fr);padding:0 1.8rem 1.4rem;gap:0;opacity:0}
+.sb{padding:.8rem .9rem;border-right:1px solid var(--br)}
+.sb:last-child{border-right:none}
+.sb-v{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;color:var(--b);line-height:1}
+.sb-l{font-size:.6rem;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--mu);margin-top:.2rem}
+
+.planner-wrap{padding:0 1.8rem 1.8rem;opacity:0}
+
+.planner-tbl{width:100%;border-collapse:collapse;table-layout:fixed}
+.planner-tbl th,.planner-tbl td{border:1px solid rgba(66,110,134,.1)}
+.planner-tbl .day-col{width:76px}
+.planner-tbl .meal-col{width:auto}
+
+.hdr-day{background:var(--card);padding:.7rem .5rem;text-align:center}
+.hdr-meal{background:var(--card);padding:.7rem .6rem;text-align:left}
+.hdr-meal-inner{display:flex;align-items:center;gap:.45rem}
+.hdr-meal-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0}
+.hdr-m-b .hdr-meal-icon{background:rgba(226,186,46,.15);color:var(--ad)}
+.hdr-m-l .hdr-meal-icon{background:rgba(66,110,134,.1);color:var(--b)}
+.hdr-m-d .hdr-meal-icon{background:rgba(42,77,99,.1);color:var(--bd)}
+.hdr-m-s .hdr-meal-icon{background:rgba(45,106,79,.1);color:#2d6a4f}
+.hdr-meal-name{font-size:.65rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu)}
+
+.day-cell{background:var(--card);padding:.55rem .6rem;vertical-align:middle;cursor:default}
+.day-cell.today{background:rgba(226,186,46,.06)}
+.day-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--tx);margin:0 auto .18rem}
+.day-cell.today .day-num{background:var(--a);color:#1c2b35}
+.day-name{font-size:.58rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);text-align:center}
+.today-pill{font-size:.52rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--ad);text-align:center;margin-top:.15rem}
+
+.meal-cell{background:var(--card);padding:.45rem;vertical-align:top;height:78px}
+.meal-cell.today{background:rgba(226,186,46,.03)}
+
+.mc-empty{height:100%;border:1.5px dashed rgba(66,110,134,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex-direction:column;gap:.2rem}
+.mc-empty:hover{border-color:var(--b);background:var(--bl)}
+.mc-empty:hover .mc-add-icon{color:var(--b)}
+.mc-add-icon{font-size:.75rem;color:rgba(66,110,134,.3);transition:.18s}
+.mc-add-txt{font-size:.6rem;font-weight:700;letter-spacing:.5px;color:rgba(66,110,134,.35);transition:.18s}
+.mc-empty:hover .mc-add-txt{color:var(--b)}
+
+.mc-filled{height:100%;border-radius:10px;padding:.5rem .55rem;display:flex;flex-direction:column;gap:.22rem;position:relative;overflow:hidden;background:var(--card);border:1px solid rgba(66,110,134,.12);cursor:default}
+.mc-filled::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:0}
+.mc-b .mc-filled::before{background:var(--mc-b)}
+.mc-l .mc-filled::before{background:var(--mc-l)}
+.mc-d .mc-filled::before{background:var(--mc-d)}
+.mc-s .mc-filled::before{background:var(--mc-s)}
+.mc-emoji{font-size:1.1rem;line-height:1}
+.mc-name{font-family:'Cormorant Garamond',serif;font-size:.82rem;font-weight:600;color:var(--tx);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:16px}
+.mc-meta{font-size:.6rem;font-weight:700;color:var(--mu)}
+.mc-remove{position:absolute;top:.35rem;right:.35rem;width:16px;height:16px;border-radius:50%;background:rgba(66,110,134,.1);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:var(--mu);opacity:0;transition:.18s}
+.mc-filled:hover .mc-remove{opacity:1}
+.mc-remove:hover{background:#c0392b;color:#fff}
+
+.footer-card{margin:0 1.8rem 2rem;background:var(--b);border-radius:16px;padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;opacity:0}
+.fc-txt{color:#fff}
+.fc-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600}
+.fc-sub{font-size:.7rem;opacity:.7;margin-top:.18rem}
+.fc-btn{background:var(--a);color:#1c2b35;border:none;border-radius:50px;padding:.55rem 1.1rem;font-family:'Syne',sans-serif;font-size:.7rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:.2s;white-space:nowrap;display:flex;align-items:center;gap:.4rem}
+.fc-btn:hover{filter:brightness(1.07);transform:scale(1.03)}
+
+.add-view{display:none;max-width:1320px;margin:0 auto;background:var(--off)}
+.add-nav{background:var(--b);height:56px;display:flex;align-items:center;padding:0 1.6rem;gap:1rem}
+.add-back{background:rgba(255,255,255,.15);border:none;border-radius:50px;color:#fff;font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:.42rem .9rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;transition:.2s}
+.add-back:hover{background:rgba(255,255,255,.25)}
+.add-context{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;color:#fff;opacity:.85}
+.add-head{padding:1.4rem 1.8rem 1rem}
+.add-h1{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--tx)}
+.add-h1 em{font-style:italic;color:var(--b)}
+.add-sub{font-size:.75rem;color:var(--mu);margin-top:.3rem}
+.add-grid{padding:0 1.8rem 2rem;display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem}
+.add-card{background:var(--card);border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:var(--sh);transition:transform .25s ease,box-shadow .25s ease;border:1.5px solid rgba(66,110,134,.1)}
+.add-card:hover{transform:translateY(-4px);box-shadow:var(--shh);border-color:var(--b)}
+.add-img{height:90px;display:flex;align-items:center;justify-content:center;font-size:2.8rem}
+.add-body{padding:.65rem .8rem}
+.add-cat{font-size:.58rem;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--a)}
+.add-name{font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;color:var(--tx);line-height:1.2;margin-top:.18rem}
+.add-tm{font-size:.62rem;color:var(--mu);font-weight:700;margin-top:.2rem}
+
+.toast-wrap{position:absolute;bottom:1rem;right:1rem;display:flex;flex-direction:column;gap:.4rem;z-index:100}
+.toast-msg{background:var(--b);color:#fff;padding:.55rem .9rem;border-radius:8px;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;box-shadow:0 6px 16px rgba(42,77,99,.25);animation:tIn .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes tIn{from{opacity:0;transform:translateX(16px) scale(.9)}to{opacity:1;transform:none}}
+
+@media (max-width: 1024px){
+  .stats-band{grid-template-columns:repeat(2,1fr);padding:0 1.4rem 1.2rem}
+  .add-grid{grid-template-columns:repeat(2,1fr);padding:0 1.4rem 1.6rem}
+  .pg-head{padding:1.4rem 1.4rem 1rem;flex-wrap:wrap}
+  .footer-card{margin:0 1.4rem 1.6rem;flex-wrap:wrap}
+}
+@media (max-width: 640px){
+  .nav-links{gap:.5rem;font-size:.66rem;flex-wrap:wrap}
+  .stats-band{grid-template-columns:1fr 1fr;padding:0 1rem 1rem}
+  .add-grid{grid-template-columns:1fr;padding:0 1rem 1.4rem}
+  .pg-head{padding:1.2rem 1rem .8rem}
+  /* The weekly plan is a real HTML table (7 day columns); rather than
+     force-reflow it into cards, let it scroll horizontally on narrow
+     screens so nothing gets crushed or clipped. */
+  .planner-wrap{padding:0 1rem 1.4rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .planner-tbl{min-width:640px}
+  .footer-card{margin:0 1rem 1.4rem;padding:1rem;flex-direction:column;align-items:stretch;text-align:center}
+}
+</style>
+
+<div style="position:relative">
+
+<div id="vMain">
+  <nav class="nav">
+    <div class="nav-logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <circle cx="13" cy="13" r="12" stroke="rgba(226,186,46,.45)" stroke-width="1"/>
+        <path d="M13 3C13 3 7 7 7 13C7 19 13 23 13 23C13 23 19 19 19 13C19 7 13 3 13 3Z" fill="rgba(226,186,46,.18)" stroke="#e2ba2e" stroke-width="1"/>
+        <circle cx="13" cy="13" r="2.8" fill="#e2ba2e"/>
+      </svg>
+      <span class="nav-lt">Perfect Palate</span>
+    </div>
+    <div class="nav-links">
+      <a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('recommendations.recommendations') }}">Recipes</a>
+      <a href="{{ url_for('meal_planner.meal_planner') }}" class="on">Meal Plan</a><a href="{{ url_for('meal_planner.favorites') }}">Favourites</a><a href="{{ url_for('meal_planner.shopping_list') }}">Shopping</a>
+      <a href="{{ url_for('logout') }}" title="Log out"><i class="fa-solid fa-right-from-bracket"></i></a>
+    </div>
+  </nav>
+
+  <div class="pg-head">
+    <svg class="pg-deco" viewBox="0 0 110 110" fill="none">
+      <g stroke="#426e86" stroke-width="1.3">
+        <circle cx="55" cy="55" r="7"/>
+        <line x1="55" y1="48" x2="55" y2="8"/><ellipse cx="55" cy="28" rx="9" ry="16"/>
+        <line x1="55" y1="62" x2="55" y2="102"/><ellipse cx="55" cy="82" rx="9" ry="16"/>
+        <line x1="49" y1="51" x2="14" y2="31"/><ellipse cx="31" cy="41" rx="9" ry="16" transform="rotate(-60 31 41)"/>
+        <line x1="61" y1="59" x2="96" y2="79"/><ellipse cx="79" cy="69" rx="9" ry="16" transform="rotate(-60 79 69)"/>
+        <line x1="49" y1="59" x2="14" y2="79"/><ellipse cx="31" cy="69" rx="9" ry="16" transform="rotate(60 31 69)"/>
+        <line x1="61" y1="51" x2="96" y2="31"/><ellipse cx="79" cy="41" rx="9" ry="16" transform="rotate(60 79 41)"/>
+      </g>
+      <circle cx="55" cy="55" r="3" fill="#e2ba2e" opacity=".6"/>
+    </svg>
+    <div class="pg-titles" id="pgTitles">
+      <div class="pg-eye">Week of June 1–7, 2026</div>
+      <h1 class="pg-h1">Weekly <em>Meal</em> <strong>Planner</strong></h1>
+    </div>
+    <div class="week-nav" id="weekNav">
+      <button class="wn-btn" onclick="navWeek(-1)"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+      <span class="wn-label">June 1–7, 2026</span>
+      <button class="wn-btn" onclick="navWeek(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  </div>
+
+  <div class="stats-band" id="statsBand">
+    <div class="sb"><div class="sb-v" id="stMeals">0</div><div class="sb-l">Meals planned</div></div>
+    <div class="sb"><div class="sb-v" id="stDays">0</div><div class="sb-l">Days covered</div></div>
+    <div class="sb"><div class="sb-v" id="stAvg">0<span style="font-size:1rem"> min</span></div><div class="sb-l">Avg prep time</div></div>
+    <div class="sb"><div class="sb-v" id="stEmpty">0</div><div class="sb-l">Slots to fill</div></div>
+  </div>
+
+  <div class="planner-wrap" id="plannerWrap">
+    <table class="planner-tbl" id="plannerTbl">
+      <colgroup>
+        <col class="day-col">
+        <col class="meal-col"><col class="meal-col">
+        <col class="meal-col"><col class="meal-col">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="hdr-day"></th>
+          <th class="hdr-meal hdr-m-b">
+            <div class="hdr-meal-inner">
+              <div class="hdr-meal-icon"><i class="fa-solid fa-sun"></i></div>
+              <span class="hdr-meal-name">Breakfast</span>
+            </div>
+          </th>
+          <th class="hdr-meal hdr-m-l">
+            <div class="hdr-meal-inner">
+              <div class="hdr-meal-icon"><i class="fa-solid fa-cloud-sun"></i></div>
+              <span class="hdr-meal-name">Lunch</span>
+            </div>
+          </th>
+          <th class="hdr-meal hdr-m-d">
+            <div class="hdr-meal-inner">
+              <div class="hdr-meal-icon"><i class="fa-solid fa-moon"></i></div>
+              <span class="hdr-meal-name">Dinner</span>
+            </div>
+          </th>
+          <th class="hdr-meal hdr-m-s">
+            <div class="hdr-meal-inner">
+              <div class="hdr-meal-icon"><i class="fa-solid fa-apple-whole"></i></div>
+              <span class="hdr-meal-name">Snack</span>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody id="plannerBody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer-card" id="footerCard">
+    <div class="fc-txt">
+      <div class="fc-title">Turn your meal plan into a shopping list</div>
+      <div class="fc-sub">All ingredients auto-extracted from your planned recipes</div>
+    </div>
+    <button class="fc-btn" onclick="window.location.href='{{ url_for('meal_planner.shopping_list') }}'"><i class="fa-solid fa-cart-shopping"></i> Generate List</button>
+  </div>
+</div>
+
+<div class="add-view" id="vAdd">
+  <div class="add-nav">
+    <button class="add-back" onclick="cancelAdd()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+    <span class="add-context" id="addContext"></span>
+  </div>
+  <div class="add-head">
+    <h2 class="add-h1">Choose a <em>Recipe</em></h2>
+    <p class="add-sub">Select a recipe to add to this meal slot</p>
+  </div>
+  <div class="add-grid" id="addGrid"></div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+</div>
+
+<script>
+const RX=[
+  {id:1,t:"Pilau ya Nyama",c:"Main Dish",em:"🍚",tm:45,g:"linear-gradient(145deg,#2a4d63,#1a3040)"},
+  {id:2,t:"Kuku Paka",c:"Main Dish",em:"🍗",tm:55,g:"linear-gradient(145deg,#1e3a2a,#2d6050)"},
+  {id:3,t:"Vitumbua",c:"Dessert",em:"🍮",tm:25,g:"linear-gradient(145deg,#3a2010,#6a3a18)"},
+  {id:4,t:"Kachumbari",c:"Salad",em:"🥗",tm:10,g:"linear-gradient(145deg,#3a1515,#682020)"},
+  {id:5,t:"Mbaazi ya Nazi",c:"Vegetarian",em:"🫘",tm:35,g:"linear-gradient(145deg,#1e3028,#35564a)"},
+  {id:6,t:"Masala Chai",c:"Beverage",em:"☕",tm:10,g:"linear-gradient(145deg,#3a1e0a,#6a3010)"},
+  {id:7,t:"Mkate wa Ufuta",c:"Breakfast",em:"🫓",tm:90,g:"linear-gradient(145deg,#3a2a0f,#604818)"},
+  {id:8,t:"Ugali Nyama",c:"Main Dish",em:"🍳",tm:40,g:"linear-gradient(145deg,#1e2e18,#304826)"},
+  {id:9,t:"Mchuzi wa Samaki",c:"Seafood",em:"🐟",tm:30,g:"linear-gradient(145deg,#1a3545,#2a5560)"},
+];
+
+const DAYS=[
+  {s:'Mon',d:1},{s:'Tue',d:2},{s:'Wed',d:3},{s:'Thu',d:4},
+  {s:'Fri',d:5},{s:'Sat',d:6},{s:'Sun',d:7}
+];
+const MEALS=['breakfast','lunch','dinner','snack'];
+const MEAL_CLS={breakfast:'mc-b',lunch:'mc-l',dinner:'mc-d',snack:'mc-s'};
+const TODAY_IDX=2;
+
+let plan={
+  0:{breakfast:RX[6],lunch:null,dinner:RX[0],snack:null},
+  1:{breakfast:null,lunch:RX[5],dinner:RX[1],snack:null},
+  2:{breakfast:RX[6],lunch:RX[3],dinner:null,snack:RX[4]},
+  3:{breakfast:null,lunch:null,dinner:RX[4],snack:null},
+  4:{breakfast:null,lunch:RX[3],dinner:RX[7],snack:null},
+  5:{breakfast:null,lunch:null,dinner:null,snack:null},
+  6:{breakfast:null,lunch:null,dinner:null,snack:null},
+};
+let addTarget=null;
+
+function calcStats(){
+  let meals=0,time=0,days=new Set(),empty=0;
+  Object.entries(plan).forEach(([i,ms])=>{
+    let dayHas=false;
+    MEALS.forEach(m=>{
+      if(ms[m]){meals++;time+=ms[m].tm;dayHas=true;}
+      else empty++;
+    });
+    if(dayHas)days.add(i);
+  });
+  return{meals,days:days.size,avg:meals?Math.round(time/meals):0,empty};
+}
+
+function updateStats(){
+  const s=calcStats();
+  gsap.to({v:parseInt(document.getElementById('stMeals').textContent)||0},{v:s.meals,duration:.6,ease:'power2.out',onUpdate:function(){document.getElementById('stMeals').textContent=Math.round(this.targets()[0].v);}});
+  gsap.to({v:parseInt(document.getElementById('stDays').textContent)||0},{v:s.days,duration:.5,ease:'power2.out',onUpdate:function(){document.getElementById('stDays').textContent=Math.round(this.targets()[0].v);}});
+  document.getElementById('stAvg').innerHTML=`${s.avg}<span style="font-size:1rem"> min</span>`;
+  gsap.to({v:parseInt(document.getElementById('stEmpty').textContent)||0},{v:s.empty,duration:.5,ease:'power2.out',onUpdate:function(){document.getElementById('stEmpty').textContent=Math.round(this.targets()[0].v);}});
+}
+
+function renderGrid(){
+  const body=document.getElementById('plannerBody');
+  body.innerHTML='';
+  DAYS.forEach((day,di)=>{
+    const tr=document.createElement('tr');
+    const isToday=di===TODAY_IDX;
+    const td0=document.createElement('td');
+    td0.className='day-cell'+(isToday?' today':'');
+    td0.innerHTML=`<div class="day-num">${day.d}</div><div class="day-name">${day.s}</div>${isToday?'<div class="today-pill">Today</div>':''}`;
+    tr.appendChild(td0);
+    MEALS.forEach(meal=>{
+      const td=document.createElement('td');
+      td.className='meal-cell'+(isToday?' today':'');
+      const r=plan[di][meal];
+      if(r){
+        td.className+=' '+MEAL_CLS[meal];
+        td.innerHTML=`<div class="mc-filled">
+          <button class="mc-remove" onclick="removeMeal(${di},'${meal}')" title="Remove"><i class="fa-solid fa-xmark"></i></button>
+          <div class="mc-emoji">${r.em}</div>
+          <div class="mc-name">${r.t}</div>
+          <div class="mc-meta"><i class="fa-regular fa-clock" style="margin-right:3px"></i>${r.tm} min</div>
+        </div>`;
+      } else {
+        td.innerHTML=`<div class="mc-empty" onclick="openAdd(${di},'${meal}')">
+          <div class="mc-add-icon"><i class="fa-solid fa-plus"></i></div>
+          <div class="mc-add-txt">Add</div>
+        </div>`;
+      }
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+}
+
+function removeMeal(di,meal){
+  plan[di][meal]=null;
+  renderGrid();updateStats();
+  toast('Meal removed');
+}
+
+function openAdd(di,meal){
+  addTarget={di,meal};
+  const dayName=DAYS[di].s;
+  const mealName=meal.charAt(0).toUpperCase()+meal.slice(1);
+  document.getElementById('addContext').textContent=`${mealName} — ${dayName}, June ${DAYS[di].d}`;
+
+  const grid=document.getElementById('addGrid');
+  grid.innerHTML='';
+  RX.forEach(r=>{
+    const card=document.createElement('div');
+    card.className='add-card';
+    card.onclick=()=>selectRecipe(r);
+    card.innerHTML=`<div class="add-img" style="background:${r.g}">${r.em}</div>
+      <div class="add-body">
+        <div class="add-cat">${r.c}</div>
+        <div class="add-name">${r.t}</div>
+        <div class="add-tm"><i class="fa-regular fa-clock" style="margin-right:3px"></i>${r.tm} min</div>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  document.getElementById('vMain').style.display='none';
+  const av=document.getElementById('vAdd');av.style.display='block';
+  gsap.fromTo(av,{opacity:0,y:12},{opacity:1,y:0,duration:.35,ease:'power3.out'});
+  gsap.from('.add-card',{opacity:0,y:16,stagger:.05,duration:.35,delay:.15,ease:'power2.out'});
+}
+
+function selectRecipe(r){
+  if(!addTarget)return;
+  plan[addTarget.di][addTarget.meal]=r;
+  cancelAdd();
+  setTimeout(()=>{renderGrid();updateStats();toast(`${r.em} ${r.t} added!`);},150);
+}
+
+function cancelAdd(){
+  const av=document.getElementById('vAdd');
+  gsap.to(av,{opacity:0,y:8,duration:.22,ease:'power2.in',onComplete:()=>{
+    av.style.display='none';
+    document.getElementById('vMain').style.display='block';
+    gsap.from('#vMain',{opacity:0,duration:.28,ease:'power2.out'});
+  }});
+}
+
+function navWeek(dir){
+  toast(dir<0?'Showing previous week (demo data only)':'Showing next week (demo data only)');
+}
+
+function toast(msg){
+  const w=document.getElementById('toastWrap'),el=document.createElement('div');
+  el.className='toast-msg';el.textContent=msg;w.appendChild(el);
+  setTimeout(()=>gsap.to(el,{opacity:0,x:12,duration:.22,onComplete:()=>el.remove()}),2400);
+}
+
+const tl=gsap.timeline({defaults:{ease:'power3.out'}});
+tl.to('#pgTitles',{opacity:1,y:0,duration:.75,delay:.1,from:{y:20,opacity:0}})
+  .to('#weekNav',{opacity:1,y:0,duration:.55,from:{y:12,opacity:0}},'-=.4')
+  .to('#statsBand',{opacity:1,y:0,duration:.55,from:{y:14,opacity:0}},'-=.3',
+    function(){updateStats();})
+  .to('#plannerWrap',{opacity:1,duration:.55},'-=.25')
+  .from('tbody tr',{opacity:0,x:-12,stagger:.07,duration:.4},'-=.25')
+  .to('#footerCard',{opacity:1,y:0,duration:.45,from:{y:12,opacity:0}},'-=.15');
+
+gsap.to('.pg-deco',{rotation:360,duration:60,repeat:-1,ease:'none',transformOrigin:'55px 55px'});
+renderGrid();
+setTimeout(updateStats,600);
+</script>
+
+{% include '_footer.html' %}
+</body>
+</html>

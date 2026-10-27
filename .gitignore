@@ -1,0 +1,24 @@
+# Flask
+instance/
+*.pyc
+__pycache__/
+*.egg-info/
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db

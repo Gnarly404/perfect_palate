@@ -1,0 +1,91 @@
+<style>
+  #ppFooter {
+    --pf-cream: #f5f0e8;
+    --pf-gold: #b8952a;
+    --pf-gold-muted: #c9a84c;
+    --pf-text-dark: #3a3020;
+    --pf-text-mid: #5a4e38;
+    --pf-text-light: #7a6e58;
+    --pf-divider: #d4c8a8;
+    position: relative;
+    overflow: hidden;
+    border-top: 1px solid var(--pf-divider);
+    background: var(--pf-cream);
+    font-family: 'Lato', 'Syne', sans-serif;
+  }
+  #ppFooter .footer-watermark {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: clamp(1000px, 140vw, 1900px);
+    min-width: 900px;
+    height: auto;
+    opacity: .05;
+    filter: grayscale(20%) contrast(1.1);
+    pointer-events: none; user-select: none; z-index: 0;
+  }
+  #ppFooter .footer-botanical {
+    position: absolute; bottom: 0; right: 0; width: 160px; height: 160px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M190 190 Q160 140 120 120 Q150 80 140 30' stroke='%23b8952a' stroke-width='1.2' fill='none' opacity='0.22'/%3E%3Cpath d='M190 190 Q140 160 100 130 Q120 100 110 60' stroke='%23b8952a' stroke-width='1' fill='none' opacity='0.16'/%3E%3Cellipse cx='120' cy='120' rx='20' ry='12' fill='none' stroke='%23b8952a' stroke-width='0.8' opacity='0.2' transform='rotate(30 120 120)'/%3E%3C/svg%3E") no-repeat center/contain;
+    pointer-events: none; z-index: 0;
+  }
+  #ppFooter .footer-botanical-left {
+    position: absolute; bottom: 0; left: 0; width: 140px; height: 140px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M10 190 Q30 140 80 120 Q50 80 60 30' stroke='%23b8952a' stroke-width='1.2' fill='none' opacity='0.2'/%3E%3Cellipse cx='80' cy='120' rx='18' ry='11' fill='none' stroke='%23b8952a' stroke-width='0.8' opacity='0.18' transform='rotate(-30 80 120)'/%3E%3C/svg%3E") no-repeat center/contain;
+    pointer-events: none; z-index: 0;
+  }
+  #ppFooter .footer-inner {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+    padding: 28px 2.5rem;
+    max-width: 1320px; margin: 0 auto;
+  }
+  #ppFooter .footer-copy { font-size: .72rem; color: var(--pf-text-light); letter-spacing: .3px; }
+  #ppFooter .footer-copy strong { color: var(--pf-text-dark); font-weight: 700; }
+  #ppFooter .footer-center { display: flex; align-items: center; gap: 12px; }
+  #ppFooter .kenya-map { width: 26px; height: 32px; opacity: .85; }
+  #ppFooter .footer-divider-v { width: 1px; height: 32px; background: var(--pf-divider); }
+  #ppFooter .footer-made {
+    font-family: 'Cormorant Garamond', 'Syne', serif;
+    font-size: .82rem; color: var(--pf-text-mid); letter-spacing: .3px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  #ppFooter .footer-made .heart { color: #c0783a; }
+  #ppFooter .footer-links { display: flex; gap: 1.1rem; }
+  #ppFooter .footer-links a {
+    font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--pf-text-mid); text-decoration: none; opacity: .8; transition: .18s;
+  }
+  #ppFooter .footer-links a:hover { opacity: 1; color: var(--pf-gold); }
+
+  @media (max-width: 768px) {
+    #ppFooter .footer-inner { flex-direction: column; align-items: center; text-align: center; padding: 24px 1.2rem; }
+    #ppFooter .footer-watermark { width: 100vw; min-width: unset; }
+    #ppFooter .footer-links { flex-wrap: wrap; justify-content: center; }
+  }
+</style>
+
+<footer id="ppFooter">
+  <img class="footer-watermark" src="{{ url_for('static', filename='images/Name.png') }}" alt="" aria-hidden="true">
+  <div class="footer-botanical"></div>
+  <div class="footer-botanical-left"></div>
+
+  <div class="footer-inner">
+    <p class="footer-copy">© 2026 <strong>Perfect Palate.</strong> All rights reserved.</p>
+
+    <div class="footer-links">
+      <a href="{{ url_for('homepage') }}">Home</a>
+      <a href="{{ url_for('recommendations.recommendations') }}">Recipes</a>
+      <a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>
+      <a href="{{ url_for('preferences') }}">Preferences</a>
+    </div>
+
+    <div class="footer-center">
+      <svg class="kenya-map" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">
+        <path d="M60 5 L80 12 L100 10 L115 25 L110 45 L95 55 L105 75 L100 95 L85 115 L70 140 L60 155 L50 140 L35 115 L20 95 L15 75 L25 55 L10 45 L5 25 L20 10 L40 12 Z" fill="#c9a84c" opacity="0.8"/>
+      </svg>
+      <div class="footer-divider-v"></div>
+      <div class="footer-made">Made in Kenya with <span class="heart">♥</span> &nbsp;•&nbsp; Nairobi, Kenya</div>
+    </div>
+  </div>
+</footer>

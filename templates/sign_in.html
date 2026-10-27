@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfect Palate - Sign In</title>    
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <h2 class="sr-only">Perfect Palate sign in and create account page with correctly sliding blue overlay panel</h2>
+</head>
+<body>
+<style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --b:#426e86;--bd:#2a4d63;--bl:rgba(66,110,134,.08);
+      --a:#e2ba2e;--ad:#b8941f;
+      --tx:#1c2b35;--mu:#6e7e88;--off:#faf8f4;--card:#fff;
+    }
+    body{font-family:'Syne',sans-serif;background:var(--off);display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 2.5rem}
+
+    .brand{display:flex;align-items:center;gap:.6rem;margin-bottom:1.6rem;opacity:0}
+    .brand-name{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:var(--tx);letter-spacing:1px}
+
+    /* ── Card ── */
+    .auth-card{
+      position:relative;width:100%;max-width:680px;height:600px;
+      overflow-x:hidden;overflow-y:visible;border-radius:22px;
+      box-shadow:0 24px 72px rgba(42,77,99,.2),0 4px 16px rgba(42,77,99,.1);
+    }
+
+    /* ── Forms area: always left 50%, white ── */
+    .forms-area{
+      position:absolute;left:0;top:0;bottom:0;width:50%;
+      background:var(--card);z-index:1;
+    }
+
+    /* Both forms sit inside forms-area, absolute, filling it */
+    .auth-form{
+      position:absolute;inset:0;
+      padding:1.8rem 1.6rem;
+      display:flex;flex-direction:column;gap:.65rem;
+      background:var(--card);
+      will-change:transform,opacity;
+    }
+    #fSI{z-index:2;opacity:1}
+    #fSU{z-index:1;opacity:0}
+
+    /* ── Overlay container: starts right 50%, clips inner ── */
+    .ov-wrap{
+      position:absolute;
+      left:50%;top:0;bottom:0;width:50%;
+      overflow:hidden;z-index:3;
+      will-change:transform;
+    }
+
+    /* Inner is 200% wide; left:-100% shifts it so RIGHT panel is visible initially */
+    .ov-inner{
+      position:relative;left:-100%;
+      width:200%;height:100%;
+      background:var(--b);
+      display:flex;
+      will-change:transform;
+    }
+
+    .ov-panel{
+      width:50%;height:100%;flex-shrink:0;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:2rem 1.5rem;text-align:center;position:relative;overflow:hidden;
+    }
+
+    /* ── Form UI ── */
+    .f-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.2rem}
+    .f-top-mark{font-size:1.1rem;color:var(--a)}
+    .f-top-name{font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;color:var(--b);letter-spacing:.8px}
+    .f-title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--tx);line-height:1}
+    .f-sub{font-size:.68rem;color:var(--mu);margin-top:.2rem}
+
+    .fld{display:flex;flex-direction:column;gap:.25rem}
+    .fld label{font-size:.58rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu)}
+    .fw{position:relative}
+    .fw > i{position:absolute;left:.82rem;top:50%;transform:translateY(-50%);color:rgba(110,126,136,.4);font-size:.76rem;pointer-events:none}
+    .fw input{width:100%;background:var(--off);border:1.5px solid rgba(66,110,134,.13);border-radius:10px;padding:.6rem 2.3rem .6rem 2.25rem;font-family:'Syne',sans-serif;font-size:.78rem;color:var(--tx);outline:none;transition:.2s}
+    .fw input:focus{border-color:var(--b);background:#fff;box-shadow:0 0 0 3px rgba(66,110,134,.1)}
+    .fw input::placeholder{color:rgba(110,126,136,.38)}
+    .pw-eye{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);cursor:pointer;color:rgba(110,126,136,.38);font-size:.78rem;transition:.18s;display:flex;align-items:center;justify-content:center;border:none;background:transparent;padding:0;z-index:2}
+    .pw-eye:hover{color:var(--b)}
+    .pw-eye i{position:static;transform:none;left:auto;pointer-events:none}
+
+    .fmsg{font-size:.68rem;font-weight:700;padding:.38rem .7rem;border-radius:8px;display:none}
+    .fmsg.ok{background:rgba(45,106,79,.08);color:#2d6a4f;display:block}
+    .fmsg.err{background:rgba(139,32,32,.08);color:#8b2020;display:block}
+
+    .sub{background:var(--b);color:#fff;border:none;border-radius:50px;padding:.68rem;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.4rem}
+    .sub:hover{background:var(--bd);transform:translateY(-1px);box-shadow:0 6px 18px rgba(42,77,99,.25)}
+    .sub.gold{background:linear-gradient(135deg,var(--a),var(--ad));color:var(--tx)}
+    .sub.gold:hover{filter:brightness(1.07);box-shadow:0 6px 16px rgba(180,130,20,.3)}
+
+    .sw{text-align:center;font-size:.63rem;color:var(--mu)}
+    .sw button{background:none;border:none;color:var(--b);font-family:'Syne',sans-serif;font-size:.63rem;font-weight:800;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+
+    /* ── Overlay panel content ── */
+    .ov-deco{position:absolute;top:-18px;right:-18px;opacity:.09;width:120px;height:120px;pointer-events:none}
+    .ov-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:#fff;line-height:1.05;margin:1rem 0 .6rem}
+    .ov-title em{font-style:italic;color:var(--a)}
+    .ov-title strong{font-weight:600;display:block}
+    .ov-sub{font-size:.68rem;color:rgba(255,255,255,.6);line-height:1.6;max-width:195px;margin-bottom:1.1rem}
+    .ov-btn{background:transparent;border:1.5px solid rgba(255,255,255,.38);border-radius:50px;padding:.54rem 1.4rem;font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#fff;cursor:pointer;transition:.2s}
+    .ov-btn:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.7)}
+    .ov-pills{display:flex;flex-direction:column;gap:.32rem;margin-top:.85rem;align-items:center}
+    .ov-pill{display:flex;align-items:center;gap:.42rem;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.65)}
+    .ov-dot{width:4px;height:4px;border-radius:50%;background:var(--a);flex-shrink:0}
+
+    /* ── Bottom strip ── */
+    .feats{width:100%;max-width:680px;display:flex;margin-top:1.1rem;opacity:0}
+    .feat{flex:1;display:flex;align-items:center;gap:.5rem;padding:.6rem .85rem;background:var(--card);border-right:1px solid rgba(66,110,134,.1);box-shadow:0 4px 14px rgba(42,77,99,.07)}
+    .feat:first-child{border-radius:12px 0 0 12px}
+    .feat:last-child{border-right:none;border-radius:0 12px 12px 0}
+    .fi{width:27px;height:27px;border-radius:7px;background:var(--bl);color:var(--b);display:flex;align-items:center;justify-content:center;font-size:.76rem;flex-shrink:0}
+    .ft{font-size:.65rem;font-weight:700;color:var(--tx)}
+    .fs{font-size:.57rem;color:var(--mu);margin-top:.1rem}
+    .note{margin-top:.9rem;font-size:.62rem;color:var(--mu);text-align:center;opacity:0}
+
+    /* ── Responsive: below tablet, the sliding two-panel layout doesn't
+       have room to work (the 50/50 split would squeeze the form into an
+       unreadable sliver). Collapse to a single full-width form instead,
+       switched with plain show/hide rather than the sliding animation. ── */
+    @media (max-width: 768px){
+      body{padding:1.2rem .8rem 1.8rem}
+      .auth-card{height:auto;max-width:420px;box-shadow:0 12px 36px rgba(42,77,99,.16)}
+      .forms-area{position:relative;left:auto;top:auto;bottom:auto;width:100%}
+      .auth-form{position:relative;inset:auto;transform:none!important}
+      .auth-form:not(.mobile-active){display:none!important}
+      .auth-form.mobile-active{display:flex!important;opacity:1!important}
+      .ov-wrap{display:none}
+      .feats{flex-direction:column;max-width:420px}
+      .feat{border-right:none;border-bottom:1px solid rgba(66,110,134,.1)}
+      .feat:first-child{border-radius:12px 12px 0 0}
+      .feat:last-child{border-radius:0 0 12px 12px;border-bottom:none}
+    }
+    @media (max-width: 460px){
+      .auth-card,.feats{max-width:100%}
+      .f-title{font-size:1.3rem}
+    }
+    </style>
+
+    <div class="brand" id="brandEl">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="13" stroke="rgba(66,110,134,.3)" stroke-width="1"/>
+        <path d="M14 3C14 3 8 8 8 14C8 20 14 25 14 25C14 25 20 20 20 14C20 8 14 3 14 3Z" fill="rgba(66,110,134,.12)" stroke="#426e86" stroke-width="1.2"/>
+        <circle cx="14" cy="14" r="3" fill="#e2ba2e"/>
+      </svg>
+      <span class="brand-name">Perfect Palate</span>
+    </div>
+
+    <div class="auth-card" id="authCard">
+
+      <!-- FORMS AREA: always left 50% -->
+      <div class="forms-area">
+
+        <!-- SIGN IN FORM -->
+        <div class="auth-form mobile-active" id="fSI">
+          <div class="f-top">
+            <span class="f-top-mark"><i class="fa-solid fa-utensils"></i></span>
+            <span class="f-top-name">Perfect Palate</span>
+          </div>
+          <div>
+            <div class="f-title">Welcome back</div>
+            <div class="f-sub">Sign in to your account</div>
+          </div>
+          <div class="fld">
+            <label>Email address</label>
+            <div class="fw">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="siEmail" placeholder="you@example.com" autocomplete="username">
+            </div>
+          </div>
+          <div class="fld">
+            <label>Password</label>
+            <div class="fw">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" id="siPw" placeholder="Your password" autocomplete="current-password">
+              <button type="button" class="pw-eye" onclick="togglePw('siPw', this)" aria-label="Show password" aria-pressed="false"><i class="fa-regular fa-eye"></i></button>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:.15rem;">
+            <a href="{{ url_for('forgot_password') }}" style="font-size:.62rem;color:var(--b);font-weight:800;text-decoration:none;">Forgot password?</a>
+          </div>
+          <div class="fmsg" id="siMsg"></div>
+          <button class="sub" onclick="doSignIn()">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In
+          </button>
+          <div class="sw">No account? <button onclick="goSU()">Create one free</button></div>
+        </div>
+
+        <!-- SIGN UP FORM -->
+        <div class="auth-form" id="fSU">
+          <div class="f-top">
+            <span class="f-top-mark"><i class="fa-solid fa-utensils"></i></span>
+            <span class="f-top-name">Perfect Palate</span>
+          </div>
+          <div>
+            <div class="f-title">Join the table</div>
+            <div class="f-sub">Create your free account</div>
+          </div>
+          <div class="fld">
+            <label>Full name</label>
+            <div class="fw">
+              <i class="fa-solid fa-user"></i>
+              <input type="text" id="suName" placeholder="Your name">
+            </div>
+          </div>
+          <div class="fld">
+            <label>Email address</label>
+            <div class="fw">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="suEmail" placeholder="you@example.com" autocomplete="username">
+            </div>
+          </div>
+          <div class="fld">
+            <label>Password</label>
+            <div class="fw">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" id="suPw" placeholder="Min. 6 characters" autocomplete="new-password">
+              <button type="button" class="pw-eye" onclick="togglePw('suPw', this)" aria-label="Show password" aria-pressed="false"><i class="fa-regular fa-eye"></i></button>
+            </div>
+          </div>
+          <div class="fmsg" id="suMsg"></div>
+          <button class="sub gold" onclick="doSignUp()">
+            <i class="fa-solid fa-user-plus"></i> Create Account
+          </button>
+          <div class="sw">Have an account? <button onclick="goSI()">Sign in</button></div>
+        </div>
+
+      </div>
+
+      <!-- OVERLAY: starts on right 50%; slides to left 50% for sign-up mode -->
+      <div class="ov-wrap" id="ovWrap">
+        <div class="ov-inner" id="ovInner">
+
+          <!-- LEFT panel of inner: visible when overlay slides to left (sign-up mode) -->
+          <div class="ov-panel">
+            <svg class="ov-deco" viewBox="0 0 120 120" fill="none">
+              <g stroke="#fff" stroke-width="1.3">
+                <circle cx="60" cy="60" r="7"/>
+                <line x1="60" y1="53" x2="60" y2="10"/><ellipse cx="60" cy="31" rx="9" ry="17"/>
+                <line x1="60" y1="67" x2="60" y2="110"/><ellipse cx="60" cy="89" rx="9" ry="17"/>
+                <line x1="54" y1="57" x2="17" y2="36"/><ellipse cx="35" cy="46" rx="9" ry="17" transform="rotate(-60 35 46)"/>
+                <line x1="66" y1="63" x2="103" y2="84"/><ellipse cx="85" cy="74" rx="9" ry="17" transform="rotate(-60 85 74)"/>
+                <line x1="54" y1="63" x2="17" y2="84"/><ellipse cx="35" cy="74" rx="9" ry="17" transform="rotate(60 35 74)"/>
+                <line x1="66" y1="57" x2="103" y2="36"/><ellipse cx="85" cy="46" rx="9" ry="17" transform="rotate(60 85 46)"/>
+              </g>
+              <circle cx="60" cy="60" r="3" fill="#e2ba2e" opacity=".7"/>
+            </svg>
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+              <circle cx="18" cy="18" r="17" stroke="rgba(226,186,46,.4)" stroke-width="1"/>
+              <path d="M18 4C18 4 10 9 10 18C10 27 18 32 18 32C18 32 26 27 26 18C26 9 18 4 18 4Z" fill="rgba(226,186,46,.18)" stroke="#e2ba2e" stroke-width="1"/>
+              <circle cx="18" cy="18" r="4" fill="#e2ba2e"/>
+            </svg>
+            <div class="ov-title">Welcome<br><em>back!</em></div>
+            <div class="ov-sub">Sign in to continue your culinary journey where you left off.</div>
+            <button class="ov-btn" onclick="goSI()">Sign In</button>
+          </div>
+
+          <!-- RIGHT panel of inner: visible initially (sign-in mode) -->
+          <div class="ov-panel">
+            <svg class="ov-deco" viewBox="0 0 120 120" fill="none">
+              <g stroke="#fff" stroke-width="1.3">
+                <circle cx="60" cy="60" r="7"/>
+                <line x1="60" y1="53" x2="60" y2="10"/><ellipse cx="60" cy="31" rx="9" ry="17"/>
+                <line x1="60" y1="67" x2="60" y2="110"/><ellipse cx="60" cy="89" rx="9" ry="17"/>
+                <line x1="54" y1="57" x2="17" y2="36"/><ellipse cx="35" cy="46" rx="9" ry="17" transform="rotate(-60 35 46)"/>
+                <line x1="66" y1="63" x2="103" y2="84"/><ellipse cx="85" cy="74" rx="9" ry="17" transform="rotate(-60 85 74)"/>
+                <line x1="54" y1="63" x2="17" y2="84"/><ellipse cx="35" cy="74" rx="9" ry="17" transform="rotate(60 35 74)"/>
+                <line x1="66" y1="57" x2="103" y2="36"/><ellipse cx="85" cy="46" rx="9" ry="17" transform="rotate(60 85 46)"/>
+              </g>
+              <circle cx="60" cy="60" r="3" fill="#e2ba2e" opacity=".7"/>
+            </svg>
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+              <circle cx="18" cy="18" r="17" stroke="rgba(226,186,46,.4)" stroke-width="1"/>
+              <path d="M18 4C18 4 10 9 10 18C10 27 18 32 18 32C18 32 26 27 26 18C26 9 18 4 18 4Z" fill="rgba(226,186,46,.18)" stroke="#e2ba2e" stroke-width="1"/>
+              <circle cx="18" cy="18" r="4" fill="#e2ba2e"/>
+            </svg>
+            <div class="ov-title">Hello,<br><em>friend!</em></div>
+            <div class="ov-sub">Enter your details and start your culinary journey with us today.</div>
+            <button class="ov-btn" onclick="goSU()">Create Account</button>
+            <div class="ov-pills">
+              <div class="ov-pill"><div class="ov-dot"></div>196 curated recipes</div>
+              <div class="ov-pill"><div class="ov-dot"></div>Health-aware recommendations</div>
+              <div class="ov-pill"><div class="ov-dot"></div>Step-by-step Cook Mode</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div class="feats" id="featsEl">
+      <div class="feat">
+        <div class="fi"><i class="fa-solid fa-shield-halved"></i></div>
+        <div><div class="ft">Secure &amp; private</div><div class="fs">Your data stays yours</div></div>
+      </div>
+      <div class="feat">
+        <div class="fi"><i class="fa-solid fa-bolt"></i></div>
+        <div><div class="ft">Ready instantly</div><div class="fs">No credit card needed</div></div>
+      </div>
+      <div class="feat">
+        <div class="fi"><i class="fa-solid fa-fire"></i></div>
+        <div><div class="ft">Cook Mode included</div><div class="fs">Step-by-step with timers</div></div>
+      </div>
+    </div>
+    <div class="note" id="noteEl">By creating an account you agree to our Terms of Service and Privacy Policy</div>
+
+    <script>
+    let isSU = false;
+    const DUR = .62, EASE = 'power3.inOut';
+
+    function goSU() {
+      if (isSU) return;
+      isSU = true;
+      const si = document.getElementById('fSI');
+      const su = document.getElementById('fSU');
+
+      if (window.innerWidth <= 768) {
+        si.classList.remove('mobile-active');
+        su.classList.add('mobile-active');
+        return;
+      }
+
+      const ow = document.getElementById('ovWrap');
+      const oi = document.getElementById('ovInner');
+
+      /* Bring the sign-up form to the front and make it clickable;
+         send the sign-in form to the back and make it click-through. */
+      si.style.zIndex = 1;
+      si.style.pointerEvents = 'none';
+      su.style.zIndex = 2;
+      su.style.pointerEvents = 'auto';
+
+      /* Overlay container slides from right 50% to left 50% */
+      gsap.to(ow, { x: '-100%', duration: DUR, ease: EASE });
+      /* Inner shifts so LEFT panel becomes visible */
+      gsap.to(oi, { x: '50%', duration: DUR, ease: EASE });
+
+      /* SI form slides right and fades out */
+      gsap.to(si, { x: '100%', opacity: 0, duration: DUR * .75, ease: 'power2.in' });
+
+      /* SU form slides to right position (exposed by overlay leaving) and fades in */
+      gsap.set(su, { x: '100%', opacity: 0 });
+      gsap.to(su, { opacity: 1, duration: .45, ease: 'power2.out', delay: DUR * .55 });
+    }
+
+    function goSI() {
+      if (!isSU) return;
+      isSU = false;
+      const si = document.getElementById('fSI');
+      const su = document.getElementById('fSU');
+
+      if (window.innerWidth <= 768) {
+        su.classList.remove('mobile-active');
+        si.classList.add('mobile-active');
+        return;
+      }
+
+      const ow = document.getElementById('ovWrap');
+      const oi = document.getElementById('ovInner');
+
+      /* Bring the sign-in form back to the front and make it clickable;
+         send the sign-up form to the back and make it click-through. */
+      su.style.zIndex = 1;
+      su.style.pointerEvents = 'none';
+      si.style.zIndex = 2;
+      si.style.pointerEvents = 'auto';
+
+      /* Overlay slides back to right */
+      gsap.to(ow, { x: '0%', duration: DUR, ease: EASE });
+      gsap.to(oi, { x: '0%', duration: DUR, ease: EASE });
+
+      /* SU form fades out (stays at x:100%, covered by returning overlay) */
+      gsap.to(su, { opacity: 0, duration: .28, ease: 'power2.in' });
+
+      /* SI form slides back to left and fades in */
+      gsap.to(si, { x: '0%', opacity: 1, duration: DUR * .8, ease: 'power3.out', delay: DUR * .3 });
+    }
+
+    function togglePw(id, iconEl) {
+      const inp = document.getElementById(id);
+      const btn = iconEl.closest('.pw-eye') || iconEl;
+      const glyph = btn.querySelector('i');
+      const willShow = inp.type === 'password';
+
+      inp.type = willShow ? 'text' : 'password';
+      btn.setAttribute('aria-pressed', String(willShow));
+      btn.setAttribute('aria-label', willShow ? 'Hide password' : 'Show password');
+      if (glyph) {
+        glyph.classList.toggle('fa-eye', !willShow);
+        glyph.classList.toggle('fa-eye-slash', willShow);
+      }
+    }
+
+    function showMsg(id, txt, ok) {
+      const el = document.getElementById(id);
+      el.className = 'fmsg ' + (ok ? 'ok' : 'err');
+      el.textContent = txt;
+    }
+
+    function doSignIn() {
+      const em = document.getElementById('siEmail').value.trim();
+      const pw = document.getElementById('siPw').value;
+      if (!em || !pw) { showMsg('siMsg', 'Please fill in all fields.', false); return; }
+      const btn = document.querySelector('#fSI .sub');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in…';
+      fetch('{{ url_for("sign_in") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: em, password: pw })
+      })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In';
+          if (ok && data.status === 'ok') {
+            showMsg('siMsg', 'Welcome back! Redirecting to your dashboard…', true);
+            setTimeout(() => { window.location.href = data.redirect; }, 700);
+          } else {
+            showMsg('siMsg', data.message || 'Something went wrong. Please try again.', false);
+          }
+        })
+        .catch(() => {
+          btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In';
+          showMsg('siMsg', 'Network error. Please try again.', false);
+        });
+    }
+
+    function doSignUp() {
+      const nm = document.getElementById('suName').value.trim();
+      const em = document.getElementById('suEmail').value.trim();
+      const pw = document.getElementById('suPw').value;
+      if (!nm || !em || !pw) { showMsg('suMsg', 'Please fill in all fields.', false); return; }
+      if (pw.length < 6) { showMsg('suMsg', 'Password must be at least 6 characters.', false); return; }
+      const btn = document.querySelector('#fSU .sub');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating account…';
+      fetch('{{ url_for("sign_up") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: nm, email: em, password: pw })
+      })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account';
+          if (ok && data.status === 'ok') {
+            showMsg('suMsg', `Account created, ${nm}! Redirecting you to sign in…`, true);
+            setTimeout(() => { window.location.href = data.redirect; }, 900);
+          } else {
+            showMsg('suMsg', data.message || 'Something went wrong. Please try again.', false);
+          }
+        })
+        .catch(() => {
+          btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account';
+          showMsg('suMsg', 'Network error. Please try again.', false);
+        });
+    }
+
+    /* Entrance animations */
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl.from('#brandEl', { opacity: 0, y: -10, duration: .6, delay: .1 })
+      .from('#authCard', { opacity: 0, y: 20, scale: .97, duration: .7 }, '-=.4')
+      .from('#fSI', { opacity: 0, y: 10, duration: .4 }, '-=.3')
+      .from('#ovWrap', { opacity: 0, duration: .4 }, '-=.5')
+      .from('#featsEl', { opacity: 0, y: 8, duration: .45 }, '-=.1')
+      .from('#noteEl', { opacity: 0, duration: .35 }, '-=.15');
+
+    /* Slow star anise rotation */
+    gsap.to('.ov-deco', { rotation: 360, duration: 60, repeat: -1, ease: 'none', transformOrigin: '60px 60px' });
+    </script>
+
+</body>
+</html>

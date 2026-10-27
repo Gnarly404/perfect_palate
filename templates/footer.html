@@ -1,0 +1,698 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Perfect Palate – Taste the Origin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Cinzel+Decorative:wght@400;700&family=Lato:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #f5f0e8;
+      --gold: #b8952a;
+      --gold-light: #d4af5a;
+      --gold-muted: #c9a84c;
+      --teal: #2d4a52;
+      --text-dark: #3a3020;
+      --text-mid: #5a4e38;
+      --text-light: #7a6e58;
+      --divider: #d4c8a8;
+    }
+
+    body {
+      background-color: var(--cream);
+      font-family: 'Lato', sans-serif;
+      color: var(--text-dark);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── TOP BAR ── */
+    .top-bar {
+      height: 6px;
+      background: linear-gradient(90deg, #2d4a52 0%, #b8952a 40%, #d4af5a 60%, #2d4a52 100%);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      text-align: center;
+      padding: 60px 24px 48px;
+      overflow: hidden;
+    }
+
+    /* Watermark background text */
+    .hero::before {
+      content: "Perfect Palate";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(80px, 14vw, 200px);
+      font-weight: 600;
+      color: rgba(184, 149, 42, 0.07);
+      white-space: nowrap;
+      pointer-events: none;
+      letter-spacing: 0.04em;
+    }
+
+    /* Decorative botanical corners */
+    .hero::after {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 220px; height: 220px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M10 190 Q30 140 80 120 Q50 80 60 30' stroke='%23b8952a' stroke-width='1.2' fill='none' opacity='0.25'/%3E%3Cpath d='M10 190 Q60 160 100 130 Q80 100 90 60' stroke='%23b8952a' stroke-width='1' fill='none' opacity='0.18'/%3E%3Cellipse cx='80' cy='120' rx='20' ry='12' fill='none' stroke='%23b8952a' stroke-width='0.8' opacity='0.2' transform='rotate(-30 80 120)'/%3E%3Cellipse cx='60' cy='80' rx='16' ry='10' fill='none' stroke='%23b8952a' stroke-width='0.8' opacity='0.18' transform='rotate(-50 60 80)'/%3E%3C/svg%3E") no-repeat center/contain;
+      pointer-events: none;
+    }
+
+    .hero-stars {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .hero-stars span {
+      color: var(--gold);
+      font-size: 18px;
+    }
+
+    /* ── HERO LOGO IMAGE ── */
+    .hero-logo {
+      display: block;
+      width: clamp(320px, 78vw, 1100px);
+      max-width: 95vw;
+      height: auto;
+      margin: 0 auto 8px;
+      position: relative;
+      z-index: 1;
+      /* subtle drop shadow to lift it off the cream background */
+      filter: drop-shadow(0 4px 18px rgba(120, 80, 10, 0.18));
+    }
+
+    .hero-tagline {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(22px, 3.5vw, 36px);
+      color: var(--teal);
+      margin-top: 20px;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(13px, 1.6vw, 17px);
+      color: var(--text-light);
+      margin-top: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .hero-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 24px auto 0;
+      width: 320px;
+      max-width: 80vw;
+    }
+    .hero-divider::before,
+    .hero-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--gold-muted);
+    }
+    .hero-divider-dot {
+      width: 10px; height: 10px;
+      background: var(--gold);
+      border-radius: 50%;
+      margin: 0 8px;
+    }
+
+    /* ── SEPARATOR ── */
+    .section-sep {
+      width: 100%;
+      height: 1px;
+      background: var(--divider);
+      margin: 0;
+    }
+
+    /* ── NAV GRID ── */
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--divider);
+      border-bottom: 1px solid var(--divider);
+    }
+
+    .nav-col {
+      padding: 40px 24px 44px;
+      text-align: center;
+      border-right: 1px solid var(--divider);
+      transition: background 0.3s;
+    }
+    .nav-col:last-child { border-right: none; }
+    .nav-col:hover { background: rgba(184,149,42,0.04); }
+
+    .nav-icon {
+      width: 48px; height: 48px;
+      margin: 0 auto 18px;
+      border: 1.5px solid var(--gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 20px;
+    }
+
+    .nav-col-title {
+      font-family: 'Lato', sans-serif;
+      font-weight: 400;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .nav-col-underline {
+      width: 28px;
+      height: 1.5px;
+      background: var(--gold-muted);
+      margin: 0 auto 18px;
+    }
+
+    .nav-col ul {
+      list-style: none;
+    }
+    .nav-col ul li {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      color: var(--text-mid);
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: color 0.2s;
+      letter-spacing: 0.01em;
+    }
+    .nav-col ul li:hover { color: var(--gold); }
+
+    /* Connect column social */
+    .social-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .social-btn {
+      width: 40px; height: 40px;
+      border: 1.5px solid #c0b090;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-mid);
+      font-size: 15px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      text-decoration: none;
+    }
+    .social-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(184,149,42,0.06);
+    }
+
+    .connect-links {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      color: var(--text-mid);
+      letter-spacing: 0.02em;
+    }
+    .connect-links span { margin: 0 6px; color: var(--divider); }
+    .connect-links a {
+      color: var(--text-mid);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .connect-links a:hover { color: var(--gold); }
+
+    /* ── FEATURE BAR ── */
+    .feature-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--divider);
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Lato', sans-serif;
+      font-size: 10.5px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-mid);
+      padding: 0 28px;
+      white-space: nowrap;
+    }
+    .feature-item svg { color: var(--gold); }
+
+    .feature-dot {
+      width: 5px; height: 5px;
+      background: var(--gold-muted);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 24px 48px;
+      position: relative;
+    }
+
+    /* Botanical bottom-right */
+    footer::after {
+      content: "";
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 180px; height: 180px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M190 190 Q160 140 120 120 Q150 80 140 30' stroke='%23b8952a' stroke-width='1.2' fill='none' opacity='0.22'/%3E%3Cpath d='M190 190 Q140 160 100 130 Q120 100 110 60' stroke='%23b8952a' stroke-width='1' fill='none' opacity='0.16'/%3E%3Cellipse cx='120' cy='120' rx='20' ry='12' fill='none' stroke='%23b8952a' stroke-width='0.8' opacity='0.2' transform='rotate(30 120 120)'/%3E%3C/svg%3E") no-repeat center/contain;
+      pointer-events: none;
+    }
+
+    .footer-copy {
+      font-family: 'Lato', sans-serif;
+      font-size: 13px;
+      color: var(--text-light);
+      letter-spacing: 0.02em;
+    }
+    .footer-copy strong {
+      color: var(--text-dark);
+      font-weight: 700;
+    }
+
+    .footer-center {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .kenya-map {
+      width: 36px; height: 44px;
+      fill: var(--gold-muted);
+      opacity: 0.85;
+    }
+    .footer-divider-v {
+      width: 1px; height: 40px;
+      background: var(--divider);
+    }
+    .footer-made {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      color: var(--text-mid);
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .footer-made .heart { color: #c0783a; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid var(--divider);
+    }
+
+    /* Full-bleed watermark logo */
+    .footer-watermark {
+      display: block;
+      width: min(2000px, 100vw);
+      max-width: none;
+      height: auto;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.055;
+      pointer-events: none;
+      user-select: none;
+      filter: sepia(1) saturate(0.4) brightness(0.6);
+      z-index: 0;
+    }
+
+    .footer-botanical {
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 200px; height: 200px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M190 190 Q160 140 120 120 Q150 80 140 30' stroke='%23b8952a' stroke-width='1.2' fill='none' opacity='0.22'/%3E%3Cpath d='M190 190 Q140 160 100 130 Q120 100 110 60' stroke='%23b8952a' stroke-width='1' fill='none' opacity='0.16'/%3E%3Cellipse cx='120' cy='120' rx='20' ry='12' fill='none' stroke='%23b8952a' stroke-width='0.8' opacity='0.2' transform='rotate(30 120 120)'/%3E%3C/svg%3E") no-repeat center/contain;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .footer-botanical-left {
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 200px; height: 200px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M10 190 Q40 140 80 120 Q50 80 60 30' stroke='%23b8952a' stroke-width='1.2' fill='none' opacity='0.22'/%3E%3Cpath d='M10 190 Q60 160 100 130 Q80 100 90 60' stroke='%23b8952a' stroke-width='1' fill='none' opacity='0.16'/%3E%3Cellipse cx='80' cy='120' rx='20' ry='12' fill='none' stroke='%23b8952a' stroke-width='0.8' opacity='0.2' transform='rotate(-30 80 120)'/%3E%3C/svg%3E") no-repeat center/contain;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .footer-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 36px 56px;
+    }
+
+    .footer-copy {
+      font-family: 'Lato', sans-serif;
+      font-size: 13px;
+      color: var(--text-light);
+      letter-spacing: 0.03em;
+    }
+    .footer-copy strong { color: var(--text-dark); font-weight: 700; }
+
+    .footer-center {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .kenya-map { width: 34px; height: 42px; fill: var(--gold-muted); opacity: 0.85; }
+    .footer-divider-v { width: 1px; height: 40px; background: var(--divider); }
+    .footer-made {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      color: var(--text-mid);
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .footer-made .heart { color: #c0783a; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid var(--divider);
+      background: var(--cream);
+    }
+
+    /* The wide watermark image — luxury cookbook publisher effect */
+    .footer-watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      /* Stretch to 1800–2200px on desktop — wider than viewport intentionally */
+      width: clamp(1200px, 160vw, 2200px);
+      min-width: 1200px;
+      height: auto;
+
+      /* Very faded so footer text stays legible */
+      opacity: 0.06;
+
+      /* Desaturate slightly so it reads as a watermark, not a logo */
+      filter: grayscale(20%) contrast(1.1);
+
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
+
+      /* Smooth fade-in on load */
+      animation: wmFade 1.4s ease-out both;
+    }
+
+    @keyframes wmFade {
+      from { opacity: 0; }
+      to   { opacity: 0.06; }
+    }
+
+    /* Botanical right corner */
+    .footer-botanical {
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 180px; height: 180px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M190 190 Q160 140 120 120 Q150 80 140 30' stroke='%23b8952a' stroke-width='1.2' fill='none' opacity='0.22'/%3E%3Cpath d='M190 190 Q140 160 100 130 Q120 100 110 60' stroke='%23b8952a' stroke-width='1' fill='none' opacity='0.16'/%3E%3Cellipse cx='120' cy='120' rx='20' ry='12' fill='none' stroke='%23b8952a' stroke-width='0.8' opacity='0.2' transform='rotate(30 120 120)'/%3E%3C/svg%3E") no-repeat center/contain;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Botanical left corner */
+    .footer-botanical-left {
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 160px; height: 160px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M10 190 Q30 140 80 120 Q50 80 60 30' stroke='%23b8952a' stroke-width='1.2' fill='none' opacity='0.2'/%3E%3Cellipse cx='80' cy='120' rx='18' ry='11' fill='none' stroke='%23b8952a' stroke-width='0.8' opacity='0.18' transform='rotate(-30 80 120)'/%3E%3C/svg%3E") no-repeat center/contain;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .footer-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 36px 56px;
+    }
+
+    .footer-copy {
+      font-family: 'Lato', sans-serif;
+      font-size: 13px;
+      color: var(--text-light);
+      letter-spacing: 0.03em;
+    }
+    .footer-copy strong { color: var(--text-dark); font-weight: 700; }
+
+    .footer-center {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .kenya-map { width: 34px; height: 42px; fill: var(--gold-muted); opacity: 0.85; }
+    .footer-divider-v { width: 1px; height: 40px; background: var(--divider); }
+    .footer-made {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      color: var(--text-mid);
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .footer-made .heart { color: #c0783a; }
+
+    /* Responsive */
+    @media (max-width: 800px) {
+      .nav-grid { grid-template-columns: repeat(2, 1fr); }
+      .nav-col:nth-child(2) { border-right: none; }
+      .nav-col:nth-child(3) { border-right: 1px solid var(--divider); border-top: 1px solid var(--divider); }
+      .nav-col:nth-child(4) { border-top: 1px solid var(--divider); }
+      .feature-bar { gap: 8px; }
+      .footer-inner { flex-direction: column; align-items: center; text-align: center; padding: 28px 24px; }
+      .footer-watermark { width: 100vw; min-width: unset; }
+    }
+    @media (max-width: 500px) {
+      .nav-grid { grid-template-columns: 1fr; }
+      .nav-col { border-right: none !important; border-top: 1px solid var(--divider); }
+      .nav-col:first-child { border-top: none; }
+      .feature-item { padding: 0 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-stars">
+      <span>✦</span><span>✦</span><span>✦</span>
+    </div>
+    <img src="../static/images/Name.png" alt="Perfect Palate" class="hero-logo">
+    <p class="hero-tagline">Taste the Origin.</p>
+    <p class="hero-sub">Discover recipes shaped by culture, health, ingredients and tradition.</p>
+    <div class="hero-divider">
+      <div class="hero-divider-dot"></div>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- NAV GRID -->
+  <nav class="nav-grid">
+
+    <!-- EXPLORE -->
+    <div class="nav-col">
+      <div class="nav-icon">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+          <path d="M8 12h.01M16 12h.01M12 16h.01" stroke-linecap="round"/>
+          <!-- compass rose -->
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="nav-col-title">Explore</div>
+      <div class="nav-col-underline"></div>
+      <ul>
+        <li>Recipes</li>
+        <li>Meal Planner</li>
+        <li>Shopping Lists</li>
+        <li>Cook Mode</li>
+        <li>Favourites</li>
+      </ul>
+    </div>
+
+    <!-- DISCOVER -->
+    <div class="nav-col">
+      <div class="nav-icon">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path d="M5 10c0-3.866 3.134-7 7-7s7 3.134 7 7c0 2.5-1.5 4.5-3 6H8c-1.5-1.5-3-3.5-3-6z" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 20h8M10 17v3M14 17v3" stroke-linecap="round"/>
+          <path d="M9 10c.5-1.5 2-2.5 3-2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="nav-col-title">Discover</div>
+      <div class="nav-col-underline"></div>
+      <ul>
+        <li>Coastal Cuisine</li>
+        <li>Kenyan Staples</li>
+        <li>Dietary Recipes</li>
+        <li>Seasonal Collections</li>
+        <li>Food Stories</li>
+      </ul>
+    </div>
+
+    <!-- GROW -->
+    <div class="nav-col">
+      <div class="nav-icon">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path d="M12 22V12M12 12C12 7 8 4 4 4c0 4 2.5 7 8 8zM12 12c0-5 4-8 8-8-1 4-3.5 7-8 8z" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="nav-col-title">Grow</div>
+      <div class="nav-col-underline"></div>
+      <ul>
+        <li>Healthy Living</li>
+        <li>Nutrition Guide</li>
+        <li>Ingredient Library</li>
+        <li>Kitchen Tips</li>
+        <li>Chef's Journal</li>
+      </ul>
+    </div>
+
+    <!-- CONNECT -->
+    <div class="nav-col">
+      <div class="nav-icon">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75M21 21v-2a4 4 0 0 0-3-3.87" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="nav-col-title">Connect</div>
+      <div class="nav-col-underline"></div>
+      <div class="social-row">
+        <a class="social-btn" href="#" title="Instagram">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        </a>
+        <a class="social-btn" href="#" title="TikTok">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a class="social-btn" href="#" title="YouTube">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="3"/><polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/></svg>
+        </a>
+        <a class="social-btn" href="#" title="Email">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7" stroke-linecap="round"/></svg>
+        </a>
+      </div>
+      <div class="connect-links">
+        <a href="#">Contact Us</a><span>|</span><a href="#">Support</a><span>|</span><a href="#">FAQs</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <!-- FEATURE BAR -->
+  <div class="feature-bar">
+    <div class="feature-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M5 10c0-3.866 3.134-7 7-7s7 3.134 7 7c0 2.5-1.5 4.5-3 6H8c-1.5-1.5-3-3.5-3-6z" stroke-linecap="round"/><path d="M8 20h8" stroke-linecap="round"/></svg>
+      Kenyan Cuisine
+    </div>
+    <div class="feature-dot"></div>
+    <div class="feature-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3" stroke-linecap="round"/></svg>
+      AI Companion
+    </div>
+    <div class="feature-dot"></div>
+    <div class="feature-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3" stroke-linecap="round"/></svg>
+      Voice Cooking
+    </div>
+    <div class="feature-dot"></div>
+    <div class="feature-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 3v12M8 11l4 4 4-4M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Recipe Import
+    </div>
+    <div class="feature-dot"></div>
+    <div class="feature-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
+      Personalised Nutrition
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <!-- Watermark: the actual Name.png at near-full browser width -->
+    <img
+      class="footer-watermark"
+      src="C:/Users/workw/Downloads/Name.png"
+      alt=""
+      aria-hidden="true"
+    />
+
+    <!-- Botanical corner decorations -->
+    <div class="footer-botanical"></div>
+    <div class="footer-botanical-left"></div>
+
+    <!-- Footer content sits above the watermark -->
+    <div class="footer-inner">
+      <p class="footer-copy">© 2026 <strong>Perfect Palate.</strong> All rights reserved.</p>
+
+      <div class="footer-center">
+        <svg class="kenya-map" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">
+          <path d="M60 5 L80 12 L100 10 L115 25 L110 45 L95 55 L105 75 L100 95 L85 115 L70 140 L60 155 L50 140 L35 115 L20 95 L15 75 L25 55 L10 45 L5 25 L20 10 L40 12 Z" fill="var(--gold-muted)" opacity="0.8"/>
+        </svg>
+        <div class="footer-divider-v"></div>
+        <div class="footer-made">
+          Made in Kenya with <span class="heart">♥</span> &nbsp;•&nbsp; Nairobi, Kenya
+        </div>
+      </div>
+
+      <!-- right spacer for balance -->
+      <div style="width:200px;"></div>
+    </div>
+  </footer>
+
+</body>
+</html>
