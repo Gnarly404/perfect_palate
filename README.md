@@ -53,20 +53,23 @@ The application will be available at `http://localhost:5000`
 ## Features
 
 - User authentication (email/password)
+- Bcrypt password hashing, with automatic upgrades for legacy password hashes
+- Database-validated login sessions
 - Health condition, allergy, and dietary preference tracking
 - Recipe recommendations with personalized filtering
-- 7-day meal planner
+- Persistent, week-by-week 7-day meal planner
 - Recipe favorites management
-- Automated shopping list generation
+- Categorized shopping lists generated from planned recipes
+- Recipe ratings and reviews
 - Cook Mode for hands-free recipe viewing
 
 ## Bug Fix Log
 
-- [ ] Implement password hashing with bcrypt
-- [ ] Add session validation middleware
-- [ ] Implement shopping list categorization
-- [ ] Add recipe rating/review system
-- [ ] Implement meal plan persistence
+- [x] Implement password hashing with bcrypt
+- [x] Add session validation middleware
+- [x] Implement shopping list categorization
+- [x] Add recipe rating/review system
+- [x] Implement meal plan persistence
 
 ## Future Enhancements
 

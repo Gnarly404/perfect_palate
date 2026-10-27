@@ -23,13 +23,14 @@ import html
 import secrets
 import smtplib
 import ssl
+import bcrypt
 from datetime import datetime, timedelta
 from email.message import EmailMessage
 from email.utils import formataddr
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from flask_session import Session
 from dotenv import load_dotenv
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from urllib.parse import urljoin, urlsplit
 from database import init_db, get_db_connection, create_password_reset_token, get_valid_password_reset_token, consume_password_reset_token
 from recommendations import recommendations_bp
@@ -45,6 +46,58 @@ Session(app)
 
 # Initialize database
 init_db()
+
+
+def hash_password(password):
+    """Hash a password with bcrypt."""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+
+def check_user_password(password_hash, password):
+    """Verify bcrypt hashes and transparently upgrade legacy Werkzeug hashes."""
+    encoded_password = password.encode('utf-8')
+    if password_hash.startswith('$2'):
+        if len(encoded_password) > 72:
+            return False, False
+        try:
+            return bcrypt.checkpw(encoded_password, password_hash.encode('ascii')), False
+        except (ValueError, TypeError):
+            return False, False
+
+    if check_password_hash(password_hash, password):
+        return True, len(encoded_password) <= 72
+    return False, False
+
+
+def password_error(password):
+    if len(password) < 6:
+        return 'Password must be at least 6 characters.'
+    if len(password.encode('utf-8')) > 72:
+        return 'Password must be no more than 72 UTF-8 bytes.'
+    return None
+
+
+@app.before_request
+def validate_session_user():
+    """Clear sessions whose account no longer exists."""
+    user_id = session.get('user_id')
+    if user_id is None:
+        return
+    if isinstance(user_id, bool) or not isinstance(user_id, int):
+        session.clear()
+        return
+    try:
+        conn = get_db_connection()
+        try:
+            user = conn.execute('SELECT id FROM users WHERE id = ?', (user_id,)).fetchone()
+        finally:
+            conn.close()
+    except Exception:
+        app.logger.exception('Failed to validate the current session.')
+        raise
+    if user is None:
+        session.clear()
+
 
 # Register blueprints
 app.register_blueprint(recommendations_bp)
@@ -186,10 +239,11 @@ def reset_password_page(token):
         if not token_row:
             return jsonify({'status': 'error', 'message': 'This password reset link is invalid or has expired.'}), 400
 
-        if len(password) < 6:
-            return jsonify({'status': 'error', 'message': 'Password must be at least 6 characters.'}), 400
+        error = password_error(password)
+        if error:
+            return jsonify({'status': 'error', 'message': error}), 400
 
-        password_hash = generate_password_hash(password)
+        password_hash = hash_password(password)
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute('UPDATE users SET password_hash = ? WHERE id = ?', (password_hash, token_row['user_id']))
@@ -227,9 +281,23 @@ def sign_in():
         user = cursor.fetchone()
         conn.close()
 
-        if not user or not check_password_hash(user['password_hash'], password):
+        if not user:
             return jsonify({'status': 'error', 'message': 'Invalid email or password.'}), 401
+        valid_password, needs_rehash = check_user_password(user['password_hash'], password)
+        if not valid_password:
+            return jsonify({'status': 'error', 'message': 'Invalid email or password.'}), 401
+        if needs_rehash:
+            conn = get_db_connection()
+            try:
+                conn.execute(
+                    'UPDATE users SET password_hash = ? WHERE id = ?',
+                    (hash_password(password), user['id']),
+                )
+                conn.commit()
+            finally:
+                conn.close()
 
+        session.clear()
         session['user_id'] = user['id']
         session['email'] = email
         return jsonify({'status': 'ok', 'redirect': url_for('dashboard')})
@@ -246,8 +314,9 @@ def sign_up():
 
     if not name or not email or not password:
         return jsonify({'status': 'error', 'message': 'All fields are required.'}), 400
-    if len(password) < 6:
-        return jsonify({'status': 'error', 'message': 'Password must be at least 6 characters.'}), 400
+    error = password_error(password)
+    if error:
+        return jsonify({'status': 'error', 'message': error}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -256,7 +325,7 @@ def sign_up():
         conn.close()
         return jsonify({'status': 'error', 'message': 'An account with that email already exists.'}), 409
 
-    password_hash = generate_password_hash(password)
+    password_hash = hash_password(password)
     cursor.execute('INSERT INTO users (email, password_hash) VALUES (?, ?)', (email, password_hash))
     conn.commit()
     conn.close()

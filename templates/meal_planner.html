@@ -185,7 +185,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
     </div>
     <div class="week-nav" id="weekNav">
       <button class="wn-btn" onclick="navWeek(-1)"><i class="fa-solid fa-chevron-left"></i> Prev</button>
-      <span class="wn-label">June 1–7, 2026</span>
+      <span class="wn-label" id="weekLabel"></span>
       <button class="wn-btn" onclick="navWeek(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
     </div>
   </div>
@@ -242,7 +242,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
       <div class="fc-title">Turn your meal plan into a shopping list</div>
       <div class="fc-sub">All ingredients auto-extracted from your planned recipes</div>
     </div>
-    <button class="fc-btn" onclick="window.location.href='{{ url_for('meal_planner.shopping_list') }}'"><i class="fa-solid fa-cart-shopping"></i> Generate List</button>
+    <button class="fc-btn" id="shoppingLink" onclick="window.location.href=this.dataset.url"><i class="fa-solid fa-cart-shopping"></i> Generate List</button>
   </div>
 </div>
 
@@ -262,36 +262,41 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 </div>
 
 <script>
-const RX=[
-  {id:1,t:"Pilau ya Nyama",c:"Main Dish",em:"🍚",tm:45,g:"linear-gradient(145deg,#2a4d63,#1a3040)"},
-  {id:2,t:"Kuku Paka",c:"Main Dish",em:"🍗",tm:55,g:"linear-gradient(145deg,#1e3a2a,#2d6050)"},
-  {id:3,t:"Vitumbua",c:"Dessert",em:"🍮",tm:25,g:"linear-gradient(145deg,#3a2010,#6a3a18)"},
-  {id:4,t:"Kachumbari",c:"Salad",em:"🥗",tm:10,g:"linear-gradient(145deg,#3a1515,#682020)"},
-  {id:5,t:"Mbaazi ya Nazi",c:"Vegetarian",em:"🫘",tm:35,g:"linear-gradient(145deg,#1e3028,#35564a)"},
-  {id:6,t:"Masala Chai",c:"Beverage",em:"☕",tm:10,g:"linear-gradient(145deg,#3a1e0a,#6a3010)"},
-  {id:7,t:"Mkate wa Ufuta",c:"Breakfast",em:"🫓",tm:90,g:"linear-gradient(145deg,#3a2a0f,#604818)"},
-  {id:8,t:"Ugali Nyama",c:"Main Dish",em:"🍳",tm:40,g:"linear-gradient(145deg,#1e2e18,#304826)"},
-  {id:9,t:"Mchuzi wa Samaki",c:"Seafood",em:"🐟",tm:30,g:"linear-gradient(145deg,#1a3545,#2a5560)"},
-];
-
-const DAYS=[
-  {s:'Mon',d:1},{s:'Tue',d:2},{s:'Wed',d:3},{s:'Thu',d:4},
-  {s:'Fri',d:5},{s:'Sat',d:6},{s:'Sun',d:7}
-];
+const RX={{ recipes|tojson }};
+const PLAN_ITEMS={{ plan_items|tojson }};
 const MEALS=['breakfast','lunch','dinner','snack'];
 const MEAL_CLS={breakfast:'mc-b',lunch:'mc-l',dinner:'mc-d',snack:'mc-s'};
-const TODAY_IDX=2;
-
-let plan={
-  0:{breakfast:RX[6],lunch:null,dinner:RX[0],snack:null},
-  1:{breakfast:null,lunch:RX[5],dinner:RX[1],snack:null},
-  2:{breakfast:RX[6],lunch:RX[3],dinner:null,snack:RX[4]},
-  3:{breakfast:null,lunch:null,dinner:RX[4],snack:null},
-  4:{breakfast:null,lunch:RX[3],dinner:RX[7],snack:null},
-  5:{breakfast:null,lunch:null,dinner:null,snack:null},
-  6:{breakfast:null,lunch:null,dinner:null,snack:null},
-};
+let planId={{ plan_id }};
+let weekStart=new Date('{{ week_start }}T00:00:00');
+let DAYS=[];
+let plan={};
 let addTarget=null;
+
+function makeWeek(start){
+  DAYS=Array.from({length:7},(_,i)=>{
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    return{s:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i],d:d.getDate(),date:d};
+  });
+  const end=DAYS[6].date;
+  document.getElementById('weekLabel').textContent=
+    `${DAYS[0].date.toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${end.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
+  const dateParam=`${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}`;
+  document.getElementById('shoppingLink').dataset.url=
+    `{{ url_for('meal_planner.shopping_list') }}?week_start_date=${dateParam}`;
+}
+
+function emptyPlan(){
+  return Object.fromEntries(DAYS.map((_,i)=>[i,Object.fromEntries(MEALS.map(m=>[m,null]))]));
+}
+
+function setPlan(items){
+  plan=emptyPlan();
+  items.forEach(item=>{
+    const dayIndex=DAYS.findIndex(day=>day.s===item.day_of_week);
+    const recipe=RX.find(r=>String(r.id)===String(item.recipe_id));
+    if(dayIndex>=0&&recipe&&MEALS.includes(item.meal_type))plan[dayIndex][item.meal_type]=recipe;
+  });
+}
 
 function calcStats(){
   let meals=0,time=0,days=new Set(),empty=0;
@@ -319,7 +324,7 @@ function renderGrid(){
   body.innerHTML='';
   DAYS.forEach((day,di)=>{
     const tr=document.createElement('tr');
-    const isToday=di===TODAY_IDX;
+    const isToday=day.date.toDateString()===new Date().toDateString();
     const td0=document.createElement('td');
     td0.className='day-cell'+(isToday?' today':'');
     td0.innerHTML=`<div class="day-num">${day.d}</div><div class="day-name">${day.s}</div>${isToday?'<div class="today-pill">Today</div>':''}`;
@@ -349,16 +354,21 @@ function renderGrid(){
 }
 
 function removeMeal(di,meal){
-  plan[di][meal]=null;
-  renderGrid();updateStats();
-  toast('Meal removed');
+  fetch('{{ url_for("meal_planner.remove_meal_from_plan") }}',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({meal_plan_id:planId,day_of_week:DAYS[di].s,meal_type:meal})
+  }).then(async response=>{
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||'Could not remove meal.');
+    plan[di][meal]=null;renderGrid();updateStats();toast('Meal removed');
+  }).catch(error=>toast(error.message));
 }
 
 function openAdd(di,meal){
   addTarget={di,meal};
   const dayName=DAYS[di].s;
   const mealName=meal.charAt(0).toUpperCase()+meal.slice(1);
-  document.getElementById('addContext').textContent=`${mealName} — ${dayName}, June ${DAYS[di].d}`;
+  document.getElementById('addContext').textContent=`${mealName} — ${dayName}, ${DAYS[di].date.toLocaleDateString(undefined,{month:'long',day:'numeric'})}`;
 
   const grid=document.getElementById('addGrid');
   grid.innerHTML='';
@@ -383,9 +393,16 @@ function openAdd(di,meal){
 
 function selectRecipe(r){
   if(!addTarget)return;
-  plan[addTarget.di][addTarget.meal]=r;
-  cancelAdd();
-  setTimeout(()=>{renderGrid();updateStats();toast(`${r.em} ${r.t} added!`);},150);
+  const target={...addTarget};
+  fetch('{{ url_for("meal_planner.add_meal_to_plan") }}',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({meal_plan_id:planId,day_of_week:DAYS[target.di].s,meal_type:target.meal,recipe_id:r.id})
+  }).then(async response=>{
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||'Could not save this meal.');
+    plan[target.di][target.meal]=r;cancelAdd();
+    setTimeout(()=>{renderGrid();updateStats();toast(`${r.em} ${r.t} added!`);},150);
+  }).catch(error=>toast(error.message));
 }
 
 function cancelAdd(){
@@ -398,7 +415,19 @@ function cancelAdd(){
 }
 
 function navWeek(dir){
-  toast(dir<0?'Showing previous week (demo data only)':'Showing next week (demo data only)');
+  const next=new Date(weekStart);next.setDate(next.getDate()+dir*7);
+  const week_start_date=`${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}-${String(next.getDate()).padStart(2,'0')}`;
+  fetch('{{ url_for("meal_planner.create_meal_plan") }}',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({week_start_date})
+  }).then(async response=>{
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||'Could not load this week.');
+    weekStart=next;planId=data.id;makeWeek(weekStart);setPlan(data.items);
+    renderGrid();updateStats();
+    const url=new URL(window.location.href);url.searchParams.set('week_start_date',week_start_date);
+    history.replaceState(null,'',url);
+  }).catch(error=>toast(error.message));
 }
 
 function toast(msg){
@@ -417,6 +446,8 @@ tl.to('#pgTitles',{opacity:1,y:0,duration:.75,delay:.1,from:{y:20,opacity:0}})
   .to('#footerCard',{opacity:1,y:0,duration:.45,from:{y:12,opacity:0}},'-=.15');
 
 gsap.to('.pg-deco',{rotation:360,duration:60,repeat:-1,ease:'none',transformOrigin:'55px 55px'});
+makeWeek(weekStart);
+setPlan(PLAN_ITEMS);
 renderGrid();
 setTimeout(updateStats,600);
 </script>

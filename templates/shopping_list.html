@@ -52,6 +52,7 @@
     .add-btn:hover{background:var(--bd)}
 
     .body{padding:0 1.8rem 1rem;display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+    .empty-list{grid-column:1/-1;padding:2rem;text-align:center;color:var(--mu);background:var(--card);border-radius:14px;box-shadow:var(--sh)}
 
     .cat-section{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:var(--sh);opacity:0;transform:translateY(16px)}
     .cat-head{padding:.8rem 1rem;display:flex;align-items:center;gap:.7rem;border-bottom:1px solid rgba(66,110,134,.07)}
@@ -186,30 +187,8 @@
     pantry: {name:'Pantry & Spices',icon:'fa-jar',cls:'cat-pantry'},
     dairy:  {name:'Dairy',icon:'fa-bottle-water',cls:'cat-dairy'},
     };
-    let nextId=100;
-    let items=[
-    {id:1,name:'Tomatoes',qty:'6 large',cat:'produce',src:'Kachumbari',done:true},
-    {id:2,name:'Red Onion',qty:'2',cat:'produce',src:'Kachumbari',done:false},
-    {id:3,name:'Onions',qty:'3 large',cat:'produce',src:'Pilau ya Nyama',done:false},
-    {id:4,name:'Fresh Coriander',qty:'1 bunch',cat:'produce',src:'Kachumbari',done:false},
-    {id:5,name:'Green Chili',qty:'3',cat:'produce',src:'Kachumbari',done:false},
-    {id:6,name:'Lime',qty:'2',cat:'produce',src:'Kachumbari',done:true},
-    {id:7,name:'Garlic',qty:'8 cloves',cat:'produce',src:'Pilau ya Nyama',done:true},
-    {id:8,name:'Fresh Ginger',qty:'1 piece',cat:'produce',src:'Masala Chai',done:false},
-    {id:9,name:'Beef',qty:'500g',cat:'protein',src:'Pilau ya Nyama',done:false},
-    {id:10,name:'Whole Chicken',qty:'1 medium',cat:'protein',src:'Kuku Paka',done:false},
-    {id:11,name:'Basmati Rice',qty:'2 cups',cat:'pantry',src:'Pilau ya Nyama',done:false},
-    {id:12,name:'Pilau Masala',qty:'2 tbsp',cat:'pantry',src:'Pilau ya Nyama',done:false},
-    {id:13,name:'Rice Flour',qty:'2 cups',cat:'pantry',src:'Mkate wa Ufuta',done:false},
-    {id:14,name:'Coconut Milk',qty:'3 × 400ml',cat:'pantry',src:'Multiple',done:true},
-    {id:15,name:'Sesame Seeds',qty:'2 tbsp',cat:'pantry',src:'Mkate wa Ufuta',done:false},
-    {id:16,name:'Sugar',qty:'½ cup',cat:'pantry',src:'Multiple',done:true},
-    {id:17,name:'Yeast',qty:'2 tsp',cat:'pantry',src:'Mkate wa Ufuta',done:false},
-    {id:18,name:'Black Tea',qty:'3 tsp',cat:'pantry',src:'Masala Chai',done:true},
-    {id:19,name:'Cardamom Pods',qty:'6 pods',cat:'pantry',src:'Multiple',done:false},
-    {id:20,name:'Cinnamon Sticks',qty:'2',cat:'pantry',src:'Masala Chai',done:false},
-    {id:21,name:'Whole Milk',qty:'700ml',cat:'dairy',src:'Masala Chai',done:false},
-    ];
+    let nextId={{ items|length + 1 }};
+    let items={{ items|tojson }};
 
     function updateProgress(){
     const done=items.filter(i=>i.done).length,tot=items.length;
@@ -224,6 +203,11 @@
     function renderList(){
     const body=document.getElementById('listBody');
     body.innerHTML='';
+    if(!items.length){
+        body.innerHTML='<p class="empty-list">Your list is empty. Add a recipe to this week’s meal plan or add an ingredient above.</p>';
+        updateProgress();
+        return;
+    }
     ['produce','protein','pantry','dairy'].forEach(cat=>{
         const catItems=items.filter(i=>i.cat===cat);
         if(!catItems.length)return;

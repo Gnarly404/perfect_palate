@@ -114,6 +114,7 @@ def delete_user_account(user_id):
         ''', (user_id,))
         cursor.execute('DELETE FROM meal_plans WHERE user_id = ?', (user_id,))
         cursor.execute('DELETE FROM favorites WHERE user_id = ?', (user_id,))
+        cursor.execute('DELETE FROM recipe_reviews WHERE user_id = ?', (user_id,))
         cursor.execute('DELETE FROM preferences WHERE user_id = ?', (user_id,))
         cursor.execute('DELETE FROM password_reset_tokens WHERE user_id = ?', (user_id,))
         cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
@@ -202,6 +203,20 @@ def init_db():
             FOREIGN KEY (meal_plan_id) REFERENCES meal_plans(id)
         )
     ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS recipe_reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            recipe_id TEXT NOT NULL,
+            rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+            review TEXT NOT NULL DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            UNIQUE (user_id, recipe_id)
+        )
+    ''')
     
     conn.commit()
 
@@ -214,6 +229,8 @@ def init_db():
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_meal_plan_items_plan_id ON meal_plan_items(meal_plan_id)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_recipe_reviews_recipe_id ON recipe_reviews(recipe_id)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_recipe_reviews_user_id ON recipe_reviews(user_id)')
 
     conn.commit()
     conn.close()

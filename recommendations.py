@@ -3,6 +3,7 @@ Perfect Palate - Recommendations Blueprint
 Recipe filtering, scoring, search, and image serving
 """
 from flask import Blueprint, render_template, request, jsonify, send_file, redirect, url_for, session
+from database import get_db_connection
 import csv
 import json
 import os
@@ -166,6 +167,92 @@ def search():
 
     filtered = [r for r in recipes if query in r['t'].lower() or query in r['ing'].lower()]
     return jsonify(filtered)
+
+
+@recommendations_bp.route('/<int:recipe_id>/reviews', methods=['GET', 'POST'])
+def recipe_reviews(recipe_id):
+    """Read community reviews or create/update the signed-in user's review."""
+    recipe = next((r for r in load_recipes() if r['id'] == recipe_id), None)
+    if not recipe:
+        return jsonify({'error': 'Recipe not found.'}), 404
+
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+        if user_id is None:
+            return jsonify({'error': 'Sign in to rate and review recipes.'}), 401
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({'error': 'A JSON object is required.'}), 400
+        rating = data.get('rating')
+        review = data.get('review', '')
+        if not isinstance(review, str):
+            return jsonify({'error': 'Review must be plain text.'}), 400
+        review = review.strip()
+        if isinstance(rating, bool) or not isinstance(rating, int) or not 1 <= rating <= 5:
+            return jsonify({'error': 'Rating must be a whole number from 1 to 5.'}), 400
+        if len(review) > 1000:
+            return jsonify({'error': 'Reviews must be 1,000 characters or fewer.'}), 400
+
+        conn = get_db_connection()
+        try:
+            conn.execute(
+                '''
+                INSERT INTO recipe_reviews (user_id, recipe_id, rating, review)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(user_id, recipe_id) DO UPDATE SET
+                    rating = excluded.rating,
+                    review = excluded.review,
+                    updated_at = CURRENT_TIMESTAMP
+                ''',
+                (user_id, str(recipe_id), rating, review),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    conn = get_db_connection()
+    try:
+        summary = conn.execute(
+            '''
+            SELECT COUNT(*) AS count, AVG(rating) AS average
+            FROM recipe_reviews
+            WHERE recipe_id = ?
+            ''',
+            (str(recipe_id),),
+        ).fetchone()
+        rows = conn.execute(
+            '''
+            SELECT rating, review, created_at
+            FROM recipe_reviews
+            WHERE recipe_id = ?
+            ORDER BY updated_at DESC, id DESC
+            LIMIT 20
+            ''',
+            (str(recipe_id),),
+        ).fetchall()
+        own_review = None
+        if session.get('user_id') is not None:
+            own_review = conn.execute(
+                '''
+                SELECT rating, review FROM recipe_reviews
+                WHERE recipe_id = ? AND user_id = ?
+                ''',
+                (str(recipe_id), session['user_id']),
+            ).fetchone()
+    finally:
+        conn.close()
+
+    return jsonify({
+        'count': summary['count'],
+        'average': round(summary['average'], 1) if summary['average'] is not None else None,
+        'reviews': [{
+            'rating': row['rating'],
+            'review': row['review'],
+            'created_at': row['created_at'],
+        } for row in rows],
+        'my_review': dict(own_review) if own_review else None,
+        'authenticated': session.get('user_id') is not None,
+    })
 
 def filter_recipes_by_preferences(recipes, health_conditions=None, allergies=None, dietary_restrictions=None):
     """Return only the recipes that are safe for the given preferences."""

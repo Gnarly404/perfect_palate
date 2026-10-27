@@ -138,6 +138,15 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
 .pp-steps-list li{display:flex;gap:.65rem;font-size:.9rem;line-height:1.65;color:var(--tx)}
 .pp-snum{min-width:21px;height:21px;border-radius:50%;background:var(--b);color:#fff;font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.12rem}
 .pp-detail-foot{padding:1rem 2rem;border-top:1px solid rgba(66,110,134,.08);background:var(--off);display:flex;gap:.75rem}
+.pp-reviews{padding:1rem 2rem 1.4rem;border-top:1px solid rgba(66,110,134,.08)}
+.pp-review-form{display:grid;grid-template-columns:150px 1fr auto;gap:.65rem;align-items:start;margin:.8rem 0 1rem}
+.pp-review-form select,.pp-review-form textarea{border:1px solid rgba(66,110,134,.2);border-radius:8px;padding:.65rem;font:inherit}
+.pp-review-form textarea{min-height:44px;resize:vertical}
+.pp-review-form button{border:0;border-radius:20px;background:var(--b);color:white;padding:.7rem 1rem;font-weight:700;cursor:pointer}
+.pp-review-entry{padding:.7rem 0;border-top:1px solid rgba(66,110,134,.08);font-size:.82rem}
+.pp-review-entry p{margin-top:.25rem;color:var(--mu);white-space:pre-wrap}
+.pp-review-status{font-size:.78rem;color:var(--mu)}
+@media(max-width:600px){.pp-review-form{grid-template-columns:1fr}.pp-reviews{padding:1rem}}
 
 /* COOK MODE */
 .pp-cook{display:none;background:var(--cook-bg);min-height:600px;flex-direction:column}
@@ -320,6 +329,26 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         <ol class="pp-steps-list" id="dtSteps"></ol>
       </div>
     </div>
+    <section class="pp-reviews">
+      <div class="pp-sec-label">Ratings &amp; Reviews</div>
+      <div id="reviewSummary" class="pp-review-status">Loading reviews…</div>
+      <form class="pp-review-form" id="reviewForm">
+        <label>Rating
+          <select id="reviewRating" required>
+            <option value="5">★★★★★ — Loved it</option>
+            <option value="4">★★★★ — Very good</option>
+            <option value="3">★★★ — Good</option>
+            <option value="2">★★ — Fair</option>
+            <option value="1">★ — Poor</option>
+          </select>
+        </label>
+        <label class="sr-only" for="reviewText">Your review</label>
+        <textarea id="reviewText" maxlength="1000" placeholder="Share what you thought (optional)"></textarea>
+        <button type="submit">Save review</button>
+      </form>
+      <div id="reviewStatus" class="pp-review-status" role="status"></div>
+      <div id="reviewList"></div>
+    </section>
     <div class="pp-detail-foot">
       <button class="pp-btnv" onclick="showView('recipes')"><i class="fa-solid fa-arrow-left"></i> Back</button>
       <button class="pp-btnc" id="dtCookBtn">🔥 Start Cook Mode</button>
@@ -434,8 +463,10 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     if(v!=='cook'){Object.values(timers).forEach(clearInterval);timers={};}
     }
 
+    let currentReviewRecipeId=null;
     function openDetail(id){
     const r=RX.find(x=>x.id===id);if(!r)return;
+    currentReviewRecipeId=id;
     const dtEl=document.getElementById('dtEmoji');
     if(r.img){dtEl.textContent='';dtEl.style.backgroundImage=`url('${r.img}')`;dtEl.style.backgroundSize='cover';dtEl.style.backgroundPosition='center';}
     else{dtEl.textContent=r.em;dtEl.style.backgroundImage='';dtEl.style.background=r.g;}
@@ -447,8 +478,55 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         `<li><span class="pp-snum">${i+1}</span><span>${s.trim()}</span></li>`).join('');
     document.getElementById('dtCookBtn').onclick=()=>startCook(id);
     showView('detail');
+    loadReviews(id);
     gsap.fromTo('#vDetail',{opacity:0,y:20},{opacity:1,y:0,duration:.38,ease:'power3.out'});
     }
+
+    async function loadReviews(id){
+    const summary=document.getElementById('reviewSummary');
+    const list=document.getElementById('reviewList');
+    const status=document.getElementById('reviewStatus');
+    summary.textContent='Loading reviews…';list.replaceChildren();status.textContent='';
+    try{
+        const response=await fetch(`/recipes/${id}/reviews`);
+        const data=await response.json();
+        if(!response.ok)throw new Error(data.error||'Could not load reviews.');
+        summary.textContent=data.count
+          ?`${data.average} out of 5 · ${data.count} review${data.count===1?'':'s'}`
+          :'No reviews yet. Be the first to rate this recipe.';
+        const own=data.my_review;
+        document.getElementById('reviewRating').value=own?String(own.rating):'5';
+        document.getElementById('reviewText').value=own?own.review:'';
+        data.reviews.forEach(review=>{
+          const entry=document.createElement('article');
+          entry.className='pp-review-entry';
+          const rating=document.createElement('strong');
+          rating.textContent=`${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)} · ${review.created_at}`;
+          const text=document.createElement('p');text.textContent=review.review||'Rating only';
+          entry.append(rating,text);list.appendChild(entry);
+        });
+        if(!data.authenticated)status.textContent='Sign in to submit or update a review.';
+    }catch(error){summary.textContent=error.message;}
+    }
+
+    document.getElementById('reviewForm').addEventListener('submit',async event=>{
+      event.preventDefault();
+      if(!currentReviewRecipeId)return;
+      const status=document.getElementById('reviewStatus');status.textContent='Saving…';
+      try{
+        const response=await fetch(`/recipes/${currentReviewRecipeId}/reviews`,{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            rating:Number(document.getElementById('reviewRating').value),
+            review:document.getElementById('reviewText').value
+          })
+        });
+        const data=await response.json();
+        if(!response.ok)throw new Error(data.error||'Could not save your review.');
+        await loadReviews(currentReviewRecipeId);
+        status.textContent='Your review was saved.';
+      }catch(error){status.textContent=error.message;}
+    });
 
     function startCook(id){
     const r=RX.find(x=>x.id===id);if(!r)return;
