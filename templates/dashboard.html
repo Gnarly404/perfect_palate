@@ -204,8 +204,9 @@
         <a href="{{ url_for('meal_planner.meal_planner') }}">Meal Plan</a>
         <a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>
         <a href="{{ url_for('meal_planner.shopping_list') }}">Shopping</a>
+        <a href="{{ url_for('recommendations.cooking_tips') }}">Tips</a>
         </div>
-        <div class="nav-user" title="Profile" onclick="window.location.href='{{ url_for('preferences') }}'" style="cursor:pointer">KM</div>
+        <a class="nav-user" title="Your profile" href="{{ url_for('profile') }}" aria-label="Your profile" style="text-decoration:none;background:{{ me.avatar_hex }};border-color:var(--a);font-size:1rem">{{ me.avatar_emoji }}</a>
         <a href="{{ url_for('logout') }}" class="nav-logout" title="Log out"><i class="fa-solid fa-right-from-bracket"></i></a>
     </nav>
 
@@ -214,7 +215,7 @@
         <div class="hero-eyebrow" id="hEye"></div>
         <h1 class="hero-greeting">
             <em id="hGreet"></em>
-            <strong>Karibu, Chef.</strong>
+            <strong>Karibu, {{ me.display_name }}.</strong>
         </h1>
         <p class="hero-tagline">Your kitchen, your rules. {{ total_recipes }} recipes are waiting — personalised to your health profile and dietary preferences.</p>
         <div class="hero-pills">

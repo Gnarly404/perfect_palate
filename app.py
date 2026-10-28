@@ -31,7 +31,9 @@ from flask_session import Session
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from urllib.parse import urljoin, urlsplit
-from database import init_db, get_db_connection, create_password_reset_token, get_valid_password_reset_token, consume_password_reset_token
+from database import (init_db, get_db_connection, create_password_reset_token, get_valid_password_reset_token,
+                      consume_password_reset_token, get_user_profile, update_user_profile, ProfileError,
+                      AVATAR_EMOJIS, AVATAR_COLORS, COOKING_LEVELS)
 from recommendations import recommendations_bp
 from meal_planner import meal_planner_bp
 
@@ -49,6 +51,13 @@ init_db()
 # Register blueprints
 app.register_blueprint(recommendations_bp)
 app.register_blueprint(meal_planner_bp)
+
+
+@app.context_processor
+def inject_profile():
+    """Expose the signed-in user's profile to templates as `me` (None when signed out)."""
+    user_id = session.get('user_id')
+    return {'me': get_user_profile(user_id) if user_id else None}
 
 
 def send_password_reset_email(to_email, reset_link):
@@ -257,7 +266,7 @@ def sign_up():
         return jsonify({'status': 'error', 'message': 'An account with that email already exists.'}), 409
 
     password_hash = generate_password_hash(password)
-    cursor.execute('INSERT INTO users (email, password_hash) VALUES (?, ?)', (email, password_hash))
+    cursor.execute('INSERT INTO users (email, password_hash, display_name) VALUES (?, ?, ?)', (email, password_hash, name[:40]))
     conn.commit()
     conn.close()
 
@@ -361,6 +370,71 @@ def preferences():
         return redirect(url_for('dashboard'))
 
     return render_template('preferences.html')
+
+def _require_json():
+    """State-changing profile endpoints only accept JSON. A cross-site form post cannot send
+    Content-Type: application/json without a CORS preflight, which blocks simple CSRF."""
+    if not request.is_json:
+        return jsonify({'status': 'error', 'message': 'Expected a JSON request.'}), 415
+    return None
+
+
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    """View and edit the signed-in user's profile."""
+    if 'user_id' not in session:
+        if request.method == 'POST':
+            return jsonify({'status': 'error', 'message': 'Not logged in.'}), 401
+        return redirect(url_for('sign_in'))
+
+    if request.method == 'POST':
+        bad = _require_json()
+        if bad:
+            return bad
+        data = request.get_json(silent=True) or {}
+        try:
+            saved = update_user_profile(session['user_id'], data)
+        except ProfileError as exc:
+            return jsonify({'status': 'error', 'message': str(exc)}), 400
+        return jsonify({'status': 'ok', 'profile': saved})
+
+    conn = get_db_connection()
+    favorites_count = conn.execute('SELECT COUNT(*) FROM favorites WHERE user_id = ?', (session['user_id'],)).fetchone()[0]
+    since = conn.execute('SELECT created_at FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    conn.close()
+    return render_template(
+        'profile.html', avatar_emojis=AVATAR_EMOJIS, avatar_colors=AVATAR_COLORS,
+        cooking_levels=COOKING_LEVELS, favorites_count=favorites_count,
+        member_since=(since['created_at'] or '')[:10] if since else '')
+
+
+@app.route('/profile/password', methods=['POST'])
+def change_password():
+    """Change password; requires the current one."""
+    if 'user_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Not logged in.'}), 401
+    bad = _require_json()
+    if bad:
+        return bad
+    data = request.get_json(silent=True) or {}
+    current = data.get('current_password') or ''
+    new = data.get('new_password') or ''
+    if len(new) < 6:
+        return jsonify({'status': 'error', 'message': 'New password must be at least 6 characters.'}), 400
+
+    conn = get_db_connection()
+    row = conn.execute('SELECT password_hash FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    if not row or not check_password_hash(row['password_hash'], current):
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Your current password is not correct.'}), 403
+    if check_password_hash(row['password_hash'], new):
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Choose a password different from your current one.'}), 400
+    conn.execute('UPDATE users SET password_hash = ? WHERE id = ?', (generate_password_hash(new), session['user_id']))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'ok', 'message': 'Password updated.'})
+
 
 @app.route('/logout')
 def logout():

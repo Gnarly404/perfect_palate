@@ -8,7 +8,24 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <h2 class="sr-only">Perfect Palate recipe browser and Cook Mode interface</h2>
+    {% if og %}
+    <title>{{ og.title }}</title>
+    <meta name="description" content="{{ og.description }}">
+    <link rel="canonical" href="{{ og.url }}">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Perfect Palate">
+    <meta property="og:title" content="{{ og.title }}">
+    <meta property="og:description" content="{{ og.description }}">
+    <meta property="og:url" content="{{ og.url }}">
+    <meta property="og:image" content="{{ og.image }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ og.title }}">
+    <meta name="twitter:description" content="{{ og.description }}">
+    <meta name="twitter:image" content="{{ og.image }}">
+    {% else %}
     <title>Perfect Palate - Recommendations</title>
+    <meta name="description" content="Kenyan and East African recipes, filtered for your health and dietary needs.">
+    {% endif %}
 </head>
 <body>
 <style>
@@ -21,6 +38,7 @@
   --cook-bg:#0d1a22;--cook-s:rgba(255,255,255,.055);
 }
 body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overflow-x:hidden}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .pp-app{min-height:600px;max-width:1320px;margin:0 auto;background:var(--off);border-radius:16px;overflow:hidden;position:relative}
 
 /* NAV */
@@ -115,6 +133,47 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
 .pp-btni{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(66,110,134,.16);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s;font-size:.7rem;color:var(--b);flex-shrink:0}
 .pp-btni:hover{background:var(--b);color:#fff;border-color:var(--b)}
 .pp-btni.fav{color:#c0392b;border-color:#e8b0a8;background:#fff5f4}
+
+/* DIFFICULTY, NUTRITION, TIPS, SHARE */
+.pp-diff{display:inline-flex;align-items:center;gap:.3rem;font-size:.62rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:.16rem .55rem;border-radius:20px;border:1px solid transparent}
+.pp-diff.d1{background:rgba(45,106,79,.12);color:#1f5a40;border-color:rgba(45,106,79,.25)}
+.pp-diff.d2{background:rgba(184,148,31,.15);color:#6d5510;border-color:rgba(184,148,31,.3)}
+.pp-diff.d3{background:rgba(156,74,46,.12);color:#8a3b12;border-color:rgba(156,74,46,.3)}
+.pp-mine{font-size:.62rem;font-weight:800;color:var(--bd)}
+.pp-mine i{color:var(--a);margin-right:.2rem}
+.pp-levels{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;width:100%}
+.pp-levels-lbl{font-size:.62rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu);margin-right:.2rem}
+.pp-detail-badges{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .7rem;margin-top:.7rem}
+.pp-detail-badges .pp-diff{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.35)}
+.pp-detail-badges .why{font-size:.74rem;color:rgba(255,255,255,.78)}
+.pp-extra{padding:0 2rem 1.4rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+.pp-extra > div{min-width:0}
+.pp-extra .full{grid-column:1/-1}
+.pp-nut{width:100%;border-collapse:collapse;font-size:.88rem}
+.pp-nut th{font-weight:600;text-align:left;padding:.42rem 0;color:var(--tx)}
+.pp-nut td{text-align:right;padding:.42rem 0;font-variant-numeric:tabular-nums;font-weight:700;color:var(--tx)}
+.pp-nut td.dv{width:4.5rem;color:var(--mu);font-weight:600}
+.pp-nut tr{border-bottom:1px solid rgba(66,110,134,.1)}
+.pp-nut tr.sub th{padding-left:1rem;font-weight:500;color:var(--mu)}
+.pp-nut thead th{font-size:.62rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu)}
+.pp-nut thead th:not(:first-child){text-align:right}
+.pp-nut-note{font-size:.74rem;color:var(--mu);margin-top:.7rem;line-height:1.55}
+.pp-nut-goal{font-size:.82rem;font-weight:700;color:var(--bd);margin-top:.7rem}
+.pp-tips{list-style:none;display:flex;flex-direction:column;gap:.85rem}
+.pp-tips li{font-size:.88rem;line-height:1.55}
+.pp-tips b{display:block;font-weight:800;color:var(--tx)}
+.pp-tips span{color:#33444e}
+.pp-tipk{display:inline-block;font-size:.56rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:.1rem .45rem;border-radius:20px;margin-right:.4rem;vertical-align:.1em;background:var(--bl);color:var(--bd)}
+.pp-tipk.safety{background:rgba(180,80,20,.1);color:#8a3b12}
+.pp-more{display:inline-block;margin-top:.8rem;font-size:.78rem;font-weight:700;color:var(--b)}
+.pp-share{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.pp-sbtn{display:inline-flex;align-items:center;gap:.45rem;font-family:'Syne',sans-serif;font-size:.74rem;font-weight:700;padding:.55rem 1rem;border-radius:50px;border:1.5px solid rgba(66,110,134,.22);background:#fff;color:var(--bd);cursor:pointer;text-decoration:none;transition:background-color .15s,color .15s,border-color .15s}
+.pp-sbtn:hover{background:var(--b);border-color:var(--b);color:#fff}
+.pp-sbtn:focus-visible,.pp-fpill:focus-visible,.pp-btnv:focus-visible,.pp-btnc:focus-visible,.pp-btni:focus-visible,.pp-more:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.pp-cook-safety{background:rgba(226,92,74,.1);border-color:rgba(226,92,74,.3)}
+.pp-cook-safety p{font-style:normal;font-family:'Syne',sans-serif;font-size:.86rem;color:rgba(255,255,255,.85)}
+.pp-cook-safety b{color:#ffb3a8}
+@media (max-width:1024px){.pp-extra{grid-template-columns:1fr;padding:0 1.4rem 1.2rem;gap:1.4rem}}
 
 /* DECORATIVE FLOATS */
 .pp-deco{position:absolute;pointer-events:none;z-index:0}
@@ -241,6 +300,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
       <a href="{{ url_for('meal_planner.meal_planner') }}">Meal Plan</a>
       <a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>
       <a href="{{ url_for('meal_planner.shopping_list') }}">Shopping</a>
+      <a href="{{ url_for('recommendations.cooking_tips') }}">Tips</a>
+      {% if me %}<a href="{{ url_for('profile') }}" title="Your profile" aria-label="Your profile">{{ me.avatar_emoji }}</a>{% endif %}
       <a href="{{ url_for('logout') }}" title="Log out"><i class="fa-solid fa-right-from-bracket"></i></a>
     </div>
   </nav>
@@ -289,6 +350,14 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         <button class="pp-fpill" onclick="setCat('Bread',this)">Bread</button>
         <button class="pp-fpill" onclick="setCat('Soup',this)">Soup</button>
       </div>
+      <div class="pp-levels" role="group" aria-label="Filter by difficulty">
+        <span class="pp-levels-lbl">Difficulty</span>
+        <button class="pp-fpill on" data-lv="all" aria-pressed="true" onclick="setLevel('all',this)">Any</button>
+        <button class="pp-fpill" data-lv="1" aria-pressed="false" onclick="setLevel(1,this)">Easy</button>
+        <button class="pp-fpill" data-lv="2" aria-pressed="false" onclick="setLevel(2,this)">Medium</button>
+        <button class="pp-fpill" data-lv="3" aria-pressed="false" onclick="setLevel(3,this)">Hard</button>
+        <button class="pp-fpill" data-lv="mine" id="lvMine" aria-pressed="false" onclick="setLevel('mine',this)" style="display:none">For my level</button>
+      </div>
     </div>
 
     <div class="pp-personal-banner" id="personalBanner" style="display:none">
@@ -307,6 +376,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         <div class="pp-detail-cat" id="dtCat"></div>
         <div class="pp-detail-title" id="dtTitle"></div>
         <div class="pp-detail-desc" id="dtDesc"></div>
+        <div class="pp-detail-badges" id="dtBadges"></div>
       </div>
       <button class="pp-detail-close" onclick="showView('recipes')">✕</button>
     </div>
@@ -318,6 +388,21 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
       <div>
         <div class="pp-sec-label">Instructions</div>
         <ol class="pp-steps-list" id="dtSteps"></ol>
+      </div>
+    </div>
+    <div class="pp-extra">
+      <div>
+        <div class="pp-sec-label">Nutrition per serving</div>
+        <div id="dtNut"></div>
+      </div>
+      <div>
+        <div class="pp-sec-label">Tips for this recipe</div>
+        <ul class="pp-tips" id="dtTips"></ul>
+        <a class="pp-more" href="{{ url_for('recommendations.cooking_tips') }}">All cooking tips and techniques →</a>
+      </div>
+      <div class="full">
+        <div class="pp-sec-label">Share this recipe</div>
+        <div class="pp-share" id="dtShare"></div>
       </div>
     </div>
     <div class="pp-detail-foot">
@@ -352,6 +437,12 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     gsap.registerPlugin(ScrollTrigger);
 
     let RX = {{ recipes_json | safe }};
+    const TIPS = {{ tips_json | safe }};
+    const OPEN_RECIPE = {{ open_recipe | tojson }};
+    const ME = {{ ({'level': me.cooking_level, 'goal': me.calorie_goal} if me else None) | tojson }};
+    const LEVEL_MAX = {beginner:1, intermediate:2, advanced:3};
+    const DV = {k:2000, p:50, c:275, f:78, fi:28, na:2300};   // FDA daily values (2,000 kcal diet)
+    const esc = s => String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
     const TAG_L={vg:'Vegan',veg:'Vegetarian',gf:'Gluten-Free',sp:'Spicy',bp:'Blood Pressure',dia:'Diabetic-Friendly'};
     let activeCat='all',curCook=null,curStep=0,timers={};
@@ -364,7 +455,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         const cls=(r.wide?'rc w':'rc');
         const d=document.createElement('div');
         d.className=`${cls} pp-card`;
-        d.dataset.cat=r.c;d.dataset.t=r.t.toLowerCase();
+        d.dataset.cat=r.c;d.dataset.t=r.t.toLowerCase();d.dataset.lv=r.df.r;
         const tagH=r.tg.map(t=>`<span class="pp-ctag ${t}">${TAG_L[t]}</span>`).join('');
         d.innerHTML=`
         <div class="pp-cimg">
@@ -381,7 +472,9 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
             <div class="pp-cmeta">
             <span><i class="fa-regular fa-clock"></i>${r.tm}</span>
             <span><i class="fa-solid fa-users"></i>${r.sv} servings</span>
+            ${r.nu?`<span><i class="fa-solid fa-fire-flame-curved"></i>~${r.nu.k} kcal</span>`:''}
             </div>
+            <div class="pp-cmeta"><span class="pp-diff d${r.df.r}">${r.df.l}</span>${ME&&ME.level&&r.df.r<=LEVEL_MAX[ME.level]?'<span class="pp-mine"><i class="fa-solid fa-circle-check"></i>For your level</span>':''}</div>
         </div>
         <div class="pp-cfoot">
             <button class="pp-btnv" onclick="openDetail(${r.id})"><i class="fa-solid fa-book-open"></i> View</button>
@@ -413,11 +506,23 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     document.querySelectorAll('.pp-fpill').forEach(b=>b.classList.remove('on'));
     btn.classList.add('on');doFilter();
     }
+    let activeLvl='all';
+    function setLevel(lv,btn){
+    activeLvl=lv;
+    document.querySelectorAll('.pp-levels .pp-fpill').forEach(b=>{b.classList.remove('on');b.setAttribute('aria-pressed','false');});
+    btn.classList.add('on');btn.setAttribute('aria-pressed','true');doFilter();
+    }
+    function lvOk(c){
+    if(activeLvl==='all')return true;
+    const n=+c.dataset.lv;
+    if(activeLvl==='mine')return ME&&ME.level?n<=LEVEL_MAX[ME.level]:true;
+    return n===activeLvl;
+    }
     function doFilter(){
     const q=document.getElementById('srch').value.toLowerCase();
     const cards=document.querySelectorAll('.pp-card');let v=0;
     cards.forEach(c=>{
-        const ok=(activeCat==='all'||c.dataset.cat===activeCat)&&(!q||c.dataset.t.includes(q));
+        const ok=(activeCat==='all'||c.dataset.cat===activeCat)&&(!q||c.dataset.t.includes(q))&&lvOk(c);
         if(ok){gsap.to(c,{opacity:1,scale:1,y:0,duration:.28,ease:'power2.out'});c.style.display='';v++;}
         else{gsap.to(c,{opacity:0,scale:.94,duration:.18,ease:'power2.in',onComplete:()=>c.style.display='none'});}
     });
@@ -430,12 +535,12 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     d.style.display=v==='detail'?'block':'none';
     const c=document.getElementById('vCook');
     c.style.display=v==='cook'?'flex':'none';
-    if(v==='recipes')ScrollTrigger.refresh();
+    if(v==='recipes'){ScrollTrigger.refresh();if(location.pathname.indexOf('/recipes/recipe/')===0)history.replaceState(null,'','/recipes/');}
     if(v!=='cook'){Object.values(timers).forEach(clearInterval);timers={};}
     }
 
     function openDetail(id){
-    const r=RX.find(x=>x.id===id);if(!r)return;
+    const r=FULL_RX.find(x=>x.id===id);if(!r)return;
     const dtEl=document.getElementById('dtEmoji');
     if(r.img){dtEl.textContent='';dtEl.style.backgroundImage=`url('${r.img}')`;dtEl.style.backgroundSize='cover';dtEl.style.backgroundPosition='center';}
     else{dtEl.textContent=r.em;dtEl.style.backgroundImage='';dtEl.style.background=r.g;}
@@ -446,12 +551,51 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     document.getElementById('dtSteps').innerHTML=r.st.split(/\d+\.\s+/).filter(Boolean).map((s,i)=>
         `<li><span class="pp-snum">${i+1}</span><span>${s.trim()}</span></li>`).join('');
     document.getElementById('dtCookBtn').onclick=()=>startCook(id);
+    renderBadges(r);renderNutrition(r);renderTips(r);renderShare(r);
+    history.replaceState(null,'','/recipes/recipe/'+r.id);
+    document.title=r.t+' | Perfect Palate';
     showView('detail');
     gsap.fromTo('#vDetail',{opacity:0,y:20},{opacity:1,y:0,duration:.38,ease:'power3.out'});
     }
 
+    function pct(v,dv){return dv?Math.round(v/dv*100)+'%':'';}
+    function renderNutrition(r){
+    const box=document.getElementById('dtNut'),n=r.nu;
+    if(!n){box.innerHTML='<p class="pp-nut-note">Nutrition information is not available for this recipe yet, because too few of its ingredients could be matched to reference values.</p>';return;}
+    const row=(label,val,unit,dv,sub)=>`<tr class="${sub?'sub':''}"><th scope="row">${label}</th><td>${val}${unit}</td><td class="dv">${dv?pct(val,dv):''}</td></tr>`;
+    let h=`<table class="pp-nut"><caption class="sr-only">Estimated nutrition per serving</caption><thead><tr><th scope="col">Amount</th><th scope="col">Per serving</th><th scope="col">% daily value</th></tr></thead><tbody>
+      ${row('Calories',n.k,' kcal',DV.k)}${row('Protein',n.p,' g',DV.p)}${row('Carbohydrate',n.c,' g',DV.c)}${row('of which sugars',n.s,' g',0,true)}
+      ${row('Fat',n.f,' g',DV.f)}${row('Fibre',n.fi,' g',DV.fi)}${row('Sodium',n.na,' mg',DV.na)}</tbody></table>`;
+    if(ME&&ME.goal)h+=`<p class="pp-nut-goal">One serving is about ${Math.round(n.k/ME.goal*100)}% of your ${ME.goal} kcal daily goal.</p>`;
+    h+=`<p class="pp-nut-note">An estimate for about ${n.sv} servings, worked out from the ingredient list using USDA reference values. ${Math.round(n.cov*100)}% of the ingredients could be counted${n.left&&n.left.length?'; not counted: '+esc(n.left.join(', ')):''}. ${n.notes&&n.notes.length?esc(n.notes.join(' ')):''} Actual values depend on brands, cuts and portions. This is general information, not medical advice.</p>`;
+    box.innerHTML=h;
+    }
+    function tipHtml(id){const t=TIPS[id];return t?`<li><b><span class="pp-tipk ${t.k}">${t.k==='safety'?'Safety':t.k==='kenyan'?'Kenyan kitchen':t.k==='flavour'?'Flavour':'Technique'}</span>${esc(t.t)}</b><span>${esc(t.x)}</span></li>`:'';}
+    function renderTips(r){document.getElementById('dtTips').innerHTML=(r.tips||[]).map(tipHtml).join('');}
+    function recipeUrl(r){return location.origin+'/recipes/recipe/'+r.id;}
+    function renderShare(r){
+    const url=recipeUrl(r),text=`Try ${r.t} on Perfect Palate: ${r.d}`.slice(0,200);
+    const e=encodeURIComponent;
+    const box=document.getElementById('dtShare');
+    box.innerHTML=`
+      ${navigator.share?'<button type="button" class="pp-sbtn" id="shNative"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i> Share…</button>':''}
+      <a class="pp-sbtn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=${e(text+' '+url)}"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+      <a class="pp-sbtn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/tweet?text=${e(text.slice(0,200))}&url=${e(url)}"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+      <a class="pp-sbtn" target="_blank" rel="noopener noreferrer" href="https://www.facebook.com/sharer/sharer.php?u=${e(url)}"><i class="fa-brands fa-facebook" aria-hidden="true"></i> Facebook</a>
+      <button type="button" class="pp-sbtn" id="shCopy"><i class="fa-regular fa-copy" aria-hidden="true"></i> Copy link</button>`;
+    const nat=document.getElementById('shNative');
+    if(nat)nat.onclick=()=>navigator.share({title:r.t,text:text,url:url}).catch(()=>{});
+    document.getElementById('shCopy').onclick=async()=>{
+        try{await navigator.clipboard.writeText(url);toast('🔗 Link copied');}
+        catch(err){window.prompt('Copy this link:',url);}
+    };
+    }
+    function renderBadges(r){
+    document.getElementById('dtBadges').innerHTML=`<span class="pp-diff d${r.df.r}">${r.df.l}</span><span class="why">${esc(r.df.why.join(' · '))}</span>`;
+    }
+
     function startCook(id){
-    const r=RX.find(x=>x.id===id);if(!r)return;
+    const r=FULL_RX.find(x=>x.id===id);if(!r)return;
     if(window.speechSynthesis)window.speechSynthesis.cancel();
     isReading=false;
     curCook=r;curStep=0;
@@ -462,6 +606,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         <div><div class="pp-cook-rtitle">${r.t}</div>
         <div class="pp-cook-rmeta">${r.c} · ${r.tm} · ${r.sv} servings</div>
         <div class="pp-cook-tags">${r.tg.map(t=>`<span class="pp-cook-tag">${TAG_L[t]}</span>`).join('')}</div></div></div>`;
+    const safety=(r.tips||[]).filter(t=>TIPS[t]&&TIPS[t].k==='safety');
+    safety.forEach(t=>{html+=`<div class="pp-chef pp-cook-safety"><div class="pp-chef-av">⚠️</div><p><b>${esc(TIPS[t].t)}.</b> ${esc(TIPS[t].x)}</p></div>`;});
     steps.forEach((s,i)=>{
         let hi=s;
         ings.forEach(ing=>{if(ing.length>3){const re=new RegExp(`(${ing.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}[s]?)`, 'gi');hi=hi.replace(re,'<span class="hi">$1</span>');}});
@@ -469,7 +615,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         const timerH=tm?`<div class="pp-timer" id="tm${i}" onclick="doTimer(${i},${tm[2].startsWith('sec')?parseInt(tm[1]):parseInt(tm[1])*60})"><div class="pp-tbox"></div><span id="td${i}">${tm[2].startsWith('sec')?tm[1]+'s':tm[1]+' min'}</span><span>start timer</span></div>`:'';
         html+=`<div class="pp-step${i===0?' cur':''}" id="ps${i}"><div class="pp-step-lbl">STEP ${i+1}</div><div class="pp-step-txt">${hi}</div>${timerH}</div>`;
     });
-    html+=`<div class="pp-chef"><div class="pp-chef-av">🍴</div><p>Mise en place — gather and prep everything before you start. This is how professional kitchens work, and it makes the process meditative rather than stressful.</p></div>`;
+    (r.tips||[]).filter(t=>TIPS[t]&&TIPS[t].k!=='safety').forEach(t=>{html+=`<div class="pp-chef"><div class="pp-chef-av">🍴</div><p><b>${esc(TIPS[t].t)}.</b> ${esc(TIPS[t].x)}</p></div>`;});
     document.getElementById('cookBody').innerHTML=html;
     updProg(0,steps.length);
     showView('cook');
@@ -629,6 +775,14 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     document.getElementById('recCount').textContent=RX.length;
     applyPersonalization();
     initAnims();
+    if(ME&&ME.level){document.getElementById('lvMine').style.display='';}
+    (function openFromUrl(){
+    let id=OPEN_RECIPE,cook=false;
+    const m=location.hash.match(/^#(cook|recipe)-(\d+)$/);
+    if(!id&&m){id=+m[2];cook=m[1]==='cook';}
+    if(!id||!FULL_RX.some(x=>x.id===id))return;
+    if(cook)startCook(id);else openDetail(id);
+    })();
 </script>
  
 {% include '_footer.html' %}

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfect Palate - Your profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --b:#426e86;--bd:#2a4d63;--bl:rgba(66,110,134,.08);
+  --a:#e2ba2e;--ad:#b8941f;
+  --tx:#1c2b35;--mu:#566670;--off:#faf8f4;--card:#fff;--line:rgba(66,110,134,.16);
+  --ok:#2d6a4f;--err:#8b2020;
+  --avatar:#426e86;
+}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off);line-height:1.5}
+::selection{background:rgba(226,186,46,.35)}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+a{color:var(--b)}
+:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+.nav{background:var(--b);min-height:56px;display:flex;align-items:center;padding:.4rem 1.8rem;gap:.8rem;flex-wrap:wrap}
+.nav-lt{font-family:'Cormorant Garamond',serif;font-size:1.08rem;font-weight:600;color:#fff;letter-spacing:.8px;text-decoration:none}
+.nav-links{display:flex;gap:.1rem;margin-left:auto;flex-wrap:wrap}
+.nav-links a{font-size:.68rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.82);text-decoration:none;padding:.5rem .8rem;border-radius:6px}
+.nav-links a:hover,.nav-links a[aria-current]{color:var(--a);background:rgba(226,186,46,.1)}
+.nav-user{width:32px;height:32px;border-radius:50%;background:var(--avatar);border:2px solid var(--a);display:flex;align-items:center;justify-content:center;font-size:1rem;text-decoration:none}
+.nav-logout{width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;text-decoration:none}
+.nav-logout:hover{background:rgba(255,255,255,.15)}
+
+.wrap{max-width:760px;margin:0 auto;padding:2.4rem 1.4rem 4rem}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,2.8rem);font-weight:600;line-height:1.05;color:var(--bd);text-wrap:balance}
+.lede{color:var(--mu);font-size:.9rem;margin-top:.5rem;max-width:58ch}
+
+.who{display:flex;align-items:center;gap:1.1rem;margin:1.8rem 0 .4rem}
+.avatar{width:76px;height:76px;border-radius:50%;background:var(--avatar);border:3px solid var(--a);display:flex;align-items:center;justify-content:center;font-size:2.3rem;flex-shrink:0;transition:background-color .25s cubic-bezier(.2,.8,.2,1)}
+.who-name{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;line-height:1.1;overflow-wrap:anywhere}
+.who-meta{font-size:.78rem;color:var(--mu);overflow-wrap:anywhere}
+
+fieldset{border:none;margin:0;padding:0;min-width:0}
+.sect{padding:1.8rem 0;border-top:1px solid var(--line)}
+.sect:first-of-type{border-top:none}
+.sect h2,.sect legend{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:600;color:var(--tx);margin-bottom:.2rem;padding:0}
+.sect legend{float:left;width:100%}   /* floats the legend out of the border so it lays out like a normal heading */
+.sect legend + .hint{clear:both}
+.sect .hint{font-size:.8rem;color:var(--mu);margin-bottom:1rem;max-width:60ch}
+.fld{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1.1rem;max-width:520px}
+.fld label,.lbl{font-size:.7rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--mu)}
+input[type=text],input[type=number],input[type=password],textarea{width:100%;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:.7rem .85rem;font-family:'Syne',sans-serif;font-size:.95rem;color:var(--tx);transition:border-color .2s,box-shadow .2s}
+textarea{resize:vertical;min-height:84px;line-height:1.5}
+input:focus,textarea:focus{outline:none;border-color:var(--b);box-shadow:0 0 0 3px rgba(66,110,134,.14)}
+input::placeholder,textarea::placeholder{color:#6b7a84}
+.count{font-size:.72rem;color:var(--mu);align-self:flex-end;font-variant-numeric:tabular-nums}
+
+.picker{display:flex;flex-wrap:wrap;gap:.45rem}
+.picker input{position:absolute;opacity:0;width:1px;height:1px}
+.picker label{cursor:pointer}
+.emo{width:46px;height:46px;border-radius:12px;border:1.5px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;transition:transform .15s,border-color .15s,background-color .15s}
+.picker input:checked + .emo{border-color:var(--b);background:var(--bl);box-shadow:0 0 0 2px var(--b)}
+.picker input:focus-visible + .emo,.picker input:focus-visible + .sw,.picker input:focus-visible + .seg{outline:2px solid var(--b);outline-offset:2px}
+.emo:hover{transform:translateY(-2px)}
+.sw{width:36px;height:36px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1.5px var(--line);display:block}
+.picker input:checked + .sw{box-shadow:0 0 0 2.5px var(--tx)}
+.segs{display:flex;flex-wrap:wrap;gap:.5rem}
+.seg{display:block;padding:.6rem 1.1rem;border-radius:50px;border:1.5px solid var(--line);background:#fff;font-size:.82rem;font-weight:700;color:var(--tx);cursor:pointer;transition:background-color .15s,border-color .15s,color .15s}
+.picker input:checked + .seg{background:var(--b);border-color:var(--b);color:#fff}
+.seg small{display:block;font-weight:600;font-size:.68rem;opacity:.85}
+
+.msg{font-size:.82rem;font-weight:700;padding:.55rem .8rem;border-radius:8px;margin-bottom:.9rem;max-width:520px;display:none}
+.msg.ok{display:block;background:rgba(45,106,79,.1);color:var(--ok)}
+.msg.err{display:block;background:rgba(139,32,32,.08);color:var(--err)}
+.btn{display:inline-flex;align-items:center;gap:.45rem;background:var(--b);color:#fff;border:none;border-radius:50px;padding:.8rem 1.6rem;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:800;letter-spacing:.9px;text-transform:uppercase;cursor:pointer;transition:background-color .2s,transform .2s}
+.btn:hover{background:var(--bd);transform:translateY(-1px)}
+.btn:disabled{opacity:.65;cursor:progress;transform:none}
+.btn.ghost{background:transparent;color:var(--b);border:1.5px solid var(--b)}
+.btn.ghost:hover{background:var(--bl)}
+.row{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center}
+.links{display:flex;flex-wrap:wrap;gap:1.4rem;font-size:.85rem;font-weight:700}
+.links a{text-underline-offset:3px}
+@media (max-width:560px){.nav{padding:.4rem 1rem}.wrap{padding-top:1.6rem}.emo{width:42px;height:42px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<nav class="nav" aria-label="Main">
+  <a class="nav-lt" href="{{ url_for('dashboard') }}">Perfect Palate</a>
+  <div class="nav-links">
+    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('recommendations.recommendations') }}">Recipes</a>
+    <a href="{{ url_for('meal_planner.meal_planner') }}">Meal Plan</a>
+    <a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>
+    <a href="{{ url_for('meal_planner.shopping_list') }}">Shopping</a>
+    <a href="{{ url_for('recommendations.cooking_tips') }}">Tips</a>
+  </div>
+  <a class="nav-user" href="{{ url_for('profile') }}" aria-current="page" aria-label="Your profile" id="navAvatar">{{ me.avatar_emoji }}</a>
+  <a class="nav-logout" href="{{ url_for('logout') }}" title="Log out" aria-label="Log out"><i class="fa-solid fa-right-from-bracket"></i></a>
+</nav>
+
+<main class="wrap" style="--avatar:{{ me.avatar_hex }}" id="page">
+  <h1>Your profile</h1>
+  <p class="lede">This is how you appear in Perfect Palate. Your cooking level and calorie goal are also used to tailor what you see on the recipe pages.</p>
+
+  <div class="who" aria-live="polite">
+    <div class="avatar" id="pvAvatar" aria-hidden="true">{{ me.avatar_emoji }}</div>
+    <div>
+      <div class="who-name" id="pvName">{{ me.display_name }}</div>
+      <div class="who-meta">{{ me.email }}{% if member_since %} · member since {{ member_since }}{% endif %} · {{ favorites_count }} favourite{{ '' if favorites_count == 1 else 's' }}</div>
+    </div>
+  </div>
+
+  <form id="profileForm" novalidate>
+    <fieldset class="sect">
+      <legend>About you</legend>
+      <p class="hint">Your name appears on your dashboard. Your email is never shown to anyone else.</p>
+
+      <div class="fld">
+        <label for="displayName">Display name</label>
+        <input type="text" id="displayName" name="display_name" maxlength="40" required autocomplete="nickname" value="{{ me.display_name }}">
+      </div>
+
+      <div class="fld">
+        <label for="bio">Short bio <span style="text-transform:none;letter-spacing:0;font-weight:600">(optional)</span></label>
+        <textarea id="bio" name="bio" maxlength="200" placeholder="What do you love to cook?">{{ me.bio }}</textarea>
+        <span class="count" id="bioCount" aria-hidden="true">{{ me.bio|length }}/200</span>
+      </div>
+
+      <div class="fld" role="radiogroup" aria-labelledby="avLbl">
+        <span class="lbl" id="avLbl">Avatar</span>
+        <div class="picker">
+          {% for e in avatar_emojis %}
+          <label><input type="radio" name="avatar_emoji" value="{{ e }}" {{ 'checked' if e == me.avatar_emoji }}><span class="emo" aria-hidden="true">{{ e }}</span><span class="sr-only">Avatar {{ loop.index }}</span></label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="fld" role="radiogroup" aria-labelledby="colLbl">
+        <span class="lbl" id="colLbl">Avatar colour</span>
+        <div class="picker">
+          {% for key, hex in avatar_colors.items() %}
+          <label><input type="radio" name="avatar_color" value="{{ key }}" data-hex="{{ hex }}" {{ 'checked' if key == me.avatar_color }}><span class="sw" style="background:{{ hex }}" aria-hidden="true"></span><span class="sr-only">{{ key|capitalize }}</span></label>
+          {% endfor %}
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="sect">
+      <legend>Your cooking</legend>
+      <p class="hint">Pick the level you are comfortable with and recipes that suit it get a “For your level” mark. The calorie goal lets each recipe show what share of your day one serving covers. Both are optional.</p>
+
+      <div class="fld" role="radiogroup" aria-labelledby="lvLbl" style="max-width:none">
+        <span class="lbl" id="lvLbl">Cooking level</span>
+        <div class="picker segs">
+          <label><input type="radio" name="cooking_level" value="" {{ 'checked' if not me.cooking_level }}><span class="seg">Not set</span></label>
+          <label><input type="radio" name="cooking_level" value="beginner" {{ 'checked' if me.cooking_level == 'beginner' }}><span class="seg">Beginner<small>Easy recipes</small></span></label>
+          <label><input type="radio" name="cooking_level" value="intermediate" {{ 'checked' if me.cooking_level == 'intermediate' }}><span class="seg">Intermediate<small>Easy and medium</small></span></label>
+          <label><input type="radio" name="cooking_level" value="advanced" {{ 'checked' if me.cooking_level == 'advanced' }}><span class="seg">Advanced<small>Everything</small></span></label>
+        </div>
+      </div>
+
+      <div class="fld">
+        <label for="calGoal">Daily calorie goal <span style="text-transform:none;letter-spacing:0;font-weight:600">(optional, kcal)</span></label>
+        <input type="number" id="calGoal" name="calorie_goal" min="1000" max="5000" step="50" inputmode="numeric" placeholder="e.g. 2000" value="{{ me.calorie_goal or '' }}">
+      </div>
+    </fieldset>
+
+    <div class="msg" id="profileMsg" role="status" aria-live="polite"></div>
+    <div class="row"><button class="btn" type="submit" id="saveBtn"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save profile</button></div>
+  </form>
+
+  <form class="sect" id="pwForm" novalidate style="margin-top:2rem">
+    <h2>Change password</h2>
+    <p class="hint">Enter your current password to set a new one.</p>
+    <div class="fld"><label for="curPw">Current password</label><input type="password" id="curPw" autocomplete="current-password" required></div>
+    <div class="fld"><label for="newPw">New password <span style="text-transform:none;letter-spacing:0;font-weight:600">(at least 6 characters)</span></label><input type="password" id="newPw" autocomplete="new-password" minlength="6" required></div>
+    <div class="msg" id="pwMsg" role="status" aria-live="polite"></div>
+    <div class="row"><button class="btn ghost" type="submit" id="pwBtn">Update password</button></div>
+  </form>
+
+  <div class="sect links">
+    <a href="{{ url_for('preferences') }}"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i> Health, allergy and diet preferences</a>
+    <a href="{{ url_for('logout') }}">Log out</a>
+  </div>
+</main>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const form = $('profileForm'), page = $('page');
+
+  function pick(name) { const el = form.querySelector('input[name="' + name + '"]:checked'); return el ? el : null; }
+  function preview() {
+    const name = $('displayName').value.trim() || 'Your name';
+    $('pvName').textContent = name;
+    const emo = pick('avatar_emoji'); if (emo) { $('pvAvatar').textContent = emo.value; $('navAvatar').textContent = emo.value; }
+    const col = pick('avatar_color'); if (col) page.style.setProperty('--avatar', col.dataset.hex);
+    document.documentElement.style.setProperty('--avatar', col ? col.dataset.hex : '');
+    $('bioCount').textContent = $('bio').value.length + '/200';
+  }
+  form.addEventListener('input', preview);
+  form.addEventListener('change', preview);
+
+  function show(el, text, ok) { el.className = 'msg ' + (ok ? 'ok' : 'err'); el.textContent = text; }
+  async function send(url, body) {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    let data = {}; try { data = await res.json(); } catch (e) {}
+    return { ok: res.ok, data };
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('saveBtn'), msg = $('profileMsg');
+    if (!$('displayName').value.trim()) { show(msg, 'Please enter a display name.', false); $('displayName').focus(); return; }
+    btn.disabled = true;
+    try {
+      const { ok, data } = await send('{{ url_for("profile") }}', {
+        display_name: $('displayName').value, bio: $('bio').value,
+        avatar_emoji: (pick('avatar_emoji') || {}).value, avatar_color: (pick('avatar_color') || {}).value,
+        cooking_level: (pick('cooking_level') || {}).value || '', calorie_goal: $('calGoal').value
+      });
+      if (ok && data.status === 'ok') { show(msg, 'Profile saved.', true); $('pvName').textContent = data.profile.display_name; }
+      else show(msg, data.message || 'Could not save your profile. Please try again.', false);
+    } catch (err) { show(msg, 'Network error. Please try again.', false); }
+    btn.disabled = false;
+  });
+
+  $('pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('pwBtn'), msg = $('pwMsg');
+    if (!$('curPw').value || !$('newPw').value) { show(msg, 'Please fill in both password fields.', false); return; }
+    btn.disabled = true;
+    try {
+      const { ok, data } = await send('{{ url_for("change_password") }}', { current_password: $('curPw').value, new_password: $('newPw').value });
+      if (ok) { show(msg, data.message || 'Password updated.', true); $('curPw').value = ''; $('newPw').value = ''; }
+      else show(msg, data.message || 'Could not update your password.', false);
+    } catch (err) { show(msg, 'Network error. Please try again.', false); }
+    btn.disabled = false;
+  });
+})();
+</script>
+</body>
+</html>

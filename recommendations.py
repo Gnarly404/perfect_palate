@@ -2,12 +2,17 @@
 Perfect Palate - Recommendations Blueprint
 Recipe filtering, scoring, search, and image serving
 """
-from flask import Blueprint, render_template, request, jsonify, send_file, redirect, url_for, session
+from flask import Blueprint, render_template, request, jsonify, send_file, redirect, url_for, session, abort, current_app
 import csv
 import json
 import os
 import re
 from pathlib import Path
+from urllib.parse import quote
+
+from nutrition import estimate_nutrition
+from difficulty import rate_difficulty
+from tips import tips_for_recipe, tip_payload, TIPS
 
 recommendations_bp = Blueprint('recommendations', __name__, url_prefix='/recipes')
 
@@ -67,6 +72,15 @@ def _build_image_index():
     return index
 
 
+def _compact_nutrition(n):
+    if not n:
+        return None
+    p = n['per_serving']
+    return {'k': p['kcal'], 'p': p['protein'], 'c': p['carbs'], 'f': p['fat'], 'fi': p['fiber'],
+            's': p['sugar'], 'na': p['sodium'], 'sv': n['servings'], 'cov': n['coverage'],
+            'conf': n['confidence'], 'left': n['left_out'], 'notes': n['notes']}
+
+
 def load_recipes(force_reload=False):
     """Load and normalize recipes from the Kenyan Recipes dataset."""
     global _recipes_cache
@@ -81,72 +95,95 @@ def load_recipes(force_reload=False):
     image_index = _build_image_index()
 
     with open(CSV_PATH, 'r', encoding='utf-8-sig') as f:
-        reader = csv.DictReader(f)
-        for i, row in enumerate(reader):
-            title = (row.get('Recipe Title') or '').strip()
-            if not title:
-                continue
+        all_rows = list(csv.DictReader(f))
 
-            category = (row.get('Recipe Category') or 'Other').strip()
-            ingredients_raw = (row.get('Recipe Ingredients Quantities') or '').strip()
-            instructions_raw = (row.get('Recipe Instructions') or '').strip()
-            description = (row.get('Description') or '').strip()
+    # The dataset reuses some Recipe IDs for different dishes (34 of them), which
+    # would make favourites and share links ambiguous. The first row keeps its
+    # ID, later rows that collide get fresh IDs above the dataset's maximum, in
+    # file order, so the assignment is stable between runs.
+    used = set()
+    next_free = max([int(r['Recipe ID']) for r in all_rows if (r.get('Recipe ID') or '').strip().isdigit()] or [0]) + 1
+    ids = []
+    for i, row in enumerate(all_rows):
+        raw = (row.get('Recipe ID') or '').strip()
+        rid = int(raw) if raw.isdigit() else None
+        if rid is None or rid in used:
+            rid = next_free
+            next_free += 1
+        used.add(rid)
+        ids.append(rid)
 
-            style = CATEGORY_STYLE.get(category, DEFAULT_STYLE)
+    for i, row in enumerate(all_rows):
+        title = (row.get('Recipe Title') or '').strip()
+        if not title:
+            continue
 
-            # Dietary/health tags, derived directly from the dataset's own flag columns
-            tags = []
-            if row.get('Vegan', '').strip() == '#':
-                tags.append('vg')
-            if row.get('Vegetarian', '').strip() == '#':
-                tags.append('veg')
-            if row.get('Gluten-Free', '').strip() == '#':
-                tags.append('gf')
-            if row.get('Blood Pressure', '').strip() == '#':
-                tags.append('bp')
-            if row.get('Diabetes', '').strip() == '#':
-                tags.append('dia')
-            if re.search(r'\bchil?[il]?e?s?\b|pepper', ingredients_raw, re.I):
-                tags.append('sp')
+        category = (row.get('Recipe Category') or 'Other').strip()
+        ingredients_raw = (row.get('Recipe Ingredients Quantities') or '').strip()
+        instructions_raw = (row.get('Recipe Instructions') or '').strip()
+        description = (row.get('Description') or '').strip()
 
-            # Duration isn't in the dataset; estimate roughly from step count
-            # rather than fabricating a specific figure.
-            step_count = len([s for s in re.split(r'\d+\.\s+', instructions_raw) if s.strip()])
-            est_minutes = max(15, min(90, 10 + step_count * 6))
-            est_servings = SERVINGS_BY_CATEGORY.get(category, DEFAULT_SERVINGS)
+        style = CATEGORY_STYLE.get(category, DEFAULT_STYLE)
 
-            image_file = image_index.get(_normalize(title))
-            recipe_id_raw = row.get('Recipe ID', '').strip()
-            recipe_id = int(recipe_id_raw) if recipe_id_raw.isdigit() else i + 1
+        # Dietary/health tags, derived directly from the dataset's own flag columns
+        tags = []
+        if row.get('Vegan', '').strip() == '#':
+            tags.append('vg')
+        if row.get('Vegetarian', '').strip() == '#':
+            tags.append('veg')
+        if row.get('Gluten-Free', '').strip() == '#':
+            tags.append('gf')
+        if row.get('Blood Pressure', '').strip() == '#':
+            tags.append('bp')
+        if row.get('Diabetes', '').strip() == '#':
+            tags.append('dia')
+        if re.search(r'\bchil?[il]?e?s?\b|pepper', ingredients_raw, re.I):
+            tags.append('sp')
 
-            recipes.append({
-                'id': recipe_id,
-                't': title,
-                'c': category,
-                'd': description or f"A traditional Kenyan {category.lower()} dish.",
-                'ing': ingredients_raw,
-                'st': instructions_raw,
-                'tg': tags,
-                'tm': f'{est_minutes} min',
-                'sv': est_servings,
-                'g': style['gradient'],
-                'em': style['emoji'],
-                'img': f'/recipes/image/{image_file}' if image_file else None,
-                'flags': {
-                    'blood_pressure': row.get('Blood Pressure', '').strip() == '#',
-                    'blood_sugar': row.get('Blood Sugar', '').strip() == '#',
-                    'high_cholesterol': row.get('High Cholesterol', '').strip() == '#',
-                    'diabetes': row.get('Diabetes', '').strip() == '#',
-                    'allergy_safe_meat': row.get('Allergies_Meat', '').strip() == '#',
-                    'allergy_safe_eggs': row.get('Allergies_Eggs', '').strip() == '#',
-                    'allergy_safe_fish': row.get('Allergies_Fish', '').strip() == '#',
-                    'allergy_safe_peanuts': row.get('Allergies_Peanuts', '').strip() == '#',
-                    'gluten_free': row.get('Gluten-Free', '').strip() == '#',
-                    'lactose_free': row.get('Lactose-Intolerant', '').strip() == '#',
-                    'vegan': row.get('Vegan', '').strip() == '#',
-                    'vegetarian': row.get('Vegetarian', '').strip() == '#',
-                },
-            })
+        # Duration isn't in the dataset; estimate roughly from step count
+        # rather than fabricating a specific figure.
+        step_count = len([s for s in re.split(r'\d+\.\s+', instructions_raw) if s.strip()])
+        est_minutes = max(15, min(90, 10 + step_count * 6))
+        est_servings = SERVINGS_BY_CATEGORY.get(category, DEFAULT_SERVINGS)
+
+        image_file = image_index.get(_normalize(title))
+        recipe_id = ids[i]
+
+        difficulty = rate_difficulty(ingredients_raw, instructions_raw)
+        nutrition = estimate_nutrition(ingredients_raw, est_servings, category)
+        tip_ids = tips_for_recipe(title, category, ingredients_raw, instructions_raw)
+
+        recipes.append({
+            'id': recipe_id,
+            't': title,
+            'c': category,
+            'd': description or f"A traditional Kenyan {category.lower()} dish.",
+            'ing': ingredients_raw,
+            'st': instructions_raw,
+            'tg': tags,
+            'tm': f'{est_minutes} min',
+            'sv': est_servings,
+            'g': style['gradient'],
+            'em': style['emoji'],
+            'img': f'/recipes/image/{quote(image_file)}' if image_file else None,
+            'df': {'l': difficulty['level'], 'r': difficulty['rank'], 'why': difficulty['reasons']},
+            'nu': _compact_nutrition(nutrition),
+            'tips': tip_ids,
+            'flags': {
+                'blood_pressure': row.get('Blood Pressure', '').strip() == '#',
+                'blood_sugar': row.get('Blood Sugar', '').strip() == '#',
+                'high_cholesterol': row.get('High Cholesterol', '').strip() == '#',
+                'diabetes': row.get('Diabetes', '').strip() == '#',
+                'allergy_safe_meat': row.get('Allergies_Meat', '').strip() == '#',
+                'allergy_safe_eggs': row.get('Allergies_Eggs', '').strip() == '#',
+                'allergy_safe_fish': row.get('Allergies_Fish', '').strip() == '#',
+                'allergy_safe_peanuts': row.get('Allergies_Peanuts', '').strip() == '#',
+                'gluten_free': row.get('Gluten-Free', '').strip() == '#',
+                'lactose_free': row.get('Lactose-Intolerant', '').strip() == '#',
+                'vegan': row.get('Vegan', '').strip() == '#',
+                'vegetarian': row.get('Vegetarian', '').strip() == '#',
+            },
+        })
 
     _recipes_cache = recipes
     return recipes
@@ -156,7 +193,48 @@ def load_recipes(force_reload=False):
 def recommendations():
     """Recipe recommendations page"""
     recipes = load_recipes()
-    return render_template('recommendations.html', recipes=recipes, recipes_json=json.dumps(recipes))
+    return render_template('recommendations.html', recipes=recipes, recipes_json=_safe_json(recipes),
+                           tips_json=_safe_json(tip_payload()), og=None, open_recipe=None)
+
+
+def _safe_json(obj):
+    """JSON for embedding inside a <script> tag: '<' is escaped so '</script>' cannot appear."""
+    return json.dumps(obj).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
+
+
+def _public_base():
+    configured = (current_app.config.get('PUBLIC_BASE_URL') or '').strip().rstrip('/')
+    return configured or request.url_root.rstrip('/')
+
+
+@recommendations_bp.route('/recipe/<int:recipe_id>')
+def recipe_permalink(recipe_id):
+    """Shareable link to one recipe: public, with Open Graph / Twitter card tags for link previews."""
+    recipes = load_recipes()
+    recipe = next((r for r in recipes if r['id'] == recipe_id), None)
+    if not recipe:
+        abort(404)
+
+    base = _public_base()
+    url = f"{base}{url_for('recommendations.recipe_permalink', recipe_id=recipe_id)}"
+    image = f"{base}{recipe['img']}" if recipe['img'] else f"{base}{url_for('static', filename='images/Logo.png')}"
+    desc = recipe['d']
+    nu = recipe.get('nu')
+    bits = [recipe['df']['l'], recipe['tm']]
+    if nu:
+        bits.append(f"about {nu['k']} kcal per serving")
+    og = {'title': f"{recipe['t']} | Perfect Palate", 'description': f"{desc} ({', '.join(bits)})"[:300],
+          'url': url, 'image': image}
+    return render_template('recommendations.html', recipes=recipes, recipes_json=_safe_json(recipes),
+                           tips_json=_safe_json(tip_payload()), og=og, open_recipe=recipe_id)
+
+
+@recommendations_bp.route('/tips')
+def cooking_tips():
+    """Cooking tips and techniques library."""
+    groups = [('safety', 'Food safety'), ('technique', 'Techniques'), ('kenyan', 'Kenyan kitchen'), ('flavour', 'Flavour')]
+    grouped = [(label, [t for t in TIPS if t['kind'] == key]) for key, label in groups]
+    return render_template('tips.html', groups=grouped)
 
 @recommendations_bp.route('/search', methods=['GET'])
 def search():

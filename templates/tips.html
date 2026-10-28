@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfect Palate - Cooking tips and techniques</title>
+  <meta name="description" content="Food-safety rules, techniques and Kenyan kitchen know-how from Perfect Palate.">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--b:#426e86;--bd:#2a4d63;--bl:rgba(66,110,134,.08);--a:#e2ba2e;--ad:#b8941f;--tx:#1c2b35;--mu:#566670;--off:#faf8f4;--line:rgba(66,110,134,.16);--warn:#8a3b12;--warnbg:rgba(180,80,20,.08)}
+body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off);line-height:1.55}
+::selection{background:rgba(226,186,46,.35)}
+a{color:var(--b)}
+:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.nav{background:var(--b);min-height:56px;display:flex;align-items:center;padding:.4rem 1.8rem;gap:.8rem;flex-wrap:wrap}
+.nav-lt{font-family:'Cormorant Garamond',serif;font-size:1.08rem;font-weight:600;color:#fff;letter-spacing:.8px;text-decoration:none}
+.nav-links{display:flex;gap:.1rem;margin-left:auto;flex-wrap:wrap}
+.nav-links a{font-size:.68rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.82);text-decoration:none;padding:.5rem .8rem;border-radius:6px}
+.nav-links a:hover,.nav-links a[aria-current]{color:var(--a);background:rgba(226,186,46,.1)}
+.wrap{max-width:860px;margin:0 auto;padding:2.4rem 1.4rem 4rem}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,2.9rem);font-weight:600;line-height:1.05;color:var(--bd);text-wrap:balance}
+.lede{color:var(--mu);font-size:.92rem;margin-top:.6rem;max-width:60ch}
+.filters{display:flex;flex-wrap:wrap;gap:.4rem;margin:1.6rem 0 .4rem}
+.filters button{font-family:'Syne',sans-serif;font-size:.74rem;font-weight:700;padding:.5rem 1rem;border-radius:50px;border:1.5px solid var(--line);background:#fff;color:var(--mu);cursor:pointer;transition:background-color .15s,color .15s,border-color .15s}
+.filters button:hover{border-color:var(--b);color:var(--b)}
+.filters button[aria-pressed="true"]{background:var(--b);border-color:var(--b);color:#fff}
+section{padding:1.6rem 0;border-top:1px solid var(--line);margin-top:1.2rem}
+section h2{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;margin-bottom:.9rem}
+.tip{padding:.95rem 0;border-bottom:1px solid rgba(66,110,134,.09);max-width:68ch}
+.tip:last-child{border-bottom:none}
+.tip h3{font-size:.95rem;font-weight:800;line-height:1.3;color:var(--tx)}
+.tip p{font-size:.9rem;color:#33444e;margin-top:.25rem}
+.safety h3::before{content:"Safety";display:inline-block;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;background:var(--warnbg);color:var(--warn);padding:.12rem .5rem;border-radius:20px;margin-right:.55rem;vertical-align:.1em}
+.src{margin-top:2rem;font-size:.78rem;color:var(--mu);max-width:68ch}
+[hidden]{display:none!important}
+@media (max-width:560px){.nav{padding:.4rem 1rem}}
+</style>
+
+<nav class="nav" aria-label="Main">
+  <a class="nav-lt" href="{{ url_for('homepage') }}">Perfect Palate</a>
+  <div class="nav-links">
+    {% if session.user_id %}<a href="{{ url_for('dashboard') }}">Dashboard</a>{% endif %}
+    <a href="{{ url_for('recommendations.recommendations') }}">Recipes</a>
+    {% if session.user_id %}<a href="{{ url_for('meal_planner.meal_planner') }}">Meal Plan</a><a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>{% endif %}
+    <a href="{{ url_for('recommendations.cooking_tips') }}" aria-current="page">Tips</a>
+    {% if session.user_id %}<a href="{{ url_for('profile') }}">Profile</a>{% else %}<a href="{{ url_for('sign_in') }}">Sign in</a>{% endif %}
+  </div>
+</nav>
+
+<main class="wrap">
+  <h1>Cooking tips and techniques</h1>
+  <p class="lede">Short, practical rules for safer and tastier cooking. The same tips appear on the recipes they apply to.</p>
+
+  <div class="filters" role="group" aria-label="Filter tips">
+    <button type="button" data-g="all" aria-pressed="true">All</button>
+    {% for label, tips in groups %}<button type="button" data-g="{{ loop.index0 }}" aria-pressed="false">{{ label }}</button>{% endfor %}
+  </div>
+
+  {% for label, tips in groups %}
+  <section data-g="{{ loop.index0 }}" aria-labelledby="g{{ loop.index0 }}">
+    <h2 id="g{{ loop.index0 }}">{{ label }}</h2>
+    {% for t in tips %}
+    <article class="tip {{ 'safety' if t.kind == 'safety' }}" id="{{ t.id }}">
+      <h3>{{ t.title }}</h3>
+      <p>{{ t.text }}</p>
+    </article>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  <p class="src">Safe-temperature figures follow the US government's foodsafety.gov chart. Guidance on kidney beans, cassava and cooked rice follows university-extension and food-standards agency advice. This is general information, not a substitute for advice from a health professional.</p>
+</main>
+
+<script>
+document.querySelectorAll('.filters button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var g = btn.dataset.g;
+    document.querySelectorAll('.filters button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+    document.querySelectorAll('main section').forEach(function (sec) { sec.hidden = !(g === 'all' || sec.dataset.g === g); });
+  });
+});
+</script>
+</body>
+</html>

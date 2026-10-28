@@ -45,6 +45,10 @@ The application will be available at `http://localhost:5000`
 - **database.py** - SQLite database initialization and connection helpers
 - **recommendations.py** - Recipe recommendations, search, and filtering blueprint
 - **meal_planner.py** - Meal planning and favorites blueprint
+- **nutrition.py** - Per-serving nutrition estimates from ingredient lists
+- **difficulty.py** - Easy / Medium / Hard rating derived from steps, ingredients and techniques
+- **tips.py** - Cooking tips, techniques and food-safety advice, matched to recipes
+- **test_enhancements.py** - Tests for the features above
 - **templates/** - Jinja2 HTML templates
 - **static/** - CSS, JavaScript, and image assets
 - **Dataset/** - Recipe CSV data and recipe images
@@ -59,6 +63,20 @@ The application will be available at `http://localhost:5000`
 - Recipe favorites management
 - Automated shopping list generation
 - Cook Mode for hands-free recipe viewing
+- **Profile customisation** (`/profile`): display name, bio, avatar and colour, cooking level, optional daily calorie goal, password change
+- **Nutritional information**: estimated calories, protein, carbs, sugars, fat, fibre and sodium per serving, with % daily value
+- **Recipe difficulty levels**: Easy / Medium / Hard badges, a difficulty filter and a "For your level" filter
+- **Cooking tips and techniques**: recipe-specific tips (food safety first) on each recipe and in Cook Mode, plus a library at `/recipes/tips`
+- **Social sharing**: shareable recipe links (`/recipes/recipe/<id>`) with link-preview tags, WhatsApp, X, Facebook, copy link and the device share sheet
+
+## How the new data is produced
+
+The recipe dataset has no nutrition, difficulty or servings columns, so these are **derived**, and labelled that way in the app:
+
+- **Nutrition** is estimated by parsing each ingredient line, converting it to grams and multiplying by per-100 g reference values (USDA FoodData Central style, typed into `nutrition.py`). Servings come from a category default, not the source recipe. When too little of the ingredient list can be matched (under 60%), or a large ingredient is unrecognised, no estimate is shown. Oil "for frying" and salt "to taste" are not counted. It is general information, not medical advice.
+- **Difficulty** is the sum of a step-count band, an ingredient-count band and the number of technique keywords (kneading, deep frying, folding, ...). Each recipe lists the reasons.
+- **Duplicate recipe IDs**: the CSV reuses 34 IDs. The first recipe keeps its ID; later ones are given new IDs above the file's maximum, so favourites saved against a reused ID now point at the first recipe only.
+- Existing databases are upgraded in place on startup (new profile columns on `users`).
 
 ## Bug Fix Log
 
@@ -70,8 +88,6 @@ The application will be available at `http://localhost:5000`
 
 ## Future Enhancements
 
-- User profile customization
-- Nutritional information display
-- Recipe difficulty levels
-- Cooking tips and techniques
-- Social sharing features
+- Servings scaling and a nutrition column in the dataset
+- Per-user ratings and reviews
+- Profile photo uploads
