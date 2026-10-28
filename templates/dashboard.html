@@ -230,7 +230,7 @@
         </div>
 
         <div class="feat-card" id="featCard">
-        <div class="feat-img"{% if featured_recipe and featured_recipe.img %} style="background-image:url('{{ featured_recipe.img }}');background-size:cover;background-position:center"{% endif %}>
+        <div class="feat-img"{% if featured_recipe and featured_recipe.img %} style="background-image:url('{{ featured_recipe.img }}?w=960');background-size:cover;background-position:center"{% endif %}>
             {% if not featured_recipe or not featured_recipe.img %}{{ featured_recipe.em if featured_recipe else '🍽️' }}{% endif %}
             <div class="feat-grain"></div>
             <div class="feat-overlay"></div>
@@ -361,7 +361,7 @@
         <div class="recent-cards">
             {% for r in recommended_recipes %}
             <div class="mini-card" style="position:relative" onclick="window.location.href='{{ url_for('recommendations.recommendations') }}'">
-            <div class="mini-img"{% if r.img %} style="background-image:url('{{ r.img }}');background-size:cover;background-position:center"{% else %} style="background:{{ r.g }}"{% endif %}>{% if not r.img %}{{ r.em }}{% endif %}</div>
+            <div class="mini-img"{% if r.img %} style="background-image:url('{{ r.img }}?w=480');background-size:cover;background-position:center"{% else %} style="background:{{ r.g }}"{% endif %}>{% if not r.img %}{{ r.em }}{% endif %}</div>
             <div class="mini-body">
                 <div class="mini-cat">{{ r.c }}</div>
                 <div class="mini-title">{{ r.t }}</div>

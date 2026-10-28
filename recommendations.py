@@ -218,7 +218,7 @@ def recipe_permalink(recipe_id):
 
     base = _public_base()
     url = f"{base}{url_for('recommendations.recipe_permalink', recipe_id=recipe_id)}"
-    image = f"{base}{recipe['img']}" if recipe['img'] else f"{base}{url_for('static', filename='images/Logo.png')}"
+    image = f"{base}{recipe['img']}?w=960" if recipe['img'] else f"{base}{url_for('static', filename='images/Logo.png')}"
     desc = recipe['d']
     nu = recipe.get('nu')
     bits = [recipe['df']['l'], recipe['tm']]
@@ -404,14 +404,41 @@ def personalized_recipes():
     )
     return jsonify({'has_preferences': True, 'recipes': filtered, 'preferences': prefs})
 
+IMAGE_WIDTHS = (480, 960)   # whitelist so the cache can't be filled with arbitrary sizes
+IMAGE_CACHE_SECONDS = 60 * 60 * 24 * 7
+
+
+def _resized_image(image_path, width):
+    """Return the path of a cached WebP copy of the image no wider than `width` (built once)."""
+    cache_dir = os.path.join(current_app.instance_path, 'image_cache')
+    os.makedirs(cache_dir, exist_ok=True)
+    stem = os.path.splitext(os.path.basename(image_path))[0]
+    out = os.path.join(cache_dir, f'{stem}.{width}.webp')
+    if not os.path.exists(out) or os.path.getmtime(out) < os.path.getmtime(image_path):
+        from PIL import Image
+        with Image.open(image_path) as im:
+            im = im.convert('RGB')
+            if im.width > width:
+                im.thumbnail((width, width * 4))
+            im.save(out + '.tmp', 'WEBP', quality=80, method=4)
+        os.replace(out + '.tmp', out)
+    return out
+
+
 @recommendations_bp.route('/image/<path:filename>')
 def get_recipe_image(filename):
-    """Serve a recipe image straight from the dataset's Recipe images folder"""
+    """Serve a recipe image from the dataset. ?w=480 or ?w=960 returns a smaller cached WebP."""
     safe_name = os.path.basename(filename)
     image_path = os.path.join(IMAGE_DIR, safe_name)
 
     if os.path.exists(image_path):
-        return send_file(image_path)
+        width = request.args.get('w', type=int)
+        if width in IMAGE_WIDTHS:
+            try:
+                return send_file(_resized_image(image_path, width), mimetype='image/webp', max_age=IMAGE_CACHE_SECONDS)
+            except Exception:
+                current_app.logger.exception('Could not resize %s; serving the original', safe_name)
+        return send_file(image_path, max_age=IMAGE_CACHE_SECONDS)
     return send_file('static/images/icon.png', mimetype='image/png')
 
 @recommendations_bp.route('/cook-mode/<int:recipe_id>')

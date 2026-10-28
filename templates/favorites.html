@@ -307,7 +307,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
         const tagH=r.tags.map(t=>`<span class="fc-tag ${t}">${TAG_L[t]}</span>`).join('');
         el.innerHTML=`
         <div class="fc-img">
-            <div class="fc-img-bg" style="${r.img?`background-image:url('${r.img}');background-size:cover;background-position:center`:`background:${r.g}`}">${r.img?'':r.em}</div>
+            <div class="fc-img-bg" style="${r.img?`background-image:url('${r.img}?w=480');background-size:cover;background-position:center`:`background:${r.g}`}">${r.img?'':r.em}</div>
             <div class="fc-grad"></div>
             <div class="fc-num">0${i+1}</div>
             <div class="fc-actions-top">
@@ -357,7 +357,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
     function openDetail(id){
     const r=RX.find(x=>x.id===id);if(!r)return;
     const detEl=document.getElementById('detEmoji');
-    if(r.img){detEl.textContent='';detEl.style.backgroundImage=`url('${r.img}')`;detEl.style.backgroundSize='cover';detEl.style.backgroundPosition='center';}
+    if(r.img){detEl.textContent='';detEl.style.backgroundImage=`url('${r.img}?w=960')`;detEl.style.backgroundSize='cover';detEl.style.backgroundPosition='center';}
     else{detEl.textContent=r.em;detEl.style.backgroundImage='';detEl.style.background=r.g;}
     document.getElementById('detCat').textContent=r.c;
     document.getElementById('detTitle').textContent=r.t;

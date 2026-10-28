@@ -292,6 +292,24 @@ class SharingAndPagesTest(AppTestCase):
         self.assertIn('id="svUp"', html)
         self.assertIn('is a guess based on its category', html)
 
+    def test_images_are_resized_and_cached(self):
+        from recommendations import load_recipes
+        r = next(x for x in load_recipes() if x['img'])
+        full = self.client.get(r['img'])
+        small = self.client.get(r['img'] + '?w=480')
+        self.assertEqual(small.status_code, 200)
+        self.assertEqual(small.mimetype, 'image/webp')
+        self.assertLessEqual(len(small.data), len(full.data))
+        self.assertIn('max-age', small.headers.get('Cache-Control', ''))
+        # sizes outside the whitelist fall back to the original rather than filling the cache
+        self.assertEqual(self.client.get(r['img'] + '?w=7').mimetype, full.mimetype)
+
+    def test_homepage_does_not_inline_frames(self):
+        html = self.client.get('/').get_data(as_text=True)
+        self.assertLess(len(html), 100_000)
+        self.assertIn('/static/frames/f00.webp', html)
+        self.assertNotIn('base64,', html)
+
 
 if __name__ == '__main__':
     unittest.main()

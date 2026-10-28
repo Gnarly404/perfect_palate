@@ -493,7 +493,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         const tagH=r.tg.map(t=>`<span class="pp-ctag ${t}">${TAG_L[t]}</span>`).join('');
         d.innerHTML=`
         <div class="pp-cimg">
-            <div class="pp-cimg-bg" style="${r.img?`background-image:url('${r.img}');background-size:cover;background-position:center`:`background:${r.g}`}">${r.img?'':r.em}</div>
+            <div class="pp-cimg-bg" style="${r.img?`background-image:url('${r.img}?w=480');background-size:cover;background-position:center`:`background:${r.g}`}">${r.img?'':r.em}</div>
             <div class="pp-cimg-grad"></div>
             <div class="pp-cnum">0${i+1}</div>
             <div class="pp-ctags">${tagH}</div>
@@ -578,7 +578,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     const r=FULL_RX.find(x=>x.id===id);if(!r)return;
     currentReviewRecipeId=id;
     const dtEl=document.getElementById('dtEmoji');
-    if(r.img){dtEl.textContent='';dtEl.style.backgroundImage=`url('${r.img}')`;dtEl.style.backgroundSize='cover';dtEl.style.backgroundPosition='center';}
+    if(r.img){dtEl.textContent='';dtEl.style.backgroundImage=`url('${r.img}?w=960')`;dtEl.style.backgroundSize='cover';dtEl.style.backgroundPosition='center';}
     else{dtEl.textContent=r.em;dtEl.style.backgroundImage='';dtEl.style.background=r.g;}
     document.getElementById('dtCat').textContent=r.c;
     document.getElementById('dtTitle').textContent=r.t;
@@ -692,7 +692,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     const steps=r.st.split(/\d+\.\s+/).filter(Boolean);
     const ings=r.ing.split(',').map(i=>i.split('(')[0].trim().toLowerCase());
     let html=`<div class="pp-cook-rcard">
-        <div class="pp-cook-thumb"${r.img?` style="background-image:url('${r.img}');background-size:cover;background-position:center"`:''}>${r.img?'':r.em}</div>
+        <div class="pp-cook-thumb"${r.img?` style="background-image:url('${r.img}?w=480');background-size:cover;background-position:center"`:''}>${r.img?'':r.em}</div>
         <div><div class="pp-cook-rtitle">${r.t}</div>
         <div class="pp-cook-rmeta">${r.c} · ${r.tm} · ${r.sv} servings</div>
         <div class="pp-cook-tags">${r.tg.map(t=>`<span class="pp-cook-tag">${TAG_L[t]}</span>`).join('')}</div></div></div>`;

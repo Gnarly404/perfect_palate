@@ -113,6 +113,14 @@ def inject_profile():
     return {'me': get_user_profile(user_id) if user_id else None}
 
 
+# Compress HTML/JSON/CSS/JS responses (the recipe list embedded in /recipes/ is ~600 KB of JSON).
+try:
+    from flask_compress import Compress
+    Compress(app)
+except ImportError:  # optional: the app still runs, just without compression
+    pass
+
+
 @app.context_processor
 def inject_recipe_total():
     """Real size of the recipe dataset, so pages never advertise a stale hardcoded count."""
