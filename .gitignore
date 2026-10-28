@@ -22,3 +22,6 @@ Thumbs.db
 
 # Database
 *.db
+
+# Server-side session files (generated at runtime)
+flask_session/
