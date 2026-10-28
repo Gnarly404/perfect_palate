@@ -5,9 +5,9 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
+import bcrypt
 import database
 from app import app
-from werkzeug.security import check_password_hash
 
 
 class PasswordRecoveryEndpointsTest(unittest.TestCase):
@@ -83,7 +83,8 @@ class PasswordRecoveryEndpointsTest(unittest.TestCase):
             ('user@example.com',),
         ).fetchone()['password_hash']
         conn.close()
-        self.assertTrue(check_password_hash(password_hash, 'new-password'))
+        self.assertTrue(password_hash.startswith('$2'))
+        self.assertTrue(bcrypt.checkpw(b'new-password', password_hash.encode('ascii')))
 
         reused_response = self.client.post(
             f'/reset-password/{token}',
