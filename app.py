@@ -60,6 +60,13 @@ def inject_profile():
     return {'me': get_user_profile(user_id) if user_id else None}
 
 
+@app.context_processor
+def inject_recipe_total():
+    """Real size of the recipe dataset, so pages never advertise a stale hardcoded count."""
+    from recommendations import load_recipes
+    return {'recipe_total': len(load_recipes())}
+
+
 def send_password_reset_email(to_email, reset_link):
     """Deliver a password reset email through the configured SMTP server."""
     host = os.getenv('SMTP_HOST', '').strip()

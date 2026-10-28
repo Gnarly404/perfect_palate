@@ -157,6 +157,11 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
 .pp-nut tr.sub th{padding-left:1rem;font-weight:500;color:var(--mu)}
 .pp-nut thead th{font-size:.62rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu)}
 .pp-nut thead th:not(:first-child){text-align:right}
+.pp-sv{display:flex;align-items:center;gap:.5rem;margin:0 0 .7rem;font-size:.8rem;color:var(--mu)}
+.pp-sv button{min-width:32px;min-height:32px;border:1px solid var(--bd,#d8d2c4);background:transparent;border-radius:8px;font:inherit;font-size:1rem;cursor:pointer;color:inherit}
+.pp-sv button:disabled{opacity:.4;cursor:default}
+.pp-sv output{min-width:1.6rem;text-align:center;font-weight:600;color:var(--b)}
+.pp-sv .pp-sv-reset{font-size:.72rem;padding:0 .6rem;margin-left:.3rem}
 .pp-nut-note{font-size:.74rem;color:var(--mu);margin-top:.7rem;line-height:1.55}
 .pp-nut-goal{font-size:.82rem;font-weight:700;color:var(--bd);margin-top:.7rem}
 .pp-tips{list-style:none;display:flex;flex-direction:column;gap:.85rem}
@@ -559,16 +564,23 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     }
 
     function pct(v,dv){return dv?Math.round(v/dv*100)+'%':'';}
-    function renderNutrition(r){
+    function renderNutrition(r,servings){
     const box=document.getElementById('dtNut'),n=r.nu;
     if(!n){box.innerHTML='<p class="pp-nut-note">Nutrition information is not available for this recipe yet, because too few of its ingredients could be matched to reference values.</p>';return;}
+    const sv=Math.min(24,Math.max(1,servings||n.sv));
+    const f=n.sv/sv,sc=(v,d)=>{const x=v*f;return d?Math.round(x*10)/10:Math.round(x);};
     const row=(label,val,unit,dv,sub)=>`<tr class="${sub?'sub':''}"><th scope="row">${label}</th><td>${val}${unit}</td><td class="dv">${dv?pct(val,dv):''}</td></tr>`;
-    let h=`<table class="pp-nut"><caption class="sr-only">Estimated nutrition per serving</caption><thead><tr><th scope="col">Amount</th><th scope="col">Per serving</th><th scope="col">% daily value</th></tr></thead><tbody>
-      ${row('Calories',n.k,' kcal',DV.k)}${row('Protein',n.p,' g',DV.p)}${row('Carbohydrate',n.c,' g',DV.c)}${row('of which sugars',n.s,' g',0,true)}
-      ${row('Fat',n.f,' g',DV.f)}${row('Fibre',n.fi,' g',DV.fi)}${row('Sodium',n.na,' mg',DV.na)}</tbody></table>`;
-    if(ME&&ME.goal)h+=`<p class="pp-nut-goal">One serving is about ${Math.round(n.k/ME.goal*100)}% of your ${ME.goal} kcal daily goal.</p>`;
-    h+=`<p class="pp-nut-note">An estimate for about ${n.sv} servings, worked out from the ingredient list using USDA reference values. ${Math.round(n.cov*100)}% of the ingredients could be counted${n.left&&n.left.length?'; not counted: '+esc(n.left.join(', ')):''}. ${n.notes&&n.notes.length?esc(n.notes.join(' ')):''} Actual values depend on brands, cuts and portions. This is general information, not medical advice.</p>`;
+    let h=`<div class="pp-sv"><span id="svLbl">Servings</span><button type="button" id="svDn" aria-label="Fewer servings"${sv<=1?' disabled':''}>−</button><output aria-labelledby="svLbl" id="svNum">${sv}</output><button type="button" id="svUp" aria-label="More servings"${sv>=24?' disabled':''}>+</button>${sv!==n.sv?'<button type="button" id="svReset" class="pp-sv-reset">Reset</button>':''}</div>
+    <table class="pp-nut"><caption class="sr-only">Estimated nutrition per serving, for ${sv} servings</caption><thead><tr><th scope="col">Amount</th><th scope="col">Per serving</th><th scope="col">% daily value</th></tr></thead><tbody>
+      ${row('Calories',sc(n.k),' kcal',DV.k)}${row('Protein',sc(n.p,1),' g',DV.p)}${row('Carbohydrate',sc(n.c,1),' g',DV.c)}${row('of which sugars',sc(n.s,1),' g',0,true)}
+      ${row('Fat',sc(n.f,1),' g',DV.f)}${row('Fibre',sc(n.fi,1),' g',DV.fi)}${row('Sodium',sc(n.na),' mg',DV.na)}</tbody></table>`;
+    if(ME&&ME.goal)h+=`<p class="pp-nut-goal">One serving is about ${Math.round(sc(n.k)/ME.goal*100)}% of your ${ME.goal} kcal daily goal.</p>`;
+    h+=`<p class="pp-nut-note">The recipe does not say how many it serves, so ${n.sv} servings is a guess based on its category. Change the number above to match how you divide it. Values come from the ingredient list and USDA-style reference values typed in by hand. ${Math.round(n.cov*100)}% of the ingredients could be counted${n.left&&n.left.length?'; not counted: '+esc(n.left.join(', ')):''}. ${n.notes&&n.notes.length?esc(n.notes.join(' ')):''} Actual values depend on brands, cuts and portions. This is general information, not medical advice.</p>`;
     box.innerHTML=h;
+    const go=v=>{renderNutrition(r,v);const el=document.getElementById(v>sv?'svUp':v<sv?'svDn':'svReset');if(el&&!el.disabled)el.focus();};
+    document.getElementById('svDn').onclick=()=>go(sv-1);
+    document.getElementById('svUp').onclick=()=>go(sv+1);
+    const rs=document.getElementById('svReset');if(rs)rs.onclick=()=>go(n.sv);
     }
     function tipHtml(id){const t=TIPS[id];return t?`<li><b><span class="pp-tipk ${t.k}">${t.k==='safety'?'Safety':t.k==='kenyan'?'Kenyan kitchen':t.k==='flavour'?'Flavour':'Technique'}</span>${esc(t.t)}</b><span>${esc(t.x)}</span></li>`:'';}
     function renderTips(r){document.getElementById('dtTips').innerHTML=(r.tips||[]).map(tipHtml).join('');}

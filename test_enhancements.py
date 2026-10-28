@@ -272,6 +272,26 @@ class SharingAndPagesTest(AppTestCase):
         self.assertRegex(html, r'<label for="siEmail">')
         self.assertIn('class="sr-only"', html)
 
+    def test_no_hardcoded_recipe_count_or_head_headings(self):
+        from recommendations import load_recipes
+        total = len(load_recipes())
+        self.assertIn(f'{total} curated recipes', self.client.get('/sign-in').get_data(as_text=True))
+        self.signup_and_login()
+        self.assertIn(f'sv1\'),{total},900', self.client.get('/dashboard').get_data(as_text=True))
+        prefs = self.client.get('/preferences').get_data(as_text=True)
+        self.assertIn(f'TOTAL_RECIPES={total}', prefs)
+        self.assertNotIn('>196<', prefs)
+        import re
+        for url in ('/dashboard', '/preferences', '/planner/', '/planner/favorites', '/planner/shopping-list'):
+            html = self.client.get(url).get_data(as_text=True)
+            head = html.split('</head>')[0]
+            self.assertNotIn('<h2', head, url)
+
+    def test_nutrition_panel_has_servings_stepper(self):
+        html = self.client.get('/recipes/').get_data(as_text=True)
+        self.assertIn('id="svUp"', html)
+        self.assertIn('is a guess based on its category', html)
+
 
 if __name__ == '__main__':
     unittest.main()
