@@ -252,6 +252,12 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
 .pp-cook-nav.nxt:hover{background:var(--b);color:#fff;border-color:var(--b)}
 
 /* TOAST */
+.pp-top{position:fixed;right:max(1rem,env(safe-area-inset-right));bottom:calc(1.1rem + env(safe-area-inset-bottom));z-index:55;display:flex;align-items:center;gap:.4rem;min-height:48px;padding:0 1.1rem 0 .9rem;border:none;border-radius:999px;background:var(--a);color:#1d2b33;font:700 .8rem 'Syne',sans-serif;letter-spacing:.04em;cursor:pointer;box-shadow:0 10px 24px -8px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.08);opacity:0;transform:translateY(12px);transition:opacity .2s,transform .2s,filter .15s}
+.pp-top.show{opacity:1;transform:none}
+.pp-top:hover{filter:brightness(1.06)}
+.pp-top:focus-visible{outline:2px solid var(--b);outline-offset:3px}
+@media (max-width:520px){.pp-top{padding:0;width:48px;justify-content:center}.pp-top span{display:none}}
+@media (prefers-reduced-motion:reduce){.pp-top{transition:none}}
 .pp-toasts{position:absolute;bottom:1.2rem;right:1.2rem;z-index:100;display:flex;flex-direction:column;gap:.4rem}
 .pp-toast{background:var(--b);color:#fff;padding:.6rem 1rem;border-radius:8px;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;box-shadow:0 6px 20px rgba(42,77,99,.3);max-width:220px;animation:tin .3s cubic-bezier(.34,1.56,.64,1)}
 @keyframes tin{from{opacity:0;transform:translateX(20px) scale(.9)}to{opacity:1;transform:none}}
@@ -449,6 +455,11 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
   <div class="pp-toasts" id="toasts"></div>
 </div>
 
+<button type="button" class="pp-top" id="ppTop" aria-label="Back to top" hidden>
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  <span>Top</span>
+</button>
+
 <script>
     gsap.registerPlugin(ScrollTrigger);
 
@@ -553,7 +564,22 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     c.style.display=v==='cook'?'flex':'none';
     if(v==='recipes'){ScrollTrigger.refresh();if(location.pathname.indexOf('/recipes/recipe/')===0)history.replaceState(null,'','/recipes/');}
     if(v!=='cook'){Object.values(timers).forEach(clearInterval);timers={};}
+    updateTop();
     }
+
+    // Back to top: appears once you have scrolled a couple of screens down the recipe list
+    const topBtn=document.getElementById('ppTop');
+    let topTick=false;
+    function updateTop(){
+    const on=document.getElementById('vRecipes').style.display!=='none'&&window.scrollY>window.innerHeight*1.2;
+    if(on){topBtn.hidden=false;requestAnimationFrame(()=>topBtn.classList.add('show'));}
+    else{topBtn.classList.remove('show');setTimeout(()=>{if(!topBtn.classList.contains('show'))topBtn.hidden=true;},220);}
+    }
+    window.addEventListener('scroll',()=>{if(topTick)return;topTick=true;requestAnimationFrame(()=>{topTick=false;updateTop();});},{passive:true});
+    topBtn.addEventListener('click',()=>{
+    const calm=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({top:0,behavior:calm?'auto':'smooth'});
+    });
 
     let currentReviewRecipeId=null;
     function openDetail(id){

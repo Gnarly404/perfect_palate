@@ -338,6 +338,20 @@ class SharingAndPagesTest(AppTestCase):
         self.assertNotIn('152', html)
         self.assertNotIn('Steps guided per recipe', html)
 
+    def test_homepage_buttons_have_no_underline_and_text_is_readable(self):
+        import re
+        html = self.client.get('/').get_data(as_text=True)
+        for cls in ('.btn-gold', '.btn-outline'):
+            rule = re.search(re.escape(cls) + r' \{[^}]*\}', html).group(0)
+            self.assertIn('text-decoration: none', rule, cls)
+        self.assertIn('.phase::before', html)                 # shade behind the hero text
+        self.assertIn('min(520px, calc(100vw - 48px))', html)  # intro block can't overflow a phone
+
+    def test_recipes_page_has_back_to_top(self):
+        html = self.client.get('/recipes/').get_data(as_text=True)
+        self.assertIn('id="ppTop"', html)
+        self.assertIn('aria-label="Back to top"', html)
+
 
 if __name__ == '__main__':
     unittest.main()
