@@ -546,9 +546,9 @@ function confirmDeleteAccount(){
 }
 
 const tl=gsap.timeline({defaults:{ease:'power3.out'}});
-tl.to('#pgEye',{opacity:1,x:0,duration:.65,delay:.1,from:{x:-20,opacity:0}})
-  .to('#pgTitle',{opacity:1,y:0,duration:.8,from:{y:25,opacity:0}},'-=.4')
-  .to('#pgSub',{opacity:1,y:0,duration:.6,from:{y:15,opacity:0}},'-=.4')
+tl.fromTo('#pgEye',{x:-20,opacity:0},{opacity:1,x:0,duration:.65,delay:.1})
+  .fromTo('#pgTitle',{y:25,opacity:0},{opacity:1,y:0,duration:.8},'-=.4')
+  .fromTo('#pgSub',{y:15,opacity:0},{opacity:1,y:0,duration:.6},'-=.4')
   .to('#sidebar',{opacity:1,x:0,duration:.7},'-=.3')
   .to('#prefMain',{opacity:1,y:0,duration:.6},'-=.5')
   .from('.pref-section',{opacity:0,y:20,stagger:.1,duration:.5},'-=.3')

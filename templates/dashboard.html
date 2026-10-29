@@ -388,12 +388,8 @@
     .to('.action-card',{opacity:1,y:0,stagger:.06,duration:.4},'-=.3')
     .to('#mealSec',{y:0,opacity:1,duration:.5},'-=.15')
     .to('#recSec',{y:0,opacity:1,duration:.5},'-=.35')
-    .to('.meal-slot',{x:0,opacity:1,stagger:.08,duration:.38,
-        from:{x:-15,opacity:0}
-    },'-=.3')
-    .to('.mini-card',{y:0,opacity:1,stagger:.07,duration:.35,
-        from:{y:12,opacity:0}
-    },'-=.4');
+    .fromTo('.meal-slot',{x:-15,opacity:0},{x:0,opacity:1,stagger:.08,duration:.38},'-=.3')
+    .fromTo('.mini-card',{y:12,opacity:0},{y:0,opacity:1,stagger:.07,duration:.35},'-=.4');
 
     gsap.set('.action-card',{opacity:0,y:16});
     gsap.set('.meal-slot',{x:-15,opacity:0});

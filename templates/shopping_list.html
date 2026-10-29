@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <title>Perfect Palate - Shopping List</title>
 <style>.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}</style>
 </head>
@@ -28,7 +27,7 @@
     .nav-links a{font-size:.65rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.6);text-decoration:none;padding:.38rem .75rem;border-radius:6px;transition:.18s}
     .nav-links a.on,.nav-links a:hover{color:var(--a);background:rgba(226,186,46,.1)}
 
-    .pg-head{padding:1.8rem 1.8rem 0;display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;opacity:0}
+    .pg-head{padding:1.8rem 1.8rem 0;display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem}
     .pg-left{}
     .pg-eye{font-size:.62rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--a);display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
     .pg-eye::before{content:'';display:block;width:24px;height:2px;background:var(--a)}
@@ -44,7 +43,7 @@
     .prog-sub{font-family:'Syne',sans-serif;font-size:.5rem;font-weight:700;fill:var(--mu);dominant-baseline:central;letter-spacing:.5px}
     .prog-label{font-size:.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);text-align:center}
 
-    .add-bar{margin:1.4rem 1.8rem;background:var(--card);border-radius:14px;padding:.7rem .8rem;display:flex;gap:.6rem;align-items:center;box-shadow:var(--sh);border:1.5px solid rgba(66,110,134,.1);opacity:0}
+    .add-bar{margin:1.4rem 1.8rem;background:var(--card);border-radius:14px;padding:.7rem .8rem;display:flex;gap:.6rem;align-items:center;box-shadow:var(--sh);border:1.5px solid rgba(66,110,134,.1)}
     .add-inp{flex:1;border:none;outline:none;background:transparent;font-family:'Syne',sans-serif;font-size:.85rem;color:var(--tx)}
     .add-inp::placeholder{color:rgba(110,126,136,.5)}
     .add-cat{appearance:none;border:1.5px solid rgba(66,110,134,.15);border-radius:50px;padding:.42rem .9rem .42rem .7rem;font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;color:var(--mu);background:var(--off);outline:none;cursor:pointer}
@@ -54,7 +53,7 @@
     .body{padding:0 1.8rem 1rem;display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
     .empty-list{grid-column:1/-1;padding:2rem;text-align:center;color:var(--mu);background:var(--card);border-radius:14px;box-shadow:var(--sh)}
 
-    .cat-section{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:var(--sh);opacity:0;transform:translateY(16px)}
+    .cat-section{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:var(--sh)}
     .cat-head{padding:.8rem 1rem;display:flex;align-items:center;gap:.7rem;border-bottom:1px solid rgba(66,110,134,.07)}
     .cat-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0}
     .cat-produce .cat-icon{background:rgba(45,106,79,.1);color:var(--cp)}
@@ -74,7 +73,7 @@
     .sl-item:hover{background:rgba(66,110,134,.03)}
     .sl-item.done{opacity:.48}
 
-    .cb-wrap{flex-shrink:0;cursor:pointer}
+    .cb-wrap{flex-shrink:0;cursor:pointer;border:0;background:none;padding:0}
     .cb{width:20px;height:20px;border-radius:50%;border:2px solid rgba(66,110,134,.25);display:flex;align-items:center;justify-content:center;transition:.18s;font-size:.6rem;color:transparent}
     .cat-produce .cb.checked{background:var(--cp);border-color:var(--cp);color:#fff}
     .cat-protein .cb.checked{background:var(--cpr);border-color:var(--cpr);color:#fff}
@@ -90,7 +89,7 @@
     .sl-del{background:none;border:none;cursor:pointer;color:rgba(110,126,136,.35);font-size:.7rem;padding:.2rem;border-radius:4px;transition:.18s;flex-shrink:0}
     .sl-del:hover{color:#c0392b;background:rgba(192,57,43,.08)}
 
-    .footer-bar{margin:0 1.8rem 2rem;background:var(--b);border-radius:14px;padding:1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;opacity:0}
+    .footer-bar{margin:0 1.8rem 2rem;background:var(--b);border-radius:14px;padding:1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
     .ft-info{color:#fff}
     .ft-main{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600}
     .ft-sub{font-size:.68rem;opacity:.7;margin-top:.12rem}
@@ -178,6 +177,10 @@
     let nextId={{ items|length + 1 }};
     let items={{ items|tojson }};
 
+    function escapeHtml(value){
+    return String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    }
+
     function updateProgress(){
     const done=items.filter(i=>i.done).length,tot=items.length;
     const pct=tot?done/tot:0;
@@ -212,13 +215,13 @@
         <ul class="items-list">
             ${catItems.map(item=>`
             <li class="sl-item${item.done?' done':''}" id="item-${item.id}">
-                <div class="cb-wrap" onclick="toggleItem(${item.id})">
+                <button class="cb-wrap" type="button" aria-label="Mark ${escapeHtml(item.name)} ${item.done?'not done':'done'}" aria-pressed="${item.done}" onclick="toggleItem(${item.id})">
                 <div class="cb${item.done?' checked':''}"><i class="fa-solid fa-check"></i></div>
-                </div>
+                </button>
                 <div class="sl-info">
-                <div class="sl-name${item.done?' struck':''}">${item.name}</div>
-                <div class="sl-qty">${item.qty}</div>
-                <span class="sl-src">${item.src}</span>
+                <div class="sl-name${item.done?' struck':''}">${escapeHtml(item.name)}</div>
+                <div class="sl-qty">${escapeHtml(item.qty)}</div>
+                <span class="sl-src">${escapeHtml(item.src)}</span>
                 </div>
                 <button class="sl-del" onclick="deleteItem(${item.id})" title="Remove"><i class="fa-solid fa-xmark"></i></button>
             </li>`).join('')}
@@ -232,24 +235,12 @@
     const item=items.find(i=>i.id===id);
     if(!item)return;
     item.done=!item.done;
-    const el=document.getElementById(`item-${id}`);
-    const cb=el.querySelector('.cb');
-    const nm=el.querySelector('.sl-name');
-    if(item.done){
-        gsap.fromTo(cb,{scale:1},{scale:1.35,duration:.14,ease:'power2.out',yoyo:true,repeat:1});
-        setTimeout(()=>{cb.classList.add('checked');nm.classList.add('struck');el.classList.add('done');},120);
-    } else {
-        cb.classList.remove('checked');nm.classList.remove('struck');el.classList.remove('done');
-    }
-    setTimeout(()=>{renderList();},150);
+    renderList();
     }
 
     function deleteItem(id){
-    const el=document.getElementById(`item-${id}`);
-    gsap.to(el,{opacity:0,x:-20,height:0,padding:0,margin:0,duration:.28,ease:'power2.in',onComplete:()=>{
-        items=items.filter(i=>i.id!==id);
-        renderList();toast('Item removed');
-    }});
+    items=items.filter(i=>i.id!==id);
+    renderList();toast('Item removed');
     }
 
     function addItem(){
@@ -261,8 +252,6 @@
     inp.value='';
     renderList();
     toast(`${name} added!`);
-    const newEl=document.getElementById(`item-${nextId-1}`);
-    if(newEl)gsap.from(newEl,{opacity:0,x:-16,duration:.3,ease:'power2.out'});
     }
 
     function clearDone(){
@@ -273,35 +262,56 @@
     }
 
     function shareList(){
+    if(!items.length){toast('Your shopping list is empty.');return;}
     const lines=['produce','protein','pantry','dairy'].flatMap(cat=>{
         const catItems=items.filter(i=>i.cat===cat);
         if(!catItems.length)return[];
-        return [`${CATS[cat].name}:`, ...catItems.map(i=>`  - ${i.name} (${i.qty})${i.done?' ✓':''}`)];
+        return [`${CATS[cat].name}:`, ...catItems.map(i=>`  - ${i.name}${i.qty?` (${i.qty})`:''}${i.done?' ✓':''}`)];
     });
     const text=lines.join('\n');
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-        navigator.clipboard.writeText(text).then(()=>toast('Shopping list copied to clipboard!'))
-        .catch(()=>toast('Could not copy — please copy manually.'));
-    } else {
-        toast('Clipboard not supported in this browser.');
+    if(navigator.share){
+        navigator.share({title:'Shopping list',text}).then(()=>toast('Shopping list shared!')).catch(error=>{
+            if(error.name!=='AbortError')copyList(text);
+        });
+        return;
+    }
+    copyList(text);
+    }
+
+    async function copyList(text){
+    try{
+        if(navigator.clipboard&&navigator.clipboard.writeText){
+            await navigator.clipboard.writeText(text);
+            toast('Shopping list copied to clipboard!');
+            return;
+        }
+    }catch(error){
+        // Fall through to the legacy clipboard API when permission or context blocks the modern API.
+    }
+    try{
+        const textarea=document.createElement('textarea');
+        textarea.value=text;
+        textarea.setAttribute('readonly','');
+        textarea.style.position='fixed';
+        textarea.style.opacity='0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied=document.execCommand('copy');
+        textarea.remove();
+        if(copied)toast('Shopping list copied to clipboard!');
+        else toast('Could not copy the list. Please select and copy it manually.');
+    }catch(error){
+        toast('Could not copy the list. Please select and copy it manually.');
     }
     }
 
     function toast(msg){
     const w=document.getElementById('toastWrap'),el=document.createElement('div');
     el.className='toast';el.textContent=msg;w.appendChild(el);
-    setTimeout(()=>gsap.to(el,{opacity:0,x:12,duration:.22,onComplete:()=>el.remove()}),2400);
+    setTimeout(()=>el.remove(),2600);
     }
 
-    const tl=gsap.timeline({defaults:{ease:'power3.out'}});
-    tl.to('#pgHead',{opacity:1,y:0,duration:.75,delay:.1,from:{y:16,opacity:0}})
-    .to('#addBar',{opacity:1,y:0,duration:.5,from:{y:12,opacity:0}},'-=.3')
-    .to('#footerBar',{opacity:1,y:0,duration:.45,from:{y:10,opacity:0}},'-=.1');
-
     renderList();
-    setTimeout(()=>{
-    gsap.to('.cat-section',{opacity:1,y:0,stagger:.09,duration:.5,ease:'power3.out'});
-    },400);
     </script>
 
 {% include '_footer.html' %}

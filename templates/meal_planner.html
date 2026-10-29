@@ -363,7 +363,7 @@ function openAdd(di,meal){
     const card=document.createElement('div');
     card.className='add-card';
     card.onclick=()=>selectRecipe(r);
-    card.innerHTML=`<div class="add-img" style="background:${r.g}">${r.em}</div>
+    card.innerHTML=`<div class="add-img" style="${r.img?`background-image:url('${r.img}');background-size:cover;background-position:center`:`background:${r.g}`}">${r.img?'':r.em}</div>
       <div class="add-body">
         <div class="add-cat">${r.c}</div>
         <div class="add-name">${r.t}</div>
@@ -424,13 +424,12 @@ function toast(msg){
 }
 
 const tl=gsap.timeline({defaults:{ease:'power3.out'}});
-tl.to('#pgTitles',{opacity:1,y:0,duration:.75,delay:.1,from:{y:20,opacity:0}})
-  .to('#weekNav',{opacity:1,y:0,duration:.55,from:{y:12,opacity:0}},'-=.4')
-  .to('#statsBand',{opacity:1,y:0,duration:.55,from:{y:14,opacity:0}},'-=.3',
-    function(){updateStats();})
+tl.fromTo('#pgTitles',{y:20,opacity:0},{opacity:1,y:0,duration:.75,delay:.1})
+  .fromTo('#weekNav',{y:12,opacity:0},{opacity:1,y:0,duration:.55},'-=.4')
+  .fromTo('#statsBand',{y:14,opacity:0},{opacity:1,y:0,duration:.55},'-=.3')
   .to('#plannerWrap',{opacity:1,duration:.55},'-=.25')
   .from('tbody tr',{opacity:0,x:-12,stagger:.07,duration:.4},'-=.25')
-  .to('#footerCard',{opacity:1,y:0,duration:.45,from:{y:12,opacity:0}},'-=.15');
+  .fromTo('#footerCard',{y:12,opacity:0},{opacity:1,y:0,duration:.45},'-=.15');
 
 gsap.to('.pg-deco',{rotation:360,duration:60,repeat:-1,ease:'none',transformOrigin:'55px 55px'});
 makeWeek(weekStart);

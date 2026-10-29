@@ -131,6 +131,19 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 .snum{min-width:21px;height:21px;border-radius:50%;background:var(--b);color:#fff;font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.12rem}
 .det-foot{padding:1rem 2rem;border-top:1px solid rgba(66,110,134,.1);background:var(--off);display:flex;gap:.75rem}
 
+.meal-modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(20,35,45,.55)}
+.meal-modal[hidden]{display:none}
+.meal-modal-card{width:min(100%,420px);padding:1.5rem;background:var(--card);border-radius:16px;box-shadow:var(--shh)}
+.meal-modal-title{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--bd)}
+.meal-modal-recipe{margin:.25rem 0 1.2rem;color:var(--mu);font-size:.78rem}
+.meal-modal-label{display:block;margin:.8rem 0 .35rem;font-size:.68rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--bd)}
+.meal-modal-select{width:100%;padding:.7rem;border:1px solid rgba(66,110,134,.25);border-radius:8px;background:#fff;color:var(--tx);font:inherit}
+.meal-modal-note{margin-top:.8rem;font-size:.68rem;line-height:1.5;color:var(--mu)}
+.meal-modal-actions{display:flex;justify-content:flex-end;gap:.5rem;margin-top:1.2rem}
+.meal-modal-actions button{border:0;border-radius:50px;padding:.65rem 1rem;font:700 .7rem 'Syne',sans-serif;cursor:pointer}
+.meal-modal-cancel{background:var(--bl);color:var(--bd)}
+.meal-modal-submit{background:var(--b);color:#fff}
+.meal-modal-submit:disabled{opacity:.55;cursor:wait}
 .toast-wrap{position:absolute;bottom:1.2rem;right:1.2rem;display:flex;flex-direction:column;gap:.4rem;z-index:100}
 .toast{background:var(--b);color:#fff;padding:.6rem 1rem;border-radius:8px;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;box-shadow:0 6px 18px rgba(42,77,99,.28);animation:tIn .3s cubic-bezier(.34,1.56,.64,1);max-width:220px}
 .toast.rm{background:#c0392b}
@@ -252,6 +265,29 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
+<div class="meal-modal" id="mealModal" role="dialog" aria-modal="true" aria-labelledby="mealModalTitle" hidden onclick="if(event.target===this)closeAddMeal()">
+  <form class="meal-modal-card" id="mealAddForm" onsubmit="event.preventDefault();addFavoriteToMealPlan()">
+    <h2 class="meal-modal-title" id="mealModalTitle">Add to your meal plan</h2>
+    <p class="meal-modal-recipe" id="mealModalRecipe"></p>
+    <label class="meal-modal-label" for="mealDay">Day</label>
+    <select class="meal-modal-select" id="mealDay" required>
+      <option value="Mon">Monday</option><option value="Tue">Tuesday</option>
+      <option value="Wed">Wednesday</option><option value="Thu">Thursday</option>
+      <option value="Fri">Friday</option><option value="Sat">Saturday</option>
+      <option value="Sun">Sunday</option>
+    </select>
+    <label class="meal-modal-label" for="mealType">Meal</label>
+    <select class="meal-modal-select" id="mealType" required>
+      <option value="breakfast">Breakfast</option><option value="lunch">Lunch</option>
+      <option value="dinner">Dinner</option><option value="snack">Snack</option>
+    </select>
+    <p class="meal-modal-note">This adds the recipe to the selected slot in this week’s plan. If the slot is occupied, you’ll be asked before it is replaced.</p>
+    <div class="meal-modal-actions">
+      <button class="meal-modal-cancel" type="button" onclick="closeAddMeal()">Cancel</button>
+      <button class="meal-modal-submit" id="mealModalSubmit" type="submit">Add recipe</button>
+    </div>
+  </form>
+</div>
 </div>
 
 <script>
@@ -259,6 +295,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 
     const TAG_L={vg:'Vegan',veg:'Vegetarian',gf:'Gluten-Free',sp:'Spicy',bp:'Blood Pressure',dia:'Diabetic-Friendly'};
     let cards=[...RX],activeCat='all';
+    let mealRecipe=null,mealModalTrigger=null;
     const LAYOUTS=['fc w','fc','fc','fc','fc','fc m','fc m'];
 
     function buildGrid(data){
@@ -284,7 +321,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
             <div class="fc-num">0${i+1}</div>
             <div class="fc-actions-top">
             <button class="fc-ibtn fc-heart" title="Remove from favourites" onclick="removeFav(event,${r.id})"><i class="fa-solid fa-heart"></i></button>
-            <button class="fc-ibtn fc-cal" title="Add to meal plan" onclick="event.stopPropagation();toast('Added to meal plan!',false)"><i class="fa-solid fa-calendar-plus"></i></button>
+            <button class="fc-ibtn fc-cal" title="Add to meal plan" aria-label="Add to meal plan" onclick="event.stopPropagation();openAddMeal(${r.id},this)"><i class="fa-solid fa-calendar-plus"></i></button>
             </div>
             <div class="fc-tags">${tagH}</div>
             ${r.w?`<div class="fc-title-over">${r.t}</div>`:''}
@@ -307,6 +344,61 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
     });
     document.getElementById('sbCount').textContent=data.length;
     gsap.fromTo('.fav-card',{y:40,opacity:0},{y:0,opacity:1,duration:.6,stagger:.07,ease:'power3.out'});
+    }
+
+    function openAddMeal(id,trigger){
+    mealRecipe=RX.find(recipe=>recipe.id===id);
+    if(!mealRecipe)return;
+    mealModalTrigger=trigger;
+    document.getElementById('mealModalRecipe').textContent=mealRecipe.t;
+    const weekday=(new Date().getDay()+6)%7;
+    document.getElementById('mealDay').selectedIndex=weekday;
+    const modal=document.getElementById('mealModal');
+    modal.hidden=false;
+    document.getElementById('mealDay').focus();
+    }
+
+    function closeAddMeal(){
+    document.getElementById('mealModal').hidden=true;
+    mealRecipe=null;
+    if(mealModalTrigger&&mealModalTrigger.isConnected)mealModalTrigger.focus();
+    mealModalTrigger=null;
+    }
+
+    async function addFavoriteToMealPlan(){
+    if(!mealRecipe)return;
+    const submit=document.getElementById('mealModalSubmit');
+    submit.disabled=true;
+    try{
+        const now=new Date();
+        now.setDate(now.getDate()-((now.getDay()+6)%7));
+        const week_start_date=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        const planResponse=await fetch('{{ url_for("meal_planner.create_meal_plan") }}',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({week_start_date})
+        });
+        const planData=await planResponse.json();
+        if(!planResponse.ok)throw new Error(planData.error||'Could not load this week’s meal plan.');
+
+        const day=document.getElementById('mealDay').value;
+        const meal=document.getElementById('mealType').value;
+        const occupied=planData.items.find(item=>item.day_of_week===day&&item.meal_type===meal);
+        if(occupied&&!window.confirm('This slot already has a planned recipe. Replace it with this one?'))return;
+
+        const response=await fetch('{{ url_for("meal_planner.add_meal_to_plan") }}',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({meal_plan_id:planData.id,day_of_week:day,meal_type:meal,recipe_id:mealRecipe.id})
+        });
+        const data=await response.json();
+        if(!response.ok)throw new Error(data.error||'Could not add this recipe to your meal plan.');
+        const recipeName=mealRecipe.t;
+        closeAddMeal();
+        toast(`${recipeName} added to ${day}, ${meal}.`);
+    }catch(error){
+        toast(error.message||'Could not add this recipe to your meal plan.',true);
+    }finally{
+        submit.disabled=false;
+    }
     }
 
     function removeFav(e,id){
@@ -385,11 +477,15 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
     setTimeout(()=>gsap.to(el,{opacity:0,x:15,duration:.25,onComplete:()=>el.remove()}),2500);
     }
 
+    document.addEventListener('keydown',event=>{
+        if(event.key==='Escape'&&!document.getElementById('mealModal').hidden)closeAddMeal();
+    });
+
     const tl=gsap.timeline({defaults:{ease:'power3.out'}});
-    tl.to('#pgEye',{opacity:1,x:0,duration:.65,delay:.1,from:{x:-20,opacity:0}})
-    .to('#pgH1',{opacity:1,y:0,duration:.8,from:{y:25,opacity:0}},'-=.4')
-    .to('#statsBand',{opacity:1,y:0,duration:.6,from:{y:16,opacity:0}},'-=.3')
-    .to('#ctrlBar',{opacity:1,y:0,duration:.55,from:{y:14,opacity:0}},'-=.25');
+    tl.fromTo('#pgEye',{x:-20,opacity:0},{opacity:1,x:0,duration:.65,delay:.1})
+    .fromTo('#pgH1',{y:25,opacity:0},{opacity:1,y:0,duration:.8},'-=.4')
+    .fromTo('#statsBand',{y:16,opacity:0},{opacity:1,y:0,duration:.6},'-=.3')
+    .fromTo('#ctrlBar',{y:14,opacity:0},{opacity:1,y:0,duration:.55},'-=.25');
 
     gsap.to('.pg-deco',{rotation:360,duration:65,repeat:-1,ease:'none',transformOrigin:'70px 70px'});
     buildGrid(cards);

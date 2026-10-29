@@ -87,6 +87,7 @@ def meal_planner():
         'em': recipe['em'],
         'tm': int(re.search(r'\d+', recipe['tm']).group()),
         'g': recipe['g'],
+        'img': recipe['img'],
         'ing': recipe['ing'],
     } for recipe in recipes]
     plan_id = _ensure_plan(session['user_id'], week_start)

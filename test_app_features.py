@@ -1,5 +1,7 @@
 import bcrypt
+import json
 import os
+import re
 import tempfile
 import unittest
 
@@ -94,20 +96,60 @@ class ApplicationFeaturesTest(unittest.TestCase):
             'recipe_id': 1,
         })
         self.assertEqual(add_response.status_code, 200)
+        produce_response = self.client.post('/planner/add-meal', json={
+            'meal_plan_id': plan_id,
+            'day_of_week': 'Tue',
+            'meal_type': 'lunch',
+            'recipe_id': 4,
+        })
+        self.assertEqual(produce_response.status_code, 200)
 
         same_plan = self.client.post(
             '/planner/create',
             json={'week_start_date': '2026-10-26'},
         )
         self.assertEqual(same_plan.json['id'], plan_id)
-        self.assertEqual(len(same_plan.json['items']), 1)
+        self.assertEqual(len(same_plan.json['items']), 2)
 
         shopping_response = self.client.get(
             '/planner/shopping-list?week_start_date=2026-10-26',
         )
         self.assertEqual(shopping_response.status_code, 200)
-        self.assertIn('All-Purpose Flour', shopping_response.get_data(as_text=True))
-        self.assertIn('produce', shopping_response.get_data(as_text=True))
+        shopping_page = shopping_response.get_data(as_text=True)
+        self.assertIn('All-Purpose Flour', shopping_page)
+        items_match = re.search(r'let items=(.*);', shopping_page)
+        self.assertIsNotNone(items_match)
+        generated_items = json.loads(items_match.group(1))
+        self.assertIn('All-Purpose Flour', [item['name'] for item in generated_items])
+        self.assertIn('Water', [item['name'] for item in generated_items])
+        self.assertIn('produce', [item['cat'] for item in generated_items])
+        self.assertIn('function toggleItem(id)', shopping_page)
+        self.assertIn('navigator.share', shopping_page)
+        self.assertNotIn('gsap.', shopping_page)
+
+    def test_favorite_add_to_meal_action_opens_picker_and_uses_meal_plan_api(self):
+        self.sign_in_session()
+        self.client.post('/planner/favorite/1')
+
+        response = self.client.get('/planner/favorites')
+        self.assertEqual(response.status_code, 200)
+        page = response.get_data(as_text=True)
+        self.assertIn('openAddMeal(${r.id},this)', page)
+        self.assertIn('addFavoriteToMealPlan()', page)
+        self.assertIn('/planner/create', page)
+        self.assertIn('/planner/add-meal', page)
+
+    def test_meal_planner_recipe_picker_includes_recipe_images(self):
+        self.sign_in_session()
+        response = self.client.get('/planner/')
+        self.assertEqual(response.status_code, 200)
+        page = response.get_data(as_text=True)
+        recipes_match = re.search(r'const RX=(\[.*?\]);', page)
+        self.assertIsNotNone(recipes_match)
+        recipes = json.loads(recipes_match.group(1))
+        self.assertTrue(recipes)
+        self.assertTrue(all('img' in recipe for recipe in recipes))
+        self.assertIn("r.img?`background-image:url('${r.img}')", page)
 
     def test_recipe_reviews_are_validated_and_upsert_per_user(self):
         self.sign_in_session()
