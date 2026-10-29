@@ -393,9 +393,18 @@ class SharingAndPagesTest(AppTestCase):
 
     def test_footer_wordmark_is_a_real_image_not_a_watermark(self):
         html = self.client.get('/recipes/tips').get_data(as_text=True)
+        footer = html.split('<footer id="ppFooter"', 1)[1]
+        self.assertLess(footer.index('<div class="pf-main">'), footer.index('<div class="pf-sig">'))
+        self.assertLess(footer.index('<div class="pf-sig">'), footer.index('<div class="pf-wrap">'))
+        self.assertIn('.pf-sig{max-width:1320px;margin:0 auto;', html)
+        self.assertIn('.pf-sig a{display:block;width:100%;', html)
+        self.assertIn('.pf-wrap{max-width:1320px;margin:0 auto;', html)
+        self.assertIn('images/Name.webp', html)
         self.assertIn('images/name-1600.webp', html)
         self.assertIn('alt="Perfect Palate"', html)
         self.assertNotIn('footer-watermark', html)
+        original = self.client.get('/static/images/Name.webp')
+        self.assertEqual(original.status_code, 200)
         for w in (800, 1600):
             r = self.client.get(f'/static/images/name-{w}.webp')
             self.assertEqual(r.status_code, 200)

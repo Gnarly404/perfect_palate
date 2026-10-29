@@ -13,17 +13,17 @@
   font-family:'Syne','Segoe UI',system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
-/* Signature band: the lettered wordmark at full colour on the page's own cream, where its baked-in shadow reads correctly */
-.pf-sig{padding:clamp(36px,6vw,72px) clamp(20px,4vw,40px) clamp(28px,4.5vw,52px);text-align:center}
-.pf-sig a{display:block;width:min(1080px,100%);margin:0 auto;border-radius:12px}
-.pf-sig img{display:block;width:100%;height:auto;aspect-ratio:2338/255}
+/* Signature band sits inside the navy footer above its content. */
+.pf-sig{max-width:1320px;margin:0 auto;padding:clamp(36px,6vw,72px) clamp(20px,4vw,40px) clamp(16px,2vw,24px);text-align:center}
+.pf-sig a{display:block;width:100%;margin:0 auto;border-radius:12px}
+.pf-sig img{display:block;width:100%;height:auto;aspect-ratio:2000/217}
 .pf-main{position:relative;background:linear-gradient(180deg,var(--pf-bg) 0%,var(--pf-bg-2) 100%);box-shadow:inset 0 3px 0 var(--pf-gold)}
 #ppFooter *{box-sizing:border-box}
 #ppFooter ::selection{background:var(--pf-gold);color:#1d2b33}
 #ppFooter a{color:inherit;text-decoration:none}
 #ppFooter a:focus-visible,#ppFooter button:focus-visible{outline:2px solid var(--pf-gold);outline-offset:3px;border-radius:6px}
 
-.pf-wrap{max-width:1320px;margin:0 auto;padding:clamp(48px,7vw,88px) clamp(20px,4vw,40px) calc(28px + env(safe-area-inset-bottom))}
+.pf-wrap{max-width:1320px;margin:0 auto;padding:clamp(16px,2vw,24px) clamp(20px,4vw,40px) calc(28px + env(safe-area-inset-bottom))}
 
 /* Top: closing line + link columns */
 .pf-top{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:clamp(36px,6vw,96px);align-items:start}
@@ -88,15 +88,15 @@
 </style>
 
 <footer id="ppFooter" aria-label="Site footer">
+  <div class="pf-main">
   <div class="pf-sig">
     <a href="{{ url_for('dashboard') if _in else url_for('homepage') }}" aria-label="Perfect Palate home">
-      <img src="{{ url_for('static', filename='images/name-1600.webp') }}"
-           srcset="{{ url_for('static', filename='images/name-800.webp') }} 800w, {{ url_for('static', filename='images/name-1600.webp') }} 1600w"
+      <img src="{{ url_for('static', filename='images/Name.webp') }}"
+           srcset="{{ url_for('static', filename='images/name-800.webp') }} 800w, {{ url_for('static', filename='images/name-1600.webp') }} 1600w, {{ url_for('static', filename='images/Name.webp') }} 2000w"
            sizes="(max-width: 1120px) 94vw, 1080px"
-           width="1600" height="175" alt="Perfect Palate" loading="lazy" decoding="async">
+           width="2000" height="217" alt="Perfect Palate" loading="lazy" decoding="async">
     </a>
   </div>
-  <div class="pf-main">
   <div class="pf-wrap">
     <div class="pf-top">
       <div>
