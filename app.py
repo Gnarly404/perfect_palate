@@ -140,7 +140,8 @@ def inject_recipe_total():
     """Real size of the recipe dataset, so pages never advertise a stale hardcoded count."""
     from recommendations import load_recipes
     recipes = load_recipes()
-    return {'recipe_total': len(recipes), 'median_steps': _median_steps(recipes)}
+    from datetime import datetime
+    return {'recipe_total': len(recipes), 'median_steps': _median_steps(recipes), 'current_year': datetime.now().year}
 
 
 def send_password_reset_email(to_email, reset_link):

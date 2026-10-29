@@ -366,6 +366,31 @@ class SharingAndPagesTest(AppTestCase):
         self.assertIn('id="ppTop"', html)
         self.assertIn('aria-label="Back to top"', html)
 
+    def test_footer_on_every_page_with_real_content(self):
+        from datetime import datetime
+        from recommendations import load_recipes
+        total = len(load_recipes())
+        for url in ('/', '/recipes/tips', '/recipes/'):
+            html = self.client.get(url).get_data(as_text=True)
+            self.assertEqual(html.count('id="ppFooter"'), 1, url)
+            self.assertIn(f'{total} Kenyan and East African recipes', html, url)
+            self.assertIn(f'© {datetime.now().year} Perfect Palate', html, url)
+            self.assertIn('not a guarantee', html, url)        # estimates / allergy disclaimer
+            self.assertIn('id="pfShare"', html, url)
+            self.assertIn('id="pfTop"', html, url)
+        self.signup_and_login()
+        for url in ('/dashboard', '/profile', '/preferences', '/planner/', '/planner/favorites', '/planner/shopping-list'):
+            html = self.client.get(url).get_data(as_text=True)
+            self.assertEqual(html.count('id="ppFooter"'), 1, url)
+            self.assertIn('Your kitchen', html, url)           # signed-in column
+        self.assertNotIn('Get started', self.client.get('/dashboard').get_data(as_text=True).split('id="ppFooter"')[1])
+
+    def test_footer_signed_out_offers_sign_in(self):
+        html = self.client.get('/recipes/tips').get_data(as_text=True).split('id="ppFooter"')[1]
+        self.assertIn('Get started', html)
+        self.assertIn('Sign in or create an account', html)
+        self.assertNotIn('Your kitchen', html)
+
 
 if __name__ == '__main__':
     unittest.main()
