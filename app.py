@@ -24,7 +24,7 @@ import secrets
 import smtplib
 import ssl
 import bcrypt
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from email.message import EmailMessage
 from email.utils import formataddr
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify
@@ -381,7 +381,6 @@ def dashboard():
     from recommendations import load_recipes, filter_recipes_by_preferences
     from database import get_user_preferences
     import random
-    from datetime import date
 
     user_id = session['user_id']
     conn = get_db_connection()
@@ -395,10 +394,36 @@ def dashboard():
         WHERE mp.user_id = ?
     ''', (user_id,))
     meals_planned = cursor.fetchone()[0]
+    today = date.today()
+    week_start = (today - timedelta(days=today.weekday())).isoformat()
+    cursor.execute('''
+        SELECT mpi.meal_type, mpi.recipe_id
+        FROM meal_plan_items mpi
+        JOIN meal_plans mp ON mpi.meal_plan_id = mp.id
+        WHERE mp.user_id = ? AND mp.week_start_date = ? AND mpi.day_of_week = ?
+    ''', (user_id, week_start, today.strftime('%a')))
+    today_plan_items = cursor.fetchall()
     conn.close()
 
     recipes = load_recipes()
     total_recipes = len(recipes)
+    recipes_by_id = {str(recipe['id']): recipe for recipe in recipes}
+    planned_recipes = {
+        row['meal_type']: recipes_by_id.get(str(row['recipe_id']))
+        for row in today_plan_items
+    }
+    today_meals = [{
+        'type': meal_type,
+        'label': label,
+        'icon': icon,
+        'class': css_class,
+        'recipe': planned_recipes.get(meal_type),
+    } for meal_type, label, icon, css_class in (
+        ('breakfast', 'Breakfast', 'fa-sun', 'ms-b'),
+        ('lunch', 'Lunch', 'fa-cloud-sun', 'ms-l'),
+        ('dinner', 'Dinner', 'fa-moon', 'ms-d'),
+        ('snack', 'Snack', 'fa-cookie-bite', 'ms-l'),
+    )]
 
     # If the user has saved preferences, only recommend recipes that are
     # safe for them; fall back to the full catalogue for everyone else.
@@ -413,19 +438,16 @@ def dashboard():
     else:
         pool_recipes = recipes
 
-    # Stable "recipe of the day" that only changes once per calendar day
-    day_seed = date.today().toordinal()
-    featured_recipe = pool_recipes[day_seed % len(pool_recipes)] if pool_recipes else None
-
-    rng = random.Random(day_seed)
+    featured_recipe = random.choice(pool_recipes) if pool_recipes else None
     rec_pool = [r for r in pool_recipes if not featured_recipe or r['id'] != featured_recipe['id']]
-    recommended_recipes = rng.sample(rec_pool, min(3, len(rec_pool)))
+    recommended_recipes = random.sample(rec_pool, min(3, len(rec_pool)))
 
     return render_template(
         'dashboard.html',
         total_recipes=total_recipes,
         favorites_count=favorites_count,
         meals_planned=meals_planned,
+        today_meals=today_meals,
         featured_recipe=featured_recipe,
         recommended_recipes=recommended_recipes,
         personalized=bool(prefs),

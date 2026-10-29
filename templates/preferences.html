@@ -70,10 +70,6 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 .active-empty{font-size:.7rem;color:var(--mu);font-style:italic}
 @keyframes pillIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
 
-.save-sidebar{background:linear-gradient(135deg,var(--b),var(--bd));border-radius:14px;padding:1.1rem;cursor:pointer;transition:.2s;border:none;width:100%;display:flex;align-items:center;justify-content:center;gap:.5rem;font-family:'Syne',sans-serif;font-size:.75rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#fff;box-shadow:0 6px 20px rgba(42,77,99,.25)}
-.save-sidebar:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(42,77,99,.35)}
-.save-sidebar:active{transform:translateY(0);box-shadow:0 4px 12px rgba(42,77,99,.2)}
-
 .pref-main{display:flex;flex-direction:column;gap:1.4rem;opacity:0;transform:translateY(18px)}
 
 .pref-section{background:var(--card);border-radius:20px;overflow:hidden;box-shadow:var(--sh)}
@@ -209,10 +205,6 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
         </div>
       </div>
 
-      <button class="save-sidebar" onclick="savePrefs()">
-        <i class="fa-solid fa-floppy-disk"></i>
-        Save Preferences
-      </button>
     </div>
 
     <div class="pref-main" id="prefMain">
@@ -381,7 +373,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
   <div class="footer-bar">
     <div class="footer-info">
       <div class="footer-info-main" id="footerMain">0 preferences selected</div>
-      <div class="footer-info-sub">Changes apply immediately to your recipe recommendations</div>
+      <div class="footer-info-sub">Save your changes to update your recipe recommendations</div>
     </div>
     <div class="footer-btns">
       <button class="btn-reset" onclick="resetAll()"><i class="fa-solid fa-rotate-left"></i> Reset all</button>

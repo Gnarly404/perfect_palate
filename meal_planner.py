@@ -2,6 +2,7 @@
 Perfect Palate - Meal Planner & Favourites Blueprint
 Meal plan creation, management, and favorite recipes
 """
+import random
 import re
 from datetime import date, datetime, timedelta
 
@@ -90,6 +91,7 @@ def meal_planner():
         'img': recipe['img'],
         'ing': recipe['ing'],
     } for recipe in recipes]
+    random.shuffle(recipe_data)
     plan_id = _ensure_plan(session['user_id'], week_start)
     return render_template(
         'meal_planner.html',
@@ -168,6 +170,79 @@ def add_meal_to_plan():
     finally:
         conn.close()
     return jsonify({'status': 'success'})
+
+
+@meal_planner_bp.route('/move-meal', methods=['POST'])
+def move_meal_in_plan():
+    """Move a planned meal to another slot, swapping with any meal already there."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({'error': 'A JSON object is required.'}), 400
+    try:
+        meal_plan_id = int(data.get('meal_plan_id'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'A valid meal plan is required.'}), 400
+
+    source_day = data.get('source_day')
+    source_meal = data.get('source_meal')
+    target_day = data.get('target_day')
+    target_meal = data.get('target_meal')
+    if (source_day not in WEEKDAYS or target_day not in WEEKDAYS
+            or source_meal not in MEAL_TYPES or target_meal not in MEAL_TYPES):
+        return jsonify({'error': 'Invalid source or destination slot.'}), 400
+
+    conn = get_db_connection()
+    try:
+        conn.execute('BEGIN IMMEDIATE')
+        owned_plan = conn.execute(
+            'SELECT id FROM meal_plans WHERE id = ? AND user_id = ?',
+            (meal_plan_id, session['user_id']),
+        ).fetchone()
+        if not owned_plan:
+            conn.rollback()
+            return jsonify({'error': 'Meal plan not found.'}), 404
+
+        source = conn.execute(
+            '''
+            SELECT id FROM meal_plan_items
+            WHERE meal_plan_id = ? AND day_of_week = ? AND meal_type = ?
+            ''',
+            (meal_plan_id, source_day, source_meal),
+        ).fetchone()
+        if not source:
+            conn.rollback()
+            return jsonify({'error': 'The source slot no longer contains a meal.'}), 404
+
+        if (source_day, source_meal) == (target_day, target_meal):
+            conn.rollback()
+            return jsonify({'status': 'unchanged', 'items': _plan_items(meal_plan_id)})
+
+        destination = conn.execute(
+            '''
+            SELECT id FROM meal_plan_items
+            WHERE meal_plan_id = ? AND day_of_week = ? AND meal_type = ?
+            ''',
+            (meal_plan_id, target_day, target_meal),
+        ).fetchone()
+        if destination:
+            conn.execute(
+                'UPDATE meal_plan_items SET day_of_week = ?, meal_type = ? WHERE id = ?',
+                (source_day, source_meal, destination['id']),
+            )
+        conn.execute(
+            'UPDATE meal_plan_items SET day_of_week = ?, meal_type = ? WHERE id = ?',
+            (target_day, target_meal, source['id']),
+        )
+        conn.commit()
+        return jsonify({'status': 'success', 'items': _plan_items(meal_plan_id)})
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 @meal_planner_bp.route('/remove-meal', methods=['POST'])

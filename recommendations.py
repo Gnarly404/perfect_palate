@@ -7,6 +7,7 @@ from database import get_db_connection
 import csv
 import json
 import os
+import random
 import re
 from pathlib import Path
 from urllib.parse import quote
@@ -196,7 +197,8 @@ def load_recipes(force_reload=False):
 @recommendations_bp.route('/')
 def recommendations():
     """Recipe recommendations page"""
-    recipes = load_recipes()
+    recipes = load_recipes().copy()
+    random.shuffle(recipes)
     return render_template('recommendations.html', recipes=recipes, recipes_json=_safe_json(recipes),
                            tips_json=_safe_json(tip_payload()), og=None, open_recipe=None)
 
@@ -394,9 +396,10 @@ def personalized_recipes():
 
     from database import get_user_preferences
     prefs = get_user_preferences(session['user_id'])
-    recipes = load_recipes()
+    recipes = load_recipes().copy()
 
     if not prefs:
+        random.shuffle(recipes)
         return jsonify({'has_preferences': False, 'recipes': recipes})
 
     filtered = filter_recipes_by_preferences(
@@ -405,6 +408,7 @@ def personalized_recipes():
         prefs.get('allergies', []),
         prefs.get('dietary_restrictions', []),
     )
+    random.shuffle(filtered)
     return jsonify({'has_preferences': True, 'recipes': filtered, 'preferences': prefs})
 
 IMAGE_WIDTHS = (480, 960)   # whitelist so the cache can't be filled with arbitrary sizes

@@ -126,7 +126,7 @@
     /* MEAL PLAN */
     .meal-section{opacity:0;transform:translateY(18px)}
     .meal-slots{display:flex;flex-direction:column;gap:.65rem;margin-top:.8rem}
-    .meal-slot{background:var(--card);border-radius:14px;padding:.9rem 1.1rem;box-shadow:var(--sh);display:flex;align-items:center;gap:.9rem;cursor:pointer;transition:.22s;position:relative;overflow:hidden}
+    .meal-slot{background:var(--card);border-radius:14px;padding:.9rem 1.1rem;box-shadow:var(--sh);display:flex;align-items:center;gap:.9rem;cursor:pointer;transition:.22s;position:relative;overflow:hidden;color:inherit;text-decoration:none}
     .meal-slot:hover{transform:translateX(3px);box-shadow:var(--shh)}
     .meal-slot::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0}
     .meal-slot.ms-b::before{background:#f4c430}
@@ -300,41 +300,24 @@
         <div class="meal-section" id="mealSec">
         <div class="section-label">Today's Meal Plan</div>
         <div class="meal-slots">
-            <div class="meal-slot ms-b" onclick="window.location.href='{{ url_for('meal_planner.meal_planner') }}'">
-            <div class="meal-slot-icon"><i class="fa-solid fa-sun"></i></div>
+            {% for meal in today_meals %}
+            <a class="meal-slot {{ meal.class }}" href="{{ url_for('meal_planner.meal_planner') }}">
+            <div class="meal-slot-icon"><i class="fa-solid {{ meal.icon }}"></i></div>
             <div class="meal-slot-info">
-                <div class="meal-slot-type">Breakfast</div>
-                <div class="meal-slot-name">Mkate wa Ufuta</div>
+                <div class="meal-slot-type">{{ meal.label }}</div>
+                {% if meal.recipe %}
+                <div class="meal-slot-name">{{ meal.recipe.t }}</div>
+                {% else %}
+                <div class="meal-slot-name empty">No {{ meal.label|lower }} planned — add one</div>
+                {% endif %}
             </div>
-            <div class="meal-slot-time">7:30 AM</div>
+            {% if meal.recipe %}
             <i class="fa-solid fa-chevron-right" style="color:rgba(66,110,134,.25);font-size:.65rem"></i>
-            </div>
-            <div class="meal-slot ms-l" onclick="window.location.href='{{ url_for('meal_planner.meal_planner') }}'">
-            <div class="meal-slot-icon"><i class="fa-solid fa-cloud-sun"></i></div>
-            <div class="meal-slot-info">
-                <div class="meal-slot-type">Lunch</div>
-                <div class="meal-slot-name">Kachumbari</div>
-            </div>
-            <div class="meal-slot-time">1:00 PM</div>
-            <i class="fa-solid fa-chevron-right" style="color:rgba(66,110,134,.25);font-size:.65rem"></i>
-            </div>
-            <div class="meal-slot ms-d" onclick="window.location.href='{{ url_for('meal_planner.meal_planner') }}'">
-            <div class="meal-slot-icon"><i class="fa-solid fa-moon"></i></div>
-            <div class="meal-slot-info">
-                <div class="meal-slot-type">Dinner</div>
-                <div class="meal-slot-name">Pilau ya Nyama</div>
-            </div>
-            <div class="meal-slot-time">7:00 PM</div>
-            <i class="fa-solid fa-chevron-right" style="color:rgba(66,110,134,.25);font-size:.65rem"></i>
-            </div>
-            <div class="meal-slot ms-l" style="opacity:.55" onclick="window.location.href='{{ url_for('meal_planner.meal_planner') }}'">
-            <div class="meal-slot-icon" style="background:rgba(66,110,134,.06)"><i class="fa-solid fa-plus" style="color:rgba(66,110,134,.4)"></i></div>
-            <div class="meal-slot-info">
-                <div class="meal-slot-type">Snack</div>
-                <div class="meal-slot-name empty">No snack planned — add one</div>
-            </div>
+            {% else %}
             <div class="meal-slot-add"><i class="fa-solid fa-plus"></i></div>
-            </div>
+            {% endif %}
+            </a>
+            {% endfor %}
         </div>
         </div>
 

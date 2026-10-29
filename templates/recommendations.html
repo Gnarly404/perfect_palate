@@ -203,8 +203,9 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
 .pp-snum{min-width:21px;height:21px;border-radius:50%;background:var(--b);color:#fff;font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.12rem}
 .pp-detail-foot{padding:1rem 2rem;border-top:1px solid rgba(66,110,134,.08);background:var(--off);display:flex;gap:.75rem}
 .pp-reviews{padding:1rem 2rem 1.4rem;border-top:1px solid rgba(66,110,134,.08)}
-.pp-review-form{display:grid;grid-template-columns:150px 1fr auto;gap:.65rem;align-items:start;margin:.8rem 0 1rem}
-.pp-review-form select,.pp-review-form textarea{border:1px solid rgba(66,110,134,.2);border-radius:8px;padding:.65rem;font:inherit}
+.pp-review-form{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr) auto;gap:.65rem;align-items:start;margin:.8rem 0 1rem}
+.pp-review-form label{display:flex;flex-direction:column;gap:.35rem;min-width:0;font-size:.78rem;font-weight:700;color:var(--mu)}
+.pp-review-form select,.pp-review-form textarea{display:block;width:100%;min-width:0;border:1px solid rgba(66,110,134,.2);border-radius:8px;padding:.65rem;font:inherit;color:var(--tx)}
 .pp-review-form textarea{min-height:44px;resize:vertical}
 .pp-review-form button{border:0;border-radius:20px;background:var(--b);color:white;padding:.7rem 1rem;font-weight:700;cursor:pointer}
 .pp-review-entry{padding:.7rem 0;border-top:1px solid rgba(66,110,134,.08);font-size:.82rem}
@@ -365,7 +366,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     <div class="pp-personal-banner" id="personalBanner" style="display:none">
       <i class="fa-solid fa-heart-circle-check"></i>
       <span id="personalBannerText">Showing recipes safe for your saved preferences</span>
-      <button class="pp-personal-clear" onclick="clearPersonalization()">Show all recipes ✕</button>
+      <button class="pp-personal-clear" id="personalToggle" onclick="togglePersonalization()">Show all recipes</button>
     </div>
 
     <div class="pp-grid" id="ppGrid"></div>
@@ -845,28 +846,51 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     document.addEventListener('keydown',e=>{if(e.key==='Escape')showView('recipes');});
     showView('recipes');
 
-    let FULL_RX = RX;
+    const FULL_RX = [...RX];
+    let PERSONAL_RX=[],hasPersonalRecipes=false,showingPersonalized=false;
 
-    function clearPersonalization(){
-    RX = FULL_RX;
-    buildGrid(RX);
-    document.getElementById('recCount').textContent=RX.length;
-    document.getElementById('personalBanner').style.display='none';
+    function shuffleRecipes(recipes){
+    const shuffled=[...recipes];
+    for(let i=shuffled.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+    }
+    return shuffled;
     }
 
-    function applyPersonalization(){
-    fetch('/recipes/personalized')
-        .then(r=>r.ok?r.json():null)
-        .then(data=>{
-        if(!data||!data.has_preferences||!data.recipes||!data.recipes.length)return;
-        RX = data.recipes;
-        buildGrid(RX);
-        document.getElementById('recCount').textContent=RX.length;
-        document.getElementById('personalBannerText').textContent=
-            `Showing ${RX.length} of ${FULL_RX.length} recipes safe for your saved preferences`;
-        document.getElementById('personalBanner').style.display='flex';
-        })
-        .catch(()=>{});
+    function setRecipeScope(personalized){
+    showingPersonalized=personalized;
+    RX=shuffleRecipes(personalized?PERSONAL_RX:FULL_RX);
+    buildGrid(RX);
+    document.getElementById('recCount').textContent=RX.length;
+    doFilter();
+    const banner=document.getElementById('personalBanner');
+    banner.style.display=hasPersonalRecipes?'flex':'none';
+    document.getElementById('personalBannerText').textContent=personalized
+        ?`Showing ${RX.length} of ${FULL_RX.length} recipes safe for your saved preferences`
+        :'Showing all recipes';
+    document.getElementById('personalToggle').textContent=personalized
+        ?'Show all recipes'
+        :'Show personalised recipes';
+    }
+
+    function togglePersonalization(){
+    if(hasPersonalRecipes)setRecipeScope(!showingPersonalized);
+    }
+
+    async function applyPersonalization(){
+    if(!ME)return;
+    try{
+        const response=await fetch('/recipes/personalized');
+        const data=await response.json();
+        if(!response.ok)throw new Error(data.error||'Could not load personalised recipes.');
+        if(!data.has_preferences)return;
+        hasPersonalRecipes=true;
+        PERSONAL_RX=data.recipes||[];
+        setRecipeScope(true);
+    }catch(error){
+        toast(error.message||'Could not load personalised recipes.');
+    }
     }
 
     buildGrid(RX);

@@ -1,11 +1,15 @@
 import bcrypt
 import json
 import os
+import random
 import re
 import tempfile
 import unittest
+from datetime import date, timedelta
+from unittest.mock import patch
 
 import database
+import recommendations
 from app import app
 from werkzeug.security import generate_password_hash
 
@@ -127,6 +131,59 @@ class ApplicationFeaturesTest(unittest.TestCase):
         self.assertIn('navigator.share', shopping_page)
         self.assertNotIn('gsap.', shopping_page)
 
+    def test_dragging_meals_moves_to_empty_slots_and_swaps_occupied_slots(self):
+        self.sign_in_session()
+        planner_page = self.client.get('/planner/').get_data(as_text=True)
+        self.assertIn('draggable="true"', planner_page)
+        self.assertIn("plannerBody.addEventListener('drop'", planner_page)
+        self.assertIn('/planner/move-meal', planner_page)
+
+        plan_id = self.client.post('/planner/create', json={
+            'week_start_date': '2026-10-26',
+        }).json['id']
+        for day, meal, recipe_id in (
+            ('Mon', 'breakfast', 1),
+            ('Tue', 'lunch', 4),
+        ):
+            response = self.client.post('/planner/add-meal', json={
+                'meal_plan_id': plan_id,
+                'day_of_week': day,
+                'meal_type': meal,
+                'recipe_id': recipe_id,
+            })
+            self.assertEqual(response.status_code, 200)
+
+        moved = self.client.post('/planner/move-meal', json={
+            'meal_plan_id': plan_id,
+            'source_day': 'Mon',
+            'source_meal': 'breakfast',
+            'target_day': 'Wed',
+            'target_meal': 'dinner',
+        })
+        self.assertEqual(moved.status_code, 200)
+        self.assertEqual(len(moved.json['items']), 2)
+        self.assertIn({
+            'day_of_week': 'Wed',
+            'meal_type': 'dinner',
+            'recipe_id': '1',
+        }, moved.json['items'])
+
+        swapped = self.client.post('/planner/move-meal', json={
+            'meal_plan_id': plan_id,
+            'source_day': 'Wed',
+            'source_meal': 'dinner',
+            'target_day': 'Tue',
+            'target_meal': 'lunch',
+        })
+        self.assertEqual(swapped.status_code, 200)
+        self.assertEqual({
+            (item['day_of_week'], item['meal_type']): item['recipe_id']
+            for item in swapped.json['items']
+        }, {
+            ('Tue', 'lunch'): '1',
+            ('Wed', 'dinner'): '4',
+        })
+
     def test_favorite_add_to_meal_action_opens_picker_and_uses_meal_plan_api(self):
         self.sign_in_session()
         self.client.post('/planner/favorite/1')
@@ -150,6 +207,107 @@ class ApplicationFeaturesTest(unittest.TestCase):
         self.assertTrue(recipes)
         self.assertTrue(all('img' in recipe for recipe in recipes))
         self.assertIn("r.img?`background-image:url('${r.img}')", page)
+
+    def test_recipe_browse_and_meal_picker_shuffle_each_request(self):
+        original_recipes = recommendations.load_recipes()
+        with patch('recommendations.random.shuffle', side_effect=lambda recipes: recipes.reverse()):
+            browse_page = self.client.get('/recipes/').get_data(as_text=True)
+        browse_match = re.search(r'let RX = (\[.*?\]);', browse_page)
+        self.assertIsNotNone(browse_match)
+        browse_recipes = json.loads(browse_match.group(1))
+        self.assertEqual(browse_recipes[0]['id'], original_recipes[-1]['id'])
+
+        self.sign_in_session()
+        with patch('meal_planner.random.shuffle', side_effect=lambda recipes: recipes.reverse()):
+            planner_page = self.client.get('/planner/').get_data(as_text=True)
+        planner_match = re.search(r'const RX=(\[.*?\]);', planner_page)
+        self.assertIsNotNone(planner_match)
+        planner_recipes = json.loads(planner_match.group(1))
+        self.assertEqual(planner_recipes[0]['id'], original_recipes[-1]['id'])
+
+    def test_personalized_recipes_shuffle_and_browser_can_toggle_scopes(self):
+        self.sign_in_session()
+        save_response = self.client.post('/preferences', json={
+            'health_conditions': [],
+            'allergies': [],
+            'dietary_restrictions': ['Vegan'],
+        })
+        self.assertEqual(save_response.status_code, 200)
+
+        source_recipes = recommendations.load_recipes()
+        vegan_recipes = recommendations.filter_recipes_by_preferences(
+            source_recipes,
+            dietary_restrictions=['Vegan'],
+        )
+        self.assertTrue(vegan_recipes)
+        with patch(
+            'recommendations.random.shuffle',
+            side_effect=lambda recipes: recipes.reverse(),
+        ):
+            response = self.client.get('/recipes/personalized')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json['has_preferences'])
+        self.assertEqual(
+            [recipe['id'] for recipe in response.json['recipes']],
+            [recipe['id'] for recipe in reversed(vegan_recipes)],
+        )
+        self.assertEqual(
+            [recipe['id'] for recipe in recommendations.load_recipes()],
+            [recipe['id'] for recipe in source_recipes],
+        )
+
+        page = self.client.get('/recipes/').get_data(as_text=True)
+        self.assertIn('function togglePersonalization()', page)
+        self.assertIn('Show personalised recipes', page)
+        self.assertIn('function shuffleRecipes(recipes)', page)
+
+    def test_preferences_page_has_one_save_button(self):
+        self.sign_in_session()
+        page = self.client.get('/preferences').get_data(as_text=True)
+        save_buttons = re.findall(
+            r'<button[^>]*class="btn-save"[^>]*>.*?Save Preferences.*?</button>',
+            page,
+            re.S,
+        )
+        self.assertEqual(len(save_buttons), 1)
+
+    def test_dashboard_randomizes_featured_and_recommended_recipes(self):
+        self.sign_in_session()
+        with patch('random.choice', wraps=random.choice) as choose_recipe, \
+                patch('random.sample', wraps=random.sample) as sample_recipes:
+            response = self.client.get('/dashboard')
+        self.assertEqual(response.status_code, 200)
+        choose_recipe.assert_called_once()
+        sample_recipes.assert_called_once()
+
+    def test_dashboard_todays_meal_plan_uses_current_day_plan(self):
+        self.sign_in_session()
+        plan_id = self.client.post('/planner/create', json={}).json['id']
+        today = date.today().strftime('%a')
+        tomorrow = (date.today() + timedelta(days=1)).strftime('%a')
+        for day, meal_type, recipe_id in (
+            (today, 'breakfast', 1),
+            (tomorrow, 'lunch', 4),
+        ):
+            response = self.client.post('/planner/add-meal', json={
+                'meal_plan_id': plan_id,
+                'day_of_week': day,
+                'meal_type': meal_type,
+                'recipe_id': recipe_id,
+            })
+            self.assertEqual(response.status_code, 200)
+
+        page = self.client.get('/dashboard').get_data(as_text=True)
+        meal_section = re.search(
+            r'<div class="meal-section" id="mealSec">(.*?)<div class="recent-section"',
+            page,
+            re.S,
+        )
+        self.assertIsNotNone(meal_section)
+        self.assertIn('Chapati', meal_section.group(1))
+        self.assertNotIn('Sukuma Wiki and Rice', meal_section.group(1))
+        self.assertIn('No lunch planned — add one', meal_section.group(1))
+        self.assertNotIn('Mkate wa Ufuta', meal_section.group(1))
 
     def test_recipe_reviews_are_validated_and_upsert_per_user(self):
         self.sign_in_session()
