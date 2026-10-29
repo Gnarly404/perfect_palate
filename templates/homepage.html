@@ -288,6 +288,9 @@ nav {
 }
 @media (max-width: 480px){
   .nav-logo{font-size:18px}
+  /* Stack the buttons so neither wraps onto three lines */
+  .cta-group{flex-direction:column;align-items:stretch;width:min(280px,80vw);margin:0 auto}
+  .btn-gold,.btn-outline{text-align:center;justify-content:center;white-space:nowrap;padding:13px 16px}
 }
 </style>
 </head>
@@ -406,11 +409,33 @@ nav {
   canvas.height = FH;
 
   // Resize canvas display
+  // The video ends on a logo, the tagline "Discover. Cook. Share. Love." and a heart.
+  // The heart's lowest pixel is at frame row 985, so the buttons are placed from that
+  // row downwards instead of at a fixed distance from the bottom of the screen.
+  const KEEP_CLEAR_BELOW = 985;
+  const CTA_GAP = 14, CTA_MARGIN = 16;
+  const phase4 = document.getElementById('phase-4');
+
   function resizeCanvas() {
     const vw = window.innerWidth, vh = window.innerHeight;
     const scale = Math.max(vw / FW, vh / FH);
+    const h = FH * scale;
     canvas.style.width  = (FW * scale) + 'px';
-    canvas.style.height = (FH * scale) + 'px';
+    canvas.style.height = h + 'px';
+
+    // Default framing: video centred at 45% of the screen height.
+    let top = vh * 0.45 - h / 2;
+    // On short or wide screens the cropped video would put the heart under the buttons,
+    // so slide the picture up just enough to leave room beneath the heart.
+    const ctaH = phase4.offsetHeight || 44;
+    const heartBottom = KEEP_CLEAR_BELOW * scale;
+    top = Math.min(top, vh - heartBottom - CTA_GAP - ctaH - CTA_MARGIN);
+    top = Math.max(vh - h, Math.min(0, top));   // never reveal an empty edge
+
+    canvas.style.top = top + 'px';
+    canvas.style.transform = 'translateX(-50%)';
+    phase4.style.bottom = 'auto';
+    phase4.style.top = (top + heartBottom + CTA_GAP) + 'px';
   }
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
@@ -482,9 +507,6 @@ nav {
 
     // Progress bar
     document.getElementById('progress-fill').style.width = (progress * 100) + '%';
-
-    // No rotation — keep canvas pixel-sharp
-    canvas.style.transform = `translate(-50%, -50%)`;
 
     // Hide scroll hint once scrolled
     if (progress > 0.03) {
