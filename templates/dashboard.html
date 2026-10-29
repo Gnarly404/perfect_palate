@@ -201,9 +201,8 @@
         </h1>
         <p class="hero-tagline">Your kitchen, your rules. {{ total_recipes }} recipes are waiting — personalised to your health profile and dietary preferences.</p>
         <div class="hero-pills">
-            <span class="hero-pill"><i class="fa-solid fa-star"></i><b>{{ total_recipes }}</b> recipes</span>
             <span class="hero-pill"><i class="fa-solid fa-heart"></i><b>{{ favorites_count }}</b> favourites</span>
-            <span class="hero-pill"><i class="fa-solid fa-calendar-check"></i><b>{{ meals_planned }}</b> meals planned today</span>
+            <span class="hero-pill"><i class="fa-solid fa-calendar-check"></i><b>{{ meals_planned }}</b> meals planned this week</span>
         </div>
         <div class="hero-btns">
             <button class="hbtn-p" onclick="window.location.href='{{ url_for('recommendations.recommendations') }}'"><i class="fa-solid fa-star"></i> Browse Recipes</button>
@@ -235,28 +234,28 @@
 
     <div class="stats-row" id="statsRow">
         <div class="stat-card s1">
-        <div class="stat-deco"><i class="fa-solid fa-book-open"></i></div>
-        <div class="stat-label">Total Recipes</div>
-        <div class="stat-val" id="sv1">0</div>
-        <div class="stat-sub">Kenyan &amp; East African</div>
-        </div>
-        <div class="stat-card s2">
         <div class="stat-deco"><i class="fa-solid fa-heart"></i></div>
         <div class="stat-label">Favourites Saved</div>
-        <div class="stat-val" id="sv2">0</div>
+        <div class="stat-val" id="sv1" data-count="{{ favorites_count|int }}">0</div>
         <div class="stat-sub">In your collection</div>
         </div>
-        <div class="stat-card s3">
+        <div class="stat-card s2">
         <div class="stat-deco"><i class="fa-solid fa-calendar-days"></i></div>
         <div class="stat-label">Meals This Week</div>
-        <div class="stat-val" id="sv3">0</div>
-        <div class="stat-sub">Breakfast, lunch &amp; dinner</div>
+        <div class="stat-val" id="sv2" data-count="{{ meals_planned|int }}">0</div>
+        <div class="stat-sub">On your meal plan</div>
+        </div>
+        <div class="stat-card s3">
+        <div class="stat-deco"><i class="fa-solid fa-star"></i></div>
+        <div class="stat-label">Reviews Written</div>
+        <div class="stat-val" id="sv3" data-count="{{ reviews_count|int }}">0</div>
+        <div class="stat-sub">Your recipe ratings</div>
         </div>
         <div class="stat-card s4">
-        <div class="stat-deco"><i class="fa-solid fa-fire"></i></div>
-        <div class="stat-label">Recipes Cooked</div>
-        <div class="stat-val" id="sv4">0</div>
-        <div class="stat-sub">All time</div>
+        <div class="stat-deco"><i class="fa-solid fa-sliders"></i></div>
+        <div class="stat-label">Preferences Active</div>
+        <div class="stat-val" id="sv4" data-count="{{ preferences_count|int }}">0</div>
+        <div class="stat-sub">Health, allergy &amp; diet filters</div>
         </div>
     </div>
 
@@ -361,10 +360,7 @@
     .to('#featCard',{y:0,opacity:1,scale:1,duration:.75},'-=.5')
     .to('#statsRow',{y:0,opacity:1,duration:.6,
         onComplete:()=>{
-        countUp(document.getElementById('sv1'),{{ total_recipes|int }},900);
-        countUp(document.getElementById('sv2'),12,700);
-        countUp(document.getElementById('sv3'),9,600);
-        countUp(document.getElementById('sv4'),34,800);
+        document.querySelectorAll('.stat-val[data-count]').forEach((el,i)=>countUp(el,Number(el.dataset.count),900-i*100));
         }
     },'-=.3')
     .to('#actGrid',{y:0,opacity:1,duration:.55},'-=.2')

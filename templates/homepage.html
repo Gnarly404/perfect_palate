@@ -80,35 +80,6 @@ body { background: var(--ink); font-family: 'Space Grotesk', sans-serif; color: 
   transition: width .05s linear;
 }
 
-/* ── NAV ── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 20px 40px;
-  background: linear-gradient(180deg, rgba(14,28,35,0.7) 0%, transparent 100%);
-}
-.nav-logo {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 22px; letter-spacing: 4px; color: #fff;
-}
-.nav-logo span { color: var(--gold); }
-.nav-links { display: flex; gap: 28px; align-items: center; }
-.nav-link {
-  font-size: 11px; font-weight: 500; letter-spacing: 2px;
-  text-transform: uppercase; color: rgba(255,255,255,0.5);
-  cursor: pointer; transition: color .2s; text-decoration: none;
-}
-.nav-link:hover { color: var(--gold); }
-.nav-cta {
-  padding: 8px 20px; border: 1px solid var(--gold);
-  background: transparent; border-radius: 2px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 11px; font-weight: 500; letter-spacing: 2px;
-  text-transform: uppercase; color: var(--gold);
-  cursor: pointer; transition: all .2s; text-decoration: none;
-}
-.nav-cta:hover { background: var(--gold); color: var(--ink); }
-
 /* ── OVERLAY PHASES ── */
 .phase {
   position: absolute; z-index: 10;

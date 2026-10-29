@@ -388,14 +388,16 @@ def dashboard():
     cursor.execute('SELECT COUNT(*) FROM favorites WHERE user_id = ?', (user_id,))
     favorites_count = cursor.fetchone()[0]
 
+    today = date.today()
+    week_start = (today - timedelta(days=today.weekday())).isoformat()
     cursor.execute('''
         SELECT COUNT(*) FROM meal_plan_items mpi
         JOIN meal_plans mp ON mpi.meal_plan_id = mp.id
-        WHERE mp.user_id = ?
-    ''', (user_id,))
+        WHERE mp.user_id = ? AND mp.week_start_date = ?
+    ''', (user_id, week_start))
     meals_planned = cursor.fetchone()[0]
-    today = date.today()
-    week_start = (today - timedelta(days=today.weekday())).isoformat()
+    cursor.execute('SELECT COUNT(*) FROM recipe_reviews WHERE user_id = ?', (user_id,))
+    reviews_count = cursor.fetchone()[0]
     cursor.execute('''
         SELECT mpi.meal_type, mpi.recipe_id
         FROM meal_plan_items mpi
@@ -428,6 +430,10 @@ def dashboard():
     # If the user has saved preferences, only recommend recipes that are
     # safe for them; fall back to the full catalogue for everyone else.
     prefs = get_user_preferences(user_id)
+    preferences_count = sum(
+        len(prefs.get(key, []) or [])
+        for key in ('health_conditions', 'allergies', 'dietary_restrictions')
+    ) if prefs else 0
     if prefs:
         pool_recipes = filter_recipes_by_preferences(
             recipes,
@@ -447,6 +453,8 @@ def dashboard():
         total_recipes=total_recipes,
         favorites_count=favorites_count,
         meals_planned=meals_planned,
+        reviews_count=reviews_count,
+        preferences_count=preferences_count,
         today_meals=today_meals,
         featured_recipe=featured_recipe,
         recommended_recipes=recommended_recipes,

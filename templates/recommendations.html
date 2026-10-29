@@ -200,6 +200,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
 .pp-ing-list li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--a);flex-shrink:0;margin-top:.4rem}
 .pp-steps-list{list-style:none;display:flex;flex-direction:column;gap:.7rem}
 .pp-steps-list li{display:flex;gap:.65rem;font-size:.9rem;line-height:1.65;color:var(--tx)}
+.pp-steps-list li.pp-variant-title{display:block;margin-top:.4rem;font-weight:800;color:var(--b)}
+.pp-steps-list li.pp-variant-ingredients{display:block;padding-left:1rem;color:var(--mu);font-size:.82rem}
 .pp-snum{min-width:21px;height:21px;border-radius:50%;background:var(--b);color:#fff;font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.12rem}
 .pp-detail-foot{padding:1rem 2rem;border-top:1px solid rgba(66,110,134,.08);background:var(--off);display:flex;gap:.75rem}
 .pp-reviews{padding:1rem 2rem 1.4rem;border-top:1px solid rgba(66,110,134,.08)}
@@ -235,6 +237,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
 .pp-step.cur .pp-step-lbl{color:var(--a)}
 .pp-step-txt{font-family:'Syne',sans-serif;font-size:.92rem;line-height:1.7;color:rgba(255,255,255,.8)}
 .pp-step-txt .hi{color:var(--a);font-weight:700}
+.pp-cook-variation{padding:.35rem 0;color:var(--a);font-size:.75rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase}
+.pp-cook-ingredients{padding:.7rem .9rem;border-left:2px solid rgba(226,186,46,.55);color:rgba(255,255,255,.62);font-size:.78rem;line-height:1.6}
 .pp-timer{display:inline-flex;align-items:center;gap:.55rem;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.11);border-radius:50px;padding:.38rem .85rem;margin-top:.7rem;cursor:pointer;transition:.18s;font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;color:rgba(255,255,255,.65)}
 .pp-timer:hover,.pp-timer.run{border-color:var(--a);color:var(--a);background:rgba(226,186,46,.07)}
 .pp-tbox{width:12px;height:12px;border-radius:2px;border:1.5px solid rgba(255,255,255,.28);flex-shrink:0;transition:.18s}
@@ -473,7 +477,29 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     const esc = s => String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
     const TAG_L={vg:'Vegan',veg:'Vegetarian',gf:'Gluten-Free',sp:'Spicy',bp:'Blood Pressure',dia:'Diabetic-Friendly'};
-    let activeCat='all',curCook=null,curStep=0,timers={};
+    let activeCat='all',curCook=null,curCookSteps=[],curStep=0,timers={};
+
+    function parseInstructionSections(raw){
+    const marker=/\[\[VARIATION:\s*([^\]]+)\]\]/g;
+    const matches=[...raw.matchAll(marker)];
+    const parseSteps=text=>text.split(/\d+\.\s+/).map(step=>step.trim()).filter(Boolean);
+    if(!matches.length){
+        return [{title:'',ingredients:'',steps:parseSteps(raw)}];
+    }
+    return matches.map((match,index)=>{
+        const start=match.index+match[0].length;
+        const end=index+1<matches.length?matches[index+1].index:raw.length;
+        const content=raw.slice(start,end).trim();
+        const stepsAt=content.indexOf('Steps:');
+        const ingredientsText=stepsAt<0?content:content.slice(0,stepsAt);
+        const stepText=stepsAt<0?'':content.slice(stepsAt+'Steps:'.length);
+        return {
+            title:match[1].trim(),
+            ingredients:ingredientsText.replace(/^\s*Ingredients:\s*/i,'').trim(),
+            steps:parseSteps(stepText)
+        };
+    });
+    }
 
     function buildGrid(data){
     const g=document.getElementById('ppGrid');
@@ -593,8 +619,11 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     document.getElementById('dtTitle').textContent=r.t;
     document.getElementById('dtDesc').textContent=r.d;
     document.getElementById('dtIng').innerHTML=r.ing.split(',').map(i=>`<li>${i.trim()}</li>`).join('');
-    document.getElementById('dtSteps').innerHTML=r.st.split(/\d+\.\s+/).filter(Boolean).map((s,i)=>
-        `<li><span class="pp-snum">${i+1}</span><span>${s.trim()}</span></li>`).join('');
+    document.getElementById('dtSteps').innerHTML=parseInstructionSections(r.st).map(section=>
+        `${section.title?`<li class="pp-variant-title">${esc(section.title)}</li>`:''}
+        ${section.ingredients?`<li class="pp-variant-ingredients"><b>Ingredients:</b> ${esc(section.ingredients)}</li>`:''}
+        ${section.steps.map((s,i)=>`<li><span class="pp-snum">${i+1}</span><span>${esc(s)}</span></li>`).join('')}`
+    ).join('');
     document.getElementById('dtCookBtn').onclick=()=>startCook(id);
     renderBadges(r);renderNutrition(r);renderTips(r);renderShare(r);
     history.replaceState(null,'','/recipes/recipe/'+r.id);
@@ -698,7 +727,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     if(window.speechSynthesis)window.speechSynthesis.cancel();
     isReading=false;
     curCook=r;curStep=0;
-    const steps=r.st.split(/\d+\.\s+/).filter(Boolean);
+    const sections=parseInstructionSections(r.st);
+    curCookSteps=sections.flatMap(section=>section.steps);
     const ings=r.ing.split(',').map(i=>i.split('(')[0].trim().toLowerCase());
     let html=`<div class="pp-cook-rcard">
         <div class="pp-cook-thumb"${r.img?` style="background-image:url('${r.img}?w=480');background-size:cover;background-position:center"`:''}>${r.img?'':r.em}</div>
@@ -707,16 +737,22 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         <div class="pp-cook-tags">${r.tg.map(t=>`<span class="pp-cook-tag">${TAG_L[t]}</span>`).join('')}</div></div></div>`;
     const safety=(r.tips||[]).filter(t=>TIPS[t]&&TIPS[t].k==='safety');
     safety.forEach(t=>{html+=`<div class="pp-chef pp-cook-safety"><div class="pp-chef-av">⚠️</div><p><b>${esc(TIPS[t].t)}.</b> ${esc(TIPS[t].x)}</p></div>`;});
-    steps.forEach((s,i)=>{
+    let stepIndex=0;
+    sections.forEach(section=>{
+      if(section.title)html+=`<div class="pp-cook-variation">${esc(section.title)}</div>`;
+      if(section.ingredients)html+=`<div class="pp-cook-ingredients"><b>Ingredients:</b> ${esc(section.ingredients)}</div>`;
+      section.steps.forEach(s=>{
+        const i=stepIndex++;
         let hi=s;
         ings.forEach(ing=>{if(ing.length>3){const re=new RegExp(`(${ing.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}[s]?)`, 'gi');hi=hi.replace(re,'<span class="hi">$1</span>');}});
         const tm=s.match(/(\d+)\s*(min|minute|second|sec)/i);
         const timerH=tm?`<div class="pp-timer" id="tm${i}" onclick="doTimer(${i},${tm[2].startsWith('sec')?parseInt(tm[1]):parseInt(tm[1])*60})"><div class="pp-tbox"></div><span id="td${i}">${tm[2].startsWith('sec')?tm[1]+'s':tm[1]+' min'}</span><span>start timer</span></div>`:'';
         html+=`<div class="pp-step${i===0?' cur':''}" id="ps${i}"><div class="pp-step-lbl">STEP ${i+1}</div><div class="pp-step-txt">${hi}</div>${timerH}</div>`;
+      });
     });
     (r.tips||[]).filter(t=>TIPS[t]&&TIPS[t].k!=='safety').forEach(t=>{html+=`<div class="pp-chef"><div class="pp-chef-av">🍴</div><p><b>${esc(TIPS[t].t)}.</b> ${esc(TIPS[t].x)}</p></div>`;});
     document.getElementById('cookBody').innerHTML=html;
-    updProg(0,steps.length);
+    updProg(0,curCookSteps.length);
     showView('cook');
     gsap.fromTo('#vCook',{opacity:0},{opacity:1,duration:.4,ease:'power2.out'});
     gsap.fromTo('.pp-step',{x:-18,opacity:0},{x:0,opacity:1,duration:.45,stagger:.06,delay:.2,ease:'power2.out'});
@@ -729,12 +765,11 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         isReading=false;
         setReadButtons(false);
     }
-    const steps=curCook.st.split(/\d+\.\s+/).filter(Boolean);
-    const ns=Math.max(0,Math.min(steps.length-1,curStep+dir));
+    const ns=Math.max(0,Math.min(curCookSteps.length-1,curStep+dir));
     document.getElementById(`ps${curStep}`)?.classList.remove('cur');
     document.getElementById(`ps${ns}`)?.classList.add('cur');
     document.getElementById(`ps${ns}`)?.scrollIntoView({behavior:'smooth',block:'center'});
-    curStep=ns;updProg(ns,steps.length);
+    curStep=ns;updProg(ns,curCookSteps.length);
     }
     function updProg(s,t){
     const p=t>0?Math.round(s/t*100):0;
@@ -797,7 +832,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
 
     function speakStepThenAdvance(){
     if(!curCook||!isReading)return;
-    const steps=curCook.st.split(/\d+\.\s+/).filter(Boolean);
+    const steps=curCookSteps;
 
     if(curStep>=steps.length){
         isReading=false;

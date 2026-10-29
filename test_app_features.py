@@ -271,6 +271,16 @@ class ApplicationFeaturesTest(unittest.TestCase):
         )
         self.assertEqual(len(save_buttons), 1)
 
+    def test_multi_variation_recipe_is_grouped_in_detail_and_cook_views(self):
+        response = self.client.get('/recipes/')
+        self.assertEqual(response.status_code, 200)
+        page = response.get_data(as_text=True)
+        self.assertIn('Lemon-rosemary chicken noodles', page)
+        self.assertIn('Creamy coconut mushroom noodles', page)
+        self.assertIn('Pea and minced beef noodles', page)
+        self.assertIn('function parseInstructionSections(raw)', page)
+        self.assertIn('pp-cook-ingredients', page)
+
     def test_dashboard_randomizes_featured_and_recommended_recipes(self):
         self.sign_in_session()
         with patch('random.choice', wraps=random.choice) as choose_recipe, \
@@ -279,6 +289,71 @@ class ApplicationFeaturesTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         choose_recipe.assert_called_once()
         sample_recipes.assert_called_once()
+
+    def test_dashboard_stats_use_only_signed_in_users_data(self):
+        self.sign_in_session()
+        conn = database.get_db_connection()
+        other_user_id = conn.execute(
+            'INSERT INTO users (email, password_hash) VALUES (?, ?)',
+            ('other@example.com', 'test-hash'),
+        ).lastrowid
+        week_start = (date.today() - timedelta(days=date.today().weekday())).isoformat()
+
+        conn.executemany(
+            'INSERT INTO favorites (user_id, recipe_id) VALUES (?, ?)',
+            [(self.user_id, '1'), (self.user_id, '2')]
+            + [(other_user_id, str(recipe_id)) for recipe_id in range(3, 8)],
+        )
+        current_plan_id = conn.execute(
+            'INSERT INTO meal_plans (user_id, week_start_date) VALUES (?, ?)',
+            (self.user_id, week_start),
+        ).lastrowid
+        other_plan_id = conn.execute(
+            'INSERT INTO meal_plans (user_id, week_start_date) VALUES (?, ?)',
+            (other_user_id, week_start),
+        ).lastrowid
+        conn.executemany(
+            'INSERT INTO meal_plan_items (meal_plan_id, day_of_week, meal_type, recipe_id) VALUES (?, ?, ?, ?)',
+            [(current_plan_id, 'Mon', 'breakfast', '1'),
+             (current_plan_id, 'Tue', 'lunch', '2')]
+            + [(other_plan_id, 'Mon', 'breakfast', str(recipe_id)) for recipe_id in range(3, 7)],
+        )
+        conn.execute(
+            'INSERT INTO recipe_reviews (user_id, recipe_id, rating, review) VALUES (?, ?, ?, ?)',
+            (self.user_id, '1', 5, 'Great'),
+        )
+        conn.executemany(
+            'INSERT INTO recipe_reviews (user_id, recipe_id, rating, review) VALUES (?, ?, ?, ?)',
+            [(other_user_id, str(recipe_id), 4, 'Good') for recipe_id in range(2, 5)],
+        )
+        conn.execute(
+            'INSERT INTO preferences (user_id, health_conditions, allergies, dietary_restrictions) VALUES (?, ?, ?, ?)',
+            (self.user_id, '["Diabetes"]', '["Peanuts"]', '[]'),
+        )
+        conn.execute(
+            'INSERT INTO preferences (user_id, health_conditions, allergies, dietary_restrictions) VALUES (?, ?, ?, ?)',
+            (other_user_id, '["Diabetes","Blood Pressure"]', '["Peanuts"]', '["Vegan","Vegetarian"]'),
+        )
+        conn.commit()
+        conn.close()
+
+        page = self.client.get('/dashboard').get_data(as_text=True)
+        expected = {'sv1': 2, 'sv2': 2, 'sv3': 1, 'sv4': 2}
+        for element_id, count in expected.items():
+            self.assertRegex(
+                page,
+                rf'id="{element_id}" data-count="{count}"',
+            )
+        self.assertIn('Reviews Written', page)
+        self.assertIn('Preferences Active', page)
+        self.assertNotIn('Recipes Cooked', page)
+
+    def test_homepage_navigation_uses_shared_nav_layout(self):
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        page = response.get_data(as_text=True)
+        self.assertIn('.pn-links{display:flex', page)
+        self.assertNotRegex(page, re.compile(r'(?m)^\s*nav\s*\{'))
 
     def test_dashboard_todays_meal_plan_uses_current_day_plan(self):
         self.sign_in_session()
