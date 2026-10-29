@@ -1,9 +1,11 @@
 """Tests for profile customisation, nutrition, difficulty, tips and sharing."""
+import csv
 import os
 import re
 import sqlite3
 import tempfile
 import unittest
+from urllib.parse import quote
 
 import database
 import difficulty
@@ -113,6 +115,16 @@ class RecipeDataTest(unittest.TestCase):
     def test_ids_are_unique(self):
         ids = [r['id'] for r in recommendations.load_recipes()]
         self.assertEqual(len(ids), len(set(ids)))
+
+    def test_dataset_image_paths_take_precedence(self):
+        with open(recommendations.CSV_PATH, encoding='utf-8-sig', newline='') as source:
+            rows = list(csv.DictReader(source))
+        recipes = recommendations.load_recipes(force_reload=True)
+        self.assertEqual(len(recipes), len(rows))
+        for row, recipe in zip(rows, recipes):
+            image_name = os.path.basename((row.get('Image_path') or '').replace('\\', '/'))
+            if image_name and os.path.isfile(os.path.join(recommendations.IMAGE_DIR, image_name)):
+                self.assertTrue(recipe['img'].endswith(quote(image_name)), row['Recipe Title'])
 
     def test_new_fields_present(self):
         for r in recommendations.load_recipes():
