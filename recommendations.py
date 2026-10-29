@@ -147,7 +147,10 @@ def load_recipes(force_reload=False):
         est_minutes = max(15, min(90, 10 + step_count * 6))
         est_servings = SERVINGS_BY_CATEGORY.get(category, DEFAULT_SERVINGS)
 
-        image_file = image_index.get(_normalize(title))
+        image_path = (row.get('Image_path') or '').strip().replace('\\', '/')
+        image_file = os.path.basename(image_path)
+        if not image_file or not os.path.isfile(os.path.join(IMAGE_DIR, image_file)):
+            image_file = image_index.get(_normalize(title))
         recipe_id = ids[i]
 
         difficulty = rate_difficulty(ingredients_raw, instructions_raw)
