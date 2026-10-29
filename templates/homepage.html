@@ -80,35 +80,6 @@ body { background: var(--ink); font-family: 'Space Grotesk', sans-serif; color: 
   transition: width .05s linear;
 }
 
-/* ── NAV ── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 20px 40px;
-  background: linear-gradient(180deg, rgba(14,28,35,0.7) 0%, transparent 100%);
-}
-.nav-logo {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 22px; letter-spacing: 4px; color: #fff;
-}
-.nav-logo span { color: var(--gold); }
-.nav-links { display: flex; gap: 28px; align-items: center; }
-.nav-link {
-  font-size: 11px; font-weight: 500; letter-spacing: 2px;
-  text-transform: uppercase; color: rgba(255,255,255,0.5);
-  cursor: pointer; transition: color .2s; text-decoration: none;
-}
-.nav-link:hover { color: var(--gold); }
-.nav-cta {
-  padding: 8px 20px; border: 1px solid var(--gold);
-  background: transparent; border-radius: 2px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 11px; font-weight: 500; letter-spacing: 2px;
-  text-transform: uppercase; color: var(--gold);
-  cursor: pointer; transition: all .2s;
-}
-.nav-cta:hover { background: var(--gold); color: var(--ink); }
-
 /* ── OVERLAY PHASES ── */
 .phase {
   position: absolute; z-index: 10;
@@ -279,15 +250,10 @@ nav {
 .after-cta:hover { background: var(--ink); }
 
 @media (max-width: 768px){
-  nav{padding:16px 20px}
-  .nav-links{gap:14px}
-  .nav-link{display:none}
-  .nav-cta{display:inline-block}
   .after-title{font-size:36px}
   .after-section{padding:56px 24px}
 }
 @media (max-width: 480px){
-  .nav-logo{font-size:18px}
   /* Stack the buttons so neither wraps onto three lines */
   .cta-group{flex-direction:column;align-items:stretch;width:min(280px,80vw);margin:0 auto}
   .btn-gold,.btn-outline{text-align:center;justify-content:center;white-space:nowrap;padding:13px 16px}
@@ -311,20 +277,8 @@ nav {
 </div>
 
 <!-- NAV -->
-<nav>
-  <div class="nav-logo">Perfect <span>Palate</span></div>
-  <div class="nav-links">
-    <a class="nav-link" href="{{ url_for('recommendations.recommendations') }}">Recipes</a>
-    <a class="nav-link" href="{{ url_for('meal_planner.meal_planner') }}">My Plan</a>
-    <a class="nav-link" href="{{ url_for('meal_planner.favorites') }}">Favourites</a>
-    {% if session.user_id %}
-    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
-    {% else %}
-    <a class="nav-link" href="{{ url_for('sign_in') }}">Sign In</a>
-    {% endif %}
-    <a class="nav-cta" href="{{ url_for('recommendations.recommendations') }}">Cook now</a>
-  </div>
-</nav>
+{% set nav_overlay = true %}
+{% include '_nav.html' %}
 
 <!-- SCROLL CONTAINER -->
 <div class="scroll-container">
@@ -335,7 +289,7 @@ nav {
     <div class="phase" id="phase-1">
       <div class="phase-eyebrow">Kenyan Recipe Discovery</div>
       <div class="phase-title">Taste<br>the <em>Origin</em></div>
-      <p class="phase-sub">Curated from 500+ dishes — built around your health, your ingredients, your palate.</p>
+      <p class="phase-sub">{{ recipe_total }} recipes, each rated for difficulty and nutrition and built around your health, your ingredients, your palate.</p>
     </div>
 
     <!-- PHASE 2: LEFT FEATURE -->
@@ -344,8 +298,8 @@ nav {
       <div class="phase-feature-title">Cooks beside you,<br>step by step</div>
       <p class="phase-feature-body">Real-time audio guidance with timers. A warm companion voice that walks you through every step.</p>
       <div class="glass-card">
-        <div class="glass-stat">6</div>
-        <div class="glass-stat-label">Steps guided per recipe</div>
+        <div class="glass-stat">{{ median_steps }}</div>
+        <div class="glass-stat-label">Steps in a typical recipe, read aloud one at a time</div>
       </div>
     </div>
 
@@ -355,8 +309,8 @@ nav {
       <div class="phase-feature-title">Your health.<br>Your rules.</div>
       <p class="phase-feature-body">Diabetes, allergies, gluten-free, vegan — 12 dietary filters that actually work.</p>
       <div class="glass-card">
-        <div class="glass-stat">152<span style="font-size:28px;color:rgba(226,186,46,0.6);">+</span></div>
-        <div class="glass-stat-label">Kenyan recipes</div>
+        <div class="glass-stat">{{ recipe_total }}</div>
+        <div class="glass-stat-label">Recipes to explore</div>
       </div>
     </div>
 
@@ -404,7 +358,8 @@ nav {
   ctx.imageSmoothingQuality = 'high';
 
   // Set canvas resolution to match video aspect
-  const FW = 1764, FH = 1176;
+  // Frames are 1764x1176 with the bottom 80px (the generator's watermark strip) cropped off.
+  const FW = 1764, FH = 1096;
   canvas.width = FW;
   canvas.height = FH;
 

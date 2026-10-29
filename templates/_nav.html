@@ -1,0 +1,203 @@
+{#-
+  Shared top navigation for every page.
+  Set before including:   {% set nav_active = 'recipes' %}   (dashboard | recipes | plan | favourites | shopping | tips | preferences | profile)
+  Optional:               {% set nav_overlay = true %}        (transparent bar floating over a hero, used by the homepage)
+-#}
+{% set _active = nav_active|default('') %}
+{% set _signed_in = me is not none and me %}
+<style>
+.pn{--pn-bg:var(--b,#426e86);--pn-gold:var(--a,#e2ba2e);--pn-h:60px;position:sticky;top:0;z-index:60;background:var(--pn-bg);color:#fff;font-family:'Syne','Segoe UI',system-ui,sans-serif;box-shadow:0 1px 0 rgba(255,255,255,.08),0 6px 18px -12px rgba(0,0,0,.5)}
+.pn.pn-overlay{position:fixed;left:0;right:0;background:linear-gradient(rgba(10,20,26,.62),rgba(10,20,26,0));box-shadow:none}
+.pn *{box-sizing:border-box}
+.pn a{color:inherit;text-decoration:none}
+.pn-in{max-width:1400px;margin:0 auto;height:var(--pn-h);padding:0 clamp(14px,3vw,28px);display:flex;align-items:center;gap:clamp(10px,2vw,24px)}
+.pn-brand{display:flex;align-items:center;gap:.55rem;font-family:'Cormorant Garamond',Georgia,serif;font-size:1.35rem;font-weight:600;letter-spacing:.01em;white-space:nowrap;border-radius:8px}
+.pn-brand svg{width:26px;height:26px;flex:none}
+.pn-links{display:flex;align-items:center;gap:.15rem;margin-left:.5rem}
+.pn-links a{position:relative;padding:.55rem .8rem;font-size:.82rem;letter-spacing:.04em;color:rgba(255,255,255,.88);border-radius:8px;transition:color .15s,background .15s}
+.pn-links a:hover{color:#fff;background:rgba(255,255,255,.1)}
+.pn-links a[aria-current="page"]{color:#fff;font-weight:600}
+.pn-links a[aria-current="page"]::after{content:'';position:absolute;left:.8rem;right:.8rem;bottom:.2rem;height:2px;border-radius:2px;background:var(--pn-gold)}
+.pn-right{margin-left:auto;display:flex;align-items:center;gap:.6rem}
+.pn-cta{padding:.55rem 1rem;border-radius:999px;background:var(--pn-gold);color:#1d2b33!important;font-size:.8rem;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.pn-cta:hover{filter:brightness(1.07)}
+.pn-signin{white-space:nowrap;padding:.55rem .8rem;font-size:.82rem;color:rgba(255,255,255,.9);border-radius:8px}
+.pn-signin:hover{background:rgba(255,255,255,.1)}
+
+/* Profile chip (desktop) */
+.pn-user{position:relative}
+.pn-chip{display:flex;align-items:center;gap:.55rem;height:44px;padding:4px 12px 4px 4px;border-radius:999px;border:1.5px solid var(--pn-gold);background:rgba(255,255,255,.14);color:#fff;font:inherit;cursor:pointer;transition:background .15s,transform .15s}
+.pn-chip:hover,.pn-chip[aria-expanded="true"]{background:rgba(255,255,255,.24)}
+.pn-av{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;font-size:18px;line-height:1;background:var(--pn-avatar,#426e86);box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)}
+.pn-name{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.85rem;font-weight:600}
+.pn-chev{width:14px;height:14px;flex:none;transition:transform .2s}
+.pn-chip[aria-expanded="true"] .pn-chev{transform:rotate(180deg)}
+.pn-menu{position:absolute;right:0;top:calc(100% + 10px);min-width:250px;padding:8px;border-radius:16px;background:#fff;color:#1d2b33;box-shadow:0 18px 40px -12px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.06);transform-origin:top right;animation:pnPop .16s ease-out}
+.pn-menu[hidden]{display:none}
+.pn-menu-head{display:flex;align-items:center;gap:.75rem;padding:10px 10px 12px;border-bottom:1px solid #e6e1d3;margin-bottom:6px}
+.pn-menu-head .pn-av{width:44px;height:44px;font-size:23px}
+.pn-menu-name{font-weight:700;font-size:.95rem;line-height:1.2;overflow-wrap:anywhere}
+.pn-menu-sub{font-size:.75rem;color:#5b6a72;margin-top:2px}
+.pn-menu a{display:flex;align-items:center;gap:.6rem;min-height:42px;padding:0 10px;border-radius:10px;font-size:.88rem;color:#1d2b33}
+.pn-menu a:hover,.pn-menu a:focus-visible{background:#eef3f6}
+.pn-menu a.pn-danger{color:#9a2f22}
+.pn-menu hr{border:0;border-top:1px solid #e6e1d3;margin:6px 0}
+@keyframes pnPop{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:none}}
+
+/* Mobile pieces, hidden on desktop */
+.pn-avlink{display:none;place-items:center;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--pn-gold);background:rgba(255,255,255,.14)}
+.pn-burger{display:none;place-items:center;width:44px;height:44px;border-radius:12px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1);color:#fff;cursor:pointer;padding:0}
+.pn-burger:hover{background:rgba(255,255,255,.2)}
+.pn-burger svg{width:22px;height:22px}
+.pn-burger .pn-x{display:none}
+.pn-burger[aria-expanded="true"] .pn-bars{display:none}
+.pn-burger[aria-expanded="true"] .pn-x{display:block}
+.pn-drawer{display:none}
+
+.pn a:focus-visible,.pn button:focus-visible{outline:2px solid var(--pn-gold);outline-offset:2px}
+
+@media (max-width:900px){
+  .pn-links,.pn-user{display:none}
+  .pn-avlink{display:grid}
+  .pn-burger{display:grid}
+  .pn-drawer{display:block;position:absolute;left:0;right:0;top:100%;max-height:calc(100vh - var(--pn-h));max-height:calc(100dvh - var(--pn-h));overflow-y:auto;background:#2f5367;padding:10px clamp(14px,3vw,28px) 22px;box-shadow:0 22px 40px -16px rgba(0,0,0,.55);animation:pnSlide .2s ease-out}
+  .pn-drawer[hidden]{display:none}
+  .pn-overlay .pn-drawer{background:rgba(24,44,56,.97)}
+  .pn-drawer a{display:flex;align-items:center;min-height:50px;padding:0 14px;border-radius:12px;font-size:1rem;color:#fff}
+  .pn-drawer a:hover{background:rgba(255,255,255,.1)}
+  .pn-drawer a[aria-current="page"]{background:rgba(255,255,255,.14);font-weight:700;box-shadow:inset 3px 0 0 var(--pn-gold)}
+  .pn-drawer hr{border:0;border-top:1px solid rgba(255,255,255,.16);margin:10px 0}
+  .pn-dprofile{display:flex!important;gap:.8rem;min-height:68px!important;background:rgba(255,255,255,.1);border:1px solid rgba(226,186,46,.55)}
+  .pn-dprofile .pn-av{width:44px;height:44px;font-size:23px}
+  .pn-dprofile small{display:block;font-size:.76rem;opacity:.8;font-weight:400}
+  .pn-drawer .pn-danger{color:#ffb4a8}
+}
+@media (max-width:520px){.pn-signin{display:none}}
+@media (max-width:420px){.pn-brand{font-size:1.15rem}.pn-brand svg{width:22px;height:22px}.pn-cta{padding:.5rem .8rem}}
+@keyframes pnSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pn-menu,.pn-drawer{animation:none}.pn-chev{transition:none}}
+</style>
+
+<header class="pn{% if nav_overlay %} pn-overlay{% endif %}" id="pn"{% if _signed_in %} style="--pn-avatar:{{ me.avatar_hex }}"{% endif %}>
+  <div class="pn-in">
+    <a class="pn-brand" href="{{ url_for('dashboard') if _signed_in else url_for('homepage') }}" aria-label="Perfect Palate home">
+      <svg viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <circle cx="13" cy="13" r="12" stroke="rgba(226,186,46,.55)" stroke-width="1"/>
+        <path d="M13 3C13 3 7 7 7 13C7 19 13 23 13 23C13 23 19 19 19 13C19 7 13 3 13 3Z" fill="rgba(226,186,46,.2)" stroke="#e2ba2e" stroke-width="1"/>
+        <circle cx="13" cy="13" r="2.8" fill="#e2ba2e"/>
+      </svg>
+      <span>Perfect Palate</span>
+    </a>
+
+    <nav class="pn-links" aria-label="Main">
+      {% if _signed_in %}<a href="{{ url_for('dashboard') }}"{% if _active == 'dashboard' %} aria-current="page"{% endif %}>Dashboard</a>{% endif %}
+      <a href="{{ url_for('recommendations.recommendations') }}"{% if _active == 'recipes' %} aria-current="page"{% endif %}>Recipes</a>
+      {% if _signed_in %}
+      <a href="{{ url_for('meal_planner.meal_planner') }}"{% if _active == 'plan' %} aria-current="page"{% endif %}>Meal Plan</a>
+      <a href="{{ url_for('meal_planner.favorites') }}"{% if _active == 'favourites' %} aria-current="page"{% endif %}>Favourites</a>
+      <a href="{{ url_for('meal_planner.shopping_list') }}"{% if _active == 'shopping' %} aria-current="page"{% endif %}>Shopping</a>
+      {% endif %}
+      <a href="{{ url_for('recommendations.cooking_tips') }}"{% if _active == 'tips' %} aria-current="page"{% endif %}>Tips</a>
+    </nav>
+
+    <div class="pn-right">
+      {% if _signed_in %}
+      <div class="pn-user">
+        <button type="button" class="pn-chip" id="pnChip" aria-haspopup="true" aria-expanded="false" aria-controls="pnMenu">
+          <span class="pn-av" data-pn-avatar>{{ me.avatar_emoji }}</span>
+          <span class="pn-name" data-pn-name>{{ me.display_name }}</span>
+          <svg class="pn-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="pn-menu" id="pnMenu" hidden>
+          <div class="pn-menu-head">
+            <span class="pn-av" data-pn-avatar>{{ me.avatar_emoji }}</span>
+            <div><div class="pn-menu-name" data-pn-name>{{ me.display_name }}</div><div class="pn-menu-sub">Signed in</div></div>
+          </div>
+          <a href="{{ url_for('profile') }}"{% if _active == 'profile' %} aria-current="page"{% endif %}>Your profile</a>
+          <a href="{{ url_for('preferences') }}"{% if _active == 'preferences' %} aria-current="page"{% endif %}>Dietary preferences</a>
+          <hr>
+          <a class="pn-danger" href="{{ url_for('logout') }}">Log out</a>
+        </div>
+      </div>
+      <a class="pn-avlink" href="{{ url_for('profile') }}" aria-label="Your profile, {{ me.display_name }}"><span class="pn-av" data-pn-avatar>{{ me.avatar_emoji }}</span></a>
+      {% else %}
+      <a class="pn-signin" href="{{ url_for('sign_in') }}">Sign in</a>
+      <a class="pn-cta" href="{{ url_for('recommendations.recommendations') }}">Cook now</a>
+      {% endif %}
+      <button type="button" class="pn-burger" id="pnBurger" aria-label="Open menu" aria-expanded="false" aria-controls="pnDrawer">
+        <svg class="pn-bars" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <svg class="pn-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="pn-drawer" id="pnDrawer" hidden>
+    {% if _signed_in %}
+    <a class="pn-dprofile" href="{{ url_for('profile') }}"{% if _active == 'profile' %} aria-current="page"{% endif %}>
+      <span class="pn-av" data-pn-avatar>{{ me.avatar_emoji }}</span>
+      <span><span data-pn-name>{{ me.display_name }}</span><small>View and edit your profile</small></span>
+    </a>
+    <hr>
+    <a href="{{ url_for('dashboard') }}"{% if _active == 'dashboard' %} aria-current="page"{% endif %}>Dashboard</a>
+    {% endif %}
+    <a href="{{ url_for('recommendations.recommendations') }}"{% if _active == 'recipes' %} aria-current="page"{% endif %}>Recipes</a>
+    {% if _signed_in %}
+    <a href="{{ url_for('meal_planner.meal_planner') }}"{% if _active == 'plan' %} aria-current="page"{% endif %}>Meal Plan</a>
+    <a href="{{ url_for('meal_planner.favorites') }}"{% if _active == 'favourites' %} aria-current="page"{% endif %}>Favourites</a>
+    <a href="{{ url_for('meal_planner.shopping_list') }}"{% if _active == 'shopping' %} aria-current="page"{% endif %}>Shopping</a>
+    {% endif %}
+    <a href="{{ url_for('recommendations.cooking_tips') }}"{% if _active == 'tips' %} aria-current="page"{% endif %}>Tips</a>
+    {% if _signed_in %}
+    <a href="{{ url_for('preferences') }}"{% if _active == 'preferences' %} aria-current="page"{% endif %}>Dietary preferences</a>
+    <hr>
+    <a class="pn-danger" href="{{ url_for('logout') }}">Log out</a>
+    {% else %}
+    <hr>
+    <a href="{{ url_for('sign_in') }}">Sign in</a>
+    {% endif %}
+  </div>
+</header>
+
+<script>
+(function () {
+  var bar = document.getElementById('pn');
+  if (!bar) return;
+  var chip = document.getElementById('pnChip'), menu = document.getElementById('pnMenu');
+  var burger = document.getElementById('pnBurger'), drawer = document.getElementById('pnDrawer');
+
+  function setMenu(open) {
+    if (!chip) return;
+    chip.setAttribute('aria-expanded', open ? 'true' : 'false');
+    menu.hidden = !open;
+  }
+  function setDrawer(open) {
+    burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    drawer.hidden = !open;
+  }
+  if (chip) chip.addEventListener('click', function () { setMenu(menu.hidden); });
+  burger.addEventListener('click', function () {
+    var open = drawer.hidden; setDrawer(open);
+    if (open) { var first = drawer.querySelector('a'); if (first) first.focus({ preventScroll: true }); }
+  });
+  document.addEventListener('click', function (e) {
+    if (!bar.contains(e.target)) { setMenu(false); setDrawer(false); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (chip && !menu.hidden) { setMenu(false); chip.focus(); }
+    else if (!drawer.hidden) { setDrawer(false); burger.focus(); }
+  });
+  var mq = window.matchMedia('(min-width: 901px)');
+  (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(function (e) {
+    if (e.matches) setDrawer(false); else setMenu(false);
+  });
+
+  // Let the profile page update the bar live while you edit.
+  window.updateNavProfile = function (p) {
+    if (p.emoji) bar.querySelectorAll('[data-pn-avatar]').forEach(function (el) { el.textContent = p.emoji; });
+    if (p.name) bar.querySelectorAll('[data-pn-name]').forEach(function (el) { el.textContent = p.name; });
+    if (p.color) bar.style.setProperty('--pn-avatar', p.color);
+  };
+})();
+</script>

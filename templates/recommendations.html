@@ -299,26 +299,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     </g>
   </svg>
 
-  <nav class="pp-nav">
-    <div class="pp-logo">
-      <svg class="pp-logo-mark" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="14" r="13" stroke="rgba(226,186,46,.45)" stroke-width="1"/>
-        <path d="M14 4 C14 4 8 8 8 14 C8 20 14 24 14 24 C14 24 20 20 20 14 C20 8 14 4 14 4Z" fill="rgba(226,186,46,.18)" stroke="#e2ba2e" stroke-width="1"/>
-        <circle cx="14" cy="14" r="3" fill="#e2ba2e"/>
-      </svg>
-      <span class="pp-logo-text">Perfect Palate</span>
-    </div>
-    <div class="pp-navlinks">
-      <a href="{{ url_for('dashboard') }}">Dashboard</a>
-      <a href="{{ url_for('recommendations.recommendations') }}" class="on">Recipes</a>
-      <a href="{{ url_for('meal_planner.meal_planner') }}">Meal Plan</a>
-      <a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>
-      <a href="{{ url_for('meal_planner.shopping_list') }}">Shopping</a>
-      <a href="{{ url_for('recommendations.cooking_tips') }}">Tips</a>
-      {% if me %}<a href="{{ url_for('profile') }}" title="Your profile" aria-label="Your profile">{{ me.avatar_emoji }}</a>{% endif %}
-      <a href="{{ url_for('logout') }}" title="Log out"><i class="fa-solid fa-right-from-bracket"></i></a>
-    </div>
-  </nav>
+{% set nav_active = 'recipes' %}
+{% include '_nav.html' %}
 
   <div id="vRecipes">
     <div class="pp-hero">

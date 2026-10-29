@@ -86,19 +86,8 @@ input::placeholder,textarea::placeholder{color:#6b7a84}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
-<nav class="nav" aria-label="Main">
-  <a class="nav-lt" href="{{ url_for('dashboard') }}">Perfect Palate</a>
-  <div class="nav-links">
-    <a href="{{ url_for('dashboard') }}">Dashboard</a>
-    <a href="{{ url_for('recommendations.recommendations') }}">Recipes</a>
-    <a href="{{ url_for('meal_planner.meal_planner') }}">Meal Plan</a>
-    <a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>
-    <a href="{{ url_for('meal_planner.shopping_list') }}">Shopping</a>
-    <a href="{{ url_for('recommendations.cooking_tips') }}">Tips</a>
-  </div>
-  <a class="nav-user" href="{{ url_for('profile') }}" aria-current="page" aria-label="Your profile" id="navAvatar">{{ me.avatar_emoji }}</a>
-  <a class="nav-logout" href="{{ url_for('logout') }}" title="Log out" aria-label="Log out"><i class="fa-solid fa-right-from-bracket"></i></a>
-</nav>
+{% set nav_active = 'profile' %}
+{% include '_nav.html' %}
 
 <main class="wrap" style="--avatar:{{ me.avatar_hex }}" id="page">
   <h1>Your profile</h1>
@@ -195,9 +184,10 @@ input::placeholder,textarea::placeholder{color:#6b7a84}
   function preview() {
     const name = $('displayName').value.trim() || 'Your name';
     $('pvName').textContent = name;
-    const emo = pick('avatar_emoji'); if (emo) { $('pvAvatar').textContent = emo.value; $('navAvatar').textContent = emo.value; }
+    const emo = pick('avatar_emoji'); if (emo) { $('pvAvatar').textContent = emo.value; }
     const col = pick('avatar_color'); if (col) page.style.setProperty('--avatar', col.dataset.hex);
     document.documentElement.style.setProperty('--avatar', col ? col.dataset.hex : '');
+    if (window.updateNavProfile) updateNavProfile({ emoji: emo && emo.value, name: $('displayName').value.trim(), color: col && col.dataset.hex });
     $('bioCount').textContent = $('bio').value.length + '/200';
   }
   form.addEventListener('input', preview);

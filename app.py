@@ -121,11 +121,26 @@ except ImportError:  # optional: the app still runs, just without compression
     pass
 
 
+_steps_cache = {}
+
+
+def _median_steps(recipes):
+    """Typical number of method steps per recipe, measured from the data (cached per dataset size)."""
+    key = len(recipes)
+    if key not in _steps_cache:
+        from statistics import median
+        from difficulty import split_steps
+        counts = [len(split_steps(r['st'])) for r in recipes]
+        _steps_cache[key] = int(round(median(counts))) if counts else 0
+    return _steps_cache[key]
+
+
 @app.context_processor
 def inject_recipe_total():
     """Real size of the recipe dataset, so pages never advertise a stale hardcoded count."""
     from recommendations import load_recipes
-    return {'recipe_total': len(load_recipes())}
+    recipes = load_recipes()
+    return {'recipe_total': len(recipes), 'median_steps': _median_steps(recipes)}
 
 
 def send_password_reset_email(to_email, reset_link):

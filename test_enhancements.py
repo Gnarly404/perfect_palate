@@ -310,6 +310,34 @@ class SharingAndPagesTest(AppTestCase):
         self.assertIn('/static/frames/f00.webp', html)
         self.assertNotIn('base64,', html)
 
+    def test_shared_navbar_on_every_signed_in_page(self):
+        self.signup_and_login()
+        expect = {'/dashboard': 'Dashboard', '/recipes/': 'Recipes', '/planner/': 'Meal Plan',
+                  '/planner/favorites': 'Favourites', '/planner/shopping-list': 'Shopping', '/recipes/tips': 'Tips'}
+        for url, label in expect.items():
+            html = self.client.get(url).get_data(as_text=True)
+            self.assertEqual(html.count('id="pn"'), 1, url)
+            self.assertIn('id="pnBurger"', html, url)                     # hamburger for small screens
+            self.assertIn('href="/profile"', html, url)                   # profile reachable from every page
+            self.assertRegex(html, r'aria-current="page">' + label, url)  # current page marked
+        for url in ('/preferences', '/profile'):
+            html = self.client.get(url).get_data(as_text=True)
+            self.assertIn('id="pnChip"', html, url)
+
+    def test_navbar_when_signed_out(self):
+        html = self.client.get('/').get_data(as_text=True)
+        self.assertIn('id="pnBurger"', html)
+        self.assertIn('pn-overlay', html)
+        self.assertNotIn('id="pnChip"', html)
+
+    def test_homepage_numbers_come_from_the_data(self):
+        from recommendations import load_recipes
+        html = self.client.get('/').get_data(as_text=True)
+        self.assertIn(f'{len(load_recipes())} recipes', html)
+        self.assertNotIn('500+', html)
+        self.assertNotIn('152', html)
+        self.assertNotIn('Steps guided per recipe', html)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -40,16 +40,8 @@ section h2{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:6
 @media (max-width:560px){.nav{padding:.4rem 1rem}}
 </style>
 
-<nav class="nav" aria-label="Main">
-  <a class="nav-lt" href="{{ url_for('homepage') }}">Perfect Palate</a>
-  <div class="nav-links">
-    {% if session.user_id %}<a href="{{ url_for('dashboard') }}">Dashboard</a>{% endif %}
-    <a href="{{ url_for('recommendations.recommendations') }}">Recipes</a>
-    {% if session.user_id %}<a href="{{ url_for('meal_planner.meal_planner') }}">Meal Plan</a><a href="{{ url_for('meal_planner.favorites') }}">Favourites</a>{% endif %}
-    <a href="{{ url_for('recommendations.cooking_tips') }}" aria-current="page">Tips</a>
-    {% if session.user_id %}<a href="{{ url_for('profile') }}">Profile</a>{% else %}<a href="{{ url_for('sign_in') }}">Sign in</a>{% endif %}
-  </div>
-</nav>
+{% set nav_active = 'tips' %}
+{% include '_nav.html' %}
 
 <main class="wrap">
   <h1>Cooking tips and techniques</h1>
