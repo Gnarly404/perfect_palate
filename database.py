@@ -346,6 +346,7 @@ def init_db():
     _ensure_column(cursor, 'users', 'avatar_color', "TEXT DEFAULT ''")
     _ensure_column(cursor, 'users', 'cooking_level', "TEXT DEFAULT ''")
     _ensure_column(cursor, 'users', 'calorie_goal', 'INTEGER')
+    _ensure_column(cursor, 'meal_plans', 'shopping_list_cleared', 'INTEGER NOT NULL DEFAULT 0')
 
     conn.commit()
 

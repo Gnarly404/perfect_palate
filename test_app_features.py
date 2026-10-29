@@ -121,15 +121,75 @@ class ApplicationFeaturesTest(unittest.TestCase):
         self.assertEqual(shopping_response.status_code, 200)
         shopping_page = shopping_response.get_data(as_text=True)
         self.assertIn('All-Purpose Flour', shopping_page)
-        items_match = re.search(r'let items=(.*);', shopping_page)
+        items_match = re.search(
+            r'<script id="shoppingListData" type="application/json">(.*?)</script>',
+            shopping_page,
+            re.S,
+        )
         self.assertIsNotNone(items_match)
-        generated_items = json.loads(items_match.group(1))
+        generated_items = json.loads(items_match.group(1))['items']
         self.assertIn('All-Purpose Flour', [item['name'] for item in generated_items])
         self.assertIn('Water', [item['name'] for item in generated_items])
         self.assertIn('produce', [item['cat'] for item in generated_items])
         self.assertIn('function toggleItem(id)', shopping_page)
         self.assertIn('navigator.share', shopping_page)
         self.assertNotIn('gsap.', shopping_page)
+
+    def test_clear_shopping_list_keeps_meal_plan_and_persists_for_week(self):
+        self.sign_in_session()
+        week_start = '2026-10-26'
+        plan_id = self.client.post('/planner/create', json={
+            'week_start_date': week_start,
+        }).json['id']
+        added = self.client.post('/planner/add-meal', json={
+            'meal_plan_id': plan_id,
+            'day_of_week': 'Mon',
+            'meal_type': 'breakfast',
+            'recipe_id': 1,
+        })
+        self.assertEqual(added.status_code, 200)
+
+        page = self.client.get(
+            f'/planner/shopping-list?week_start_date={week_start}',
+        ).get_data(as_text=True)
+        self.assertIn('All-Purpose Flour', page)
+        self.assertIn('id="clearAllBtn"', page)
+        self.assertIn('function clearAll()', page)
+
+        cleared = self.client.post('/planner/shopping-list/clear', json={
+            'week_start_date': week_start,
+        })
+        self.assertEqual(cleared.status_code, 200)
+        self.assertEqual(cleared.json['status'], 'success')
+
+        refreshed_page = self.client.get(
+            f'/planner/shopping-list?week_start_date={week_start}',
+        ).get_data(as_text=True)
+        items_match = re.search(
+            r'<script id="shoppingListData" type="application/json">(.*?)</script>',
+            refreshed_page,
+            re.S,
+        )
+        self.assertIsNotNone(items_match)
+        self.assertEqual(json.loads(items_match.group(1))['items'], [])
+
+        unchanged_plan = self.client.post('/planner/create', json={
+            'week_start_date': week_start,
+        })
+        self.assertEqual(len(unchanged_plan.json['items']), 1)
+
+        added_after_clear = self.client.post('/planner/add-meal', json={
+            'meal_plan_id': plan_id,
+            'day_of_week': 'Tue',
+            'meal_type': 'lunch',
+            'recipe_id': 4,
+        })
+        self.assertEqual(added_after_clear.status_code, 200)
+        regenerated_page = self.client.get(
+            f'/planner/shopping-list?week_start_date={week_start}',
+        ).get_data(as_text=True)
+        self.assertIn('All-Purpose Flour', regenerated_page)
+        self.assertIn('Sukuma Wiki', regenerated_page)
 
     def test_dragging_meals_moves_to_empty_slots_and_swaps_occupied_slots(self):
         self.sign_in_session()
@@ -207,6 +267,11 @@ class ApplicationFeaturesTest(unittest.TestCase):
         self.assertTrue(recipes)
         self.assertTrue(all('img' in recipe for recipe in recipes))
         self.assertIn("r.img?`background-image:url('${r.img}')", page)
+        self.assertIn('id="recipeSearch"', page)
+        self.assertIn('id="recipeCategory"', page)
+        self.assertIn('id="recipeTime"', page)
+        self.assertIn('function renderRecipeCards()', page)
+        self.assertIn('selectedCell.scrollIntoView({behavior:\'smooth\',block:\'center\'})', page)
 
     def test_recipe_browse_and_meal_picker_shuffle_each_request(self):
         original_recipes = recommendations.load_recipes()

@@ -116,9 +116,17 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 .add-h1{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--tx)}
 .add-h1 em{font-style:italic;color:var(--b)}
 .add-sub{font-size:.75rem;color:var(--mu);margin-top:.3rem}
+.recipe-filters{padding:0 1.8rem 1rem;display:grid;grid-template-columns:minmax(220px,1fr) repeat(2,minmax(150px,200px));gap:.65rem}
+.filter-search,.filter-select{min-width:0;background:var(--card);border:1.5px solid rgba(66,110,134,.14);border-radius:10px;color:var(--tx);font:inherit}
+.filter-search{display:flex;align-items:center;gap:.55rem;padding:0 .8rem;color:var(--mu)}
+.filter-search input,.filter-select{height:42px}
+.filter-search input{width:100%;border:0;outline:0;background:transparent;font:inherit;font-size:.74rem;color:var(--tx)}
+.filter-select{padding:0 .75rem;font-size:.7rem;font-weight:700;cursor:pointer}
+.recipe-count{padding:0 1.8rem .7rem;font-size:.68rem;color:var(--mu)}
 .add-grid{padding:0 1.8rem 2rem;display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem}
 .add-card{background:var(--card);border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:var(--sh);transition:transform .25s ease,box-shadow .25s ease;border:1.5px solid rgba(66,110,134,.1)}
 .add-card:hover{transform:translateY(-4px);box-shadow:var(--shh);border-color:var(--b)}
+.add-empty{grid-column:1/-1;padding:2rem;text-align:center;color:var(--mu);background:var(--card);border-radius:14px}
 .add-img{height:90px;display:flex;align-items:center;justify-content:center;font-size:2.8rem}
 .add-body{padding:.65rem .8rem}
 .add-cat{font-size:.58rem;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--a)}
@@ -131,6 +139,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 
 @media (max-width: 1024px){
   .stats-band{grid-template-columns:repeat(2,1fr);padding:0 1.4rem 1.2rem}
+  .recipe-filters{padding:0 1.4rem 1rem}
+  .recipe-count{padding-left:1.4rem;padding-right:1.4rem}
   .add-grid{grid-template-columns:repeat(2,1fr);padding:0 1.4rem 1.6rem}
   .pg-head{padding:1.4rem 1.4rem 1rem;flex-wrap:wrap}
   .footer-card{margin:0 1.4rem 1.6rem;flex-wrap:wrap}
@@ -138,6 +148,9 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 @media (max-width: 640px){
   .nav-links{gap:.5rem;font-size:.66rem;flex-wrap:wrap}
   .stats-band{grid-template-columns:1fr 1fr;padding:0 1rem 1rem}
+  .recipe-filters{grid-template-columns:1fr 1fr;padding:0 1rem 1rem}
+  .filter-search{grid-column:1/-1}
+  .recipe-count{padding-left:1rem;padding-right:1rem}
   .add-grid{grid-template-columns:1fr;padding:0 1rem 1.4rem}
   .pg-head{padding:1.2rem 1rem .8rem}
   /* The weekly plan is a real HTML table (7 day columns); rather than
@@ -244,6 +257,29 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
     <h2 class="add-h1">Choose a <em>Recipe</em></h2>
     <p class="add-sub">Select a recipe to add to this meal slot</p>
   </div>
+  <div class="recipe-filters" role="search" aria-label="Filter recipes">
+    <label class="filter-search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <span class="sr-only">Search recipes or ingredients</span>
+      <input id="recipeSearch" type="search" placeholder="Search recipes or ingredients" autocomplete="off">
+    </label>
+    <label>
+      <span class="sr-only">Filter by category</span>
+      <select class="filter-select" id="recipeCategory" aria-label="Filter by category">
+        <option value="">All categories</option>
+      </select>
+    </label>
+    <label>
+      <span class="sr-only">Filter by prep time</span>
+      <select class="filter-select" id="recipeTime" aria-label="Filter by prep time">
+        <option value="">Any prep time</option>
+        <option value="30">30 min or less</option>
+        <option value="60">31-60 min</option>
+        <option value="60+">Over 60 min</option>
+      </select>
+    </label>
+  </div>
+  <p class="recipe-count" id="recipeCount" aria-live="polite"></p>
   <div class="add-grid" id="addGrid"></div>
 </div>
 
@@ -406,15 +442,31 @@ function removeMeal(di,meal){
   }).catch(error=>toast(error.message));
 }
 
-function openAdd(di,meal){
-  addTarget={di,meal};
-  const dayName=DAYS[di].s;
-  const mealName=meal.charAt(0).toUpperCase()+meal.slice(1);
-  document.getElementById('addContext').textContent=`${mealName} — ${dayName}, ${DAYS[di].date.toLocaleDateString(undefined,{month:'long',day:'numeric'})}`;
-
+function renderRecipeCards(){
+  const query=document.getElementById('recipeSearch').value.trim().toLocaleLowerCase();
+  const category=document.getElementById('recipeCategory').value;
+  const timeLimit=document.getElementById('recipeTime').value;
+  const filtered=RX.filter(r=>{
+    const matchesQuery=`${r.t} ${r.c} ${r.ing}`.toLocaleLowerCase().includes(query);
+    const matchesCategory=!category||r.c===category;
+    const prepTime=Number(r.tm);
+    const matchesTime=!timeLimit
+      ||(timeLimit==='30'&&prepTime<=30)
+      ||(timeLimit==='60'&&prepTime>30&&prepTime<=60)
+      ||(timeLimit==='60+'&&prepTime>60);
+    return matchesQuery&&matchesCategory&&matchesTime;
+  });
   const grid=document.getElementById('addGrid');
-  grid.innerHTML='';
-  RX.forEach(r=>{
+  grid.replaceChildren();
+  document.getElementById('recipeCount').textContent=`Showing ${filtered.length} of ${RX.length} recipes`;
+  if(!filtered.length){
+    const empty=document.createElement('p');
+    empty.className='add-empty';
+    empty.textContent='No recipes match these filters. Try changing your search or filters.';
+    grid.appendChild(empty);
+    return;
+  }
+  filtered.forEach(r=>{
     const card=document.createElement('div');
     card.className='add-card';
     card.onclick=()=>selectRecipe(r);
@@ -426,9 +478,20 @@ function openAdd(di,meal){
       </div>`;
     grid.appendChild(card);
   });
+}
 
+function openAdd(di,meal){
+  addTarget={di,meal};
+  const dayName=DAYS[di].s;
+  const mealName=meal.charAt(0).toUpperCase()+meal.slice(1);
+  document.getElementById('addContext').textContent=`${mealName} — ${dayName}, ${DAYS[di].date.toLocaleDateString(undefined,{month:'long',day:'numeric'})}`;
+  document.getElementById('recipeSearch').value='';
+  document.getElementById('recipeCategory').value='';
+  document.getElementById('recipeTime').value='';
+  renderRecipeCards();
   document.getElementById('vMain').style.display='none';
   const av=document.getElementById('vAdd');av.style.display='block';
+  av.scrollIntoView({behavior:'smooth',block:'start'});
   gsap.fromTo(av,{opacity:0,y:12},{opacity:1,y:0,duration:.35,ease:'power3.out'});
   gsap.from('.add-card',{opacity:0,y:16,stagger:.05,duration:.35,delay:.15,ease:'power2.out'});
 }
@@ -442,17 +505,25 @@ function selectRecipe(r){
   }).then(async response=>{
     const data=await response.json();
     if(!response.ok)throw new Error(data.error||'Could not save this meal.');
-    plan[target.di][target.meal]=r;cancelAdd();
-    setTimeout(()=>{renderGrid();updateStats();toast(`${r.em} ${r.t} added!`);},150);
+    plan[target.di][target.meal]=r;
+    renderGrid();updateStats();
+    cancelAdd(()=>toast(`${r.em} ${r.t} added!`));
   }).catch(error=>toast(error.message));
 }
 
-function cancelAdd(){
+function cancelAdd(onClose){
   const av=document.getElementById('vAdd');
   gsap.to(av,{opacity:0,y:8,duration:.22,ease:'power2.in',onComplete:()=>{
     av.style.display='none';
     document.getElementById('vMain').style.display='block';
     gsap.from('#vMain',{opacity:0,duration:.28,ease:'power2.out'});
+    if(addTarget){
+      const selectedCell=plannerBody.querySelector(
+        `.meal-cell[data-day="${DAYS[addTarget.di].s}"][data-meal="${addTarget.meal}"]`
+      );
+      if(selectedCell)selectedCell.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    if(onClose)onClose();
   }});
 }
 
@@ -487,6 +558,16 @@ tl.fromTo('#pgTitles',{y:20,opacity:0},{opacity:1,y:0,duration:.75,delay:.1})
   .fromTo('#footerCard',{y:12,opacity:0},{opacity:1,y:0,duration:.45},'-=.15');
 
 gsap.to('.pg-deco',{rotation:360,duration:60,repeat:-1,ease:'none',transformOrigin:'55px 55px'});
+const recipeCategory=document.getElementById('recipeCategory');
+[...new Set(RX.map(recipe=>recipe.c))].sort((a,b)=>a.localeCompare(b)).forEach(category=>{
+  const option=document.createElement('option');
+  option.value=category;
+  option.textContent=category;
+  recipeCategory.appendChild(option);
+});
+document.getElementById('recipeSearch').addEventListener('input',renderRecipeCards);
+recipeCategory.addEventListener('change',renderRecipeCards);
+document.getElementById('recipeTime').addEventListener('change',renderRecipeCards);
 makeWeek(weekStart);
 setPlan(PLAN_ITEMS);
 renderGrid();

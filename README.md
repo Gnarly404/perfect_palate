@@ -5,13 +5,16 @@ A Flask-based web application for Kenyan cuisine recipe recommendations with mea
 ## Setup Instructions
 
 ### 1. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 2. Environment Setup
+
 Create a `.env` file in the root directory with:
-```
+
+```dotenv
 SECRET_KEY=your-secret-key-here
 FLASK_ENV=development
 PUBLIC_BASE_URL=http://localhost:5000
@@ -28,11 +31,13 @@ SMTP_USE_SSL=false
 Password reset emails are sent through the configured SMTP server using STARTTLS by default. Configure these variables in the deployment environment (not in source control) with credentials and a sender address authorized by your email provider. Set `PUBLIC_BASE_URL` to the public HTTPS origin of the deployed app so reset links point to the correct site. For implicit TLS providers, use port `465`, set `SMTP_USE_SSL=true`, and set `SMTP_USE_TLS=false`. If the provider does not require authentication, leave both `SMTP_USERNAME` and `SMTP_PASSWORD` empty. Reset requests return an error if SMTP is missing or delivery fails; failed deliveries do not leave a usable reset token.
 
 ### 3. Initialize Database
+
 ```bash
 python -c "from database import init_db; init_db()"
 ```
 
 ### 4. Run the Application
+
 ```bash
 python app.py
 ```

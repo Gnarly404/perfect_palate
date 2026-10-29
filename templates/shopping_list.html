@@ -28,7 +28,6 @@
     .nav-links a.on,.nav-links a:hover{color:var(--a);background:rgba(226,186,46,.1)}
 
     .pg-head{padding:1.8rem 1.8rem 0;display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem}
-    .pg-left{}
     .pg-eye{font-size:.62rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--a);display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
     .pg-eye::before{content:'';display:block;width:24px;height:2px;background:var(--a)}
     .pg-h1{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:300;line-height:.95;letter-spacing:-.5px}
@@ -98,6 +97,9 @@
     .ft-btn:hover{background:rgba(255,255,255,.15);color:#fff}
     .ft-btn.amber{background:var(--a);border-color:var(--a);color:#1c2b35}
     .ft-btn.amber:hover{filter:brightness(1.07)}
+    .ft-btn.danger{border-color:rgba(255,255,255,.4);color:#fff}
+    .ft-btn.danger:hover:not(:disabled){background:rgba(192,57,43,.9);border-color:rgba(255,255,255,.65)}
+    .ft-btn:disabled{opacity:.45;cursor:not-allowed}
 
     .toast-wrap{position:absolute;bottom:1rem;right:1rem;display:flex;flex-direction:column;gap:.4rem;z-index:50}
     .toast{background:var(--b);color:#fff;padding:.55rem .9rem;border-radius:8px;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;animation:tIn .3s cubic-bezier(.34,1.56,.64,1)}
@@ -159,13 +161,16 @@
         <div class="ft-sub">Generated from your weekly meal plan</div>
     </div>
     <div class="ft-actions">
-        <button class="ft-btn" onclick="clearDone()"><i class="fa-solid fa-broom"></i> Clear done</button>
-        <button class="ft-btn amber" onclick="shareList()"><i class="fa-solid fa-share-nodes"></i> Share list</button>
+            <button class="ft-btn danger" id="clearAllBtn" onclick="clearAll()"><i class="fa-solid fa-trash-can"></i> Clear all</button>
+            <button class="ft-btn" onclick="clearDone()"><i class="fa-solid fa-broom"></i> Clear done</button>
+            <button class="ft-btn amber" onclick="shareList()"><i class="fa-solid fa-share-nodes"></i> Share list</button>
     </div>
     </div>
 
     <div class="toast-wrap" id="toastWrap"></div>
     </div>
+
+    <script id="shoppingListData" type="application/json">{{ {'items': items, 'week_start': week_start}|tojson }}</script>
 
     <script>
     const CATS={
@@ -174,8 +179,10 @@
     pantry: {name:'Pantry & Spices',icon:'fa-jar',cls:'cat-pantry'},
     dairy:  {name:'Dairy',icon:'fa-bottle-water',cls:'cat-dairy'},
     };
-    let nextId={{ items|length + 1 }};
-    let items={{ items|tojson }};
+    const shoppingListData=JSON.parse(document.getElementById('shoppingListData').textContent);
+    let nextId=shoppingListData.items.length+1;
+    let items=shoppingListData.items;
+    const WEEK_START=shoppingListData.week_start;
 
     function escapeHtml(value){
     return String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -189,6 +196,7 @@
     document.getElementById('progNum').textContent=`${done}/${tot}`;
     const rem=tot-done;
     document.getElementById('ftMain').textContent=`${rem} item${rem!==1?'s':''} remaining · ${done} checked off`;
+    document.getElementById('clearAllBtn').disabled=tot===0;
     }
 
     function renderList(){
@@ -259,6 +267,28 @@
     items=items.filter(i=>!i.done);
     renderList();
     if(count)toast(`${count} item${count!==1?'s':''} cleared`);
+    }
+
+    async function clearAll(){
+    if(!items.length)return;
+    if(!window.confirm('Clear every item from this week’s shopping list? Your meal plan will stay unchanged.'))return;
+    const button=document.getElementById('clearAllBtn');
+    button.disabled=true;
+    try{
+        const response=await fetch('/planner/shopping-list/clear',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({week_start_date:WEEK_START})
+        });
+        const data=await response.json();
+        if(!response.ok)throw new Error(data.error||'Could not clear the shopping list.');
+        items=[];
+        renderList();
+        toast('Shopping list cleared.');
+    }catch(error){
+        button.disabled=false;
+        toast(error.message||'Could not clear the shopping list.');
+    }
     }
 
     function shareList(){

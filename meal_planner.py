@@ -163,6 +163,10 @@ def add_meal_to_plan():
             ''',
             (meal_plan_id, day_of_week, meal_type, recipe_id),
         )
+        conn.execute(
+            'UPDATE meal_plans SET shopping_list_cleared = 0 WHERE id = ?',
+            (meal_plan_id,),
+        )
         conn.commit()
     except Exception:
         conn.rollback()
@@ -236,6 +240,10 @@ def move_meal_in_plan():
             'UPDATE meal_plan_items SET day_of_week = ?, meal_type = ? WHERE id = ?',
             (target_day, target_meal, source['id']),
         )
+        conn.execute(
+            'UPDATE meal_plans SET shopping_list_cleared = 0 WHERE id = ?',
+            (meal_plan_id,),
+        )
         conn.commit()
         return jsonify({'status': 'success', 'items': _plan_items(meal_plan_id)})
     except Exception:
@@ -271,6 +279,14 @@ def remove_meal_from_plan():
             ''',
             (meal_plan_id, day_of_week, meal_type, session['user_id']),
         )
+        if cursor.rowcount:
+            conn.execute(
+                '''
+                UPDATE meal_plans SET shopping_list_cleared = 0
+                WHERE id = ? AND user_id = ?
+                ''',
+                (meal_plan_id, session['user_id']),
+            )
         conn.commit()
         if not cursor.rowcount:
             return jsonify({'error': 'Meal plan or item not found.'}), 404
@@ -290,6 +306,20 @@ def shopping_list():
     if not week_start:
         return jsonify({'error': 'week_start_date must be a Monday in YYYY-MM-DD format.'}), 400
     plan_id = _ensure_plan(session['user_id'], week_start)
+    conn = get_db_connection()
+    try:
+        plan = conn.execute(
+            '''
+            SELECT shopping_list_cleared FROM meal_plans
+            WHERE id = ? AND user_id = ?
+            ''',
+            (plan_id, session['user_id']),
+        ).fetchone()
+    finally:
+        conn.close()
+    if plan['shopping_list_cleared']:
+        return render_template('shopping_list.html', items=[], week_start=week_start)
+
     recipes_by_id = {str(recipe['id']): recipe for recipe in load_recipes()}
     aggregated = {}
     for item in _plan_items(plan_id):
@@ -323,7 +353,37 @@ def shopping_list():
         'cat': entry['category'],
         'done': False,
     } for index, entry in enumerate(aggregated.values())]
-    return render_template('shopping_list.html', items=items)
+    return render_template('shopping_list.html', items=items, week_start=week_start)
+
+
+@meal_planner_bp.route('/shopping-list/clear', methods=['POST'])
+def clear_shopping_list():
+    """Clear generated shopping-list items for one week without changing its meal plan."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({'error': 'A JSON object is required.'}), 400
+    week_start = _week_start(data.get('week_start_date'))
+    if not week_start:
+        return jsonify({'error': 'week_start_date must be a Monday in YYYY-MM-DD format.'}), 400
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.execute(
+            '''
+            UPDATE meal_plans SET shopping_list_cleared = 1
+            WHERE user_id = ? AND week_start_date = ?
+            ''',
+            (session['user_id'], week_start),
+        )
+        conn.commit()
+        if not cursor.rowcount:
+            return jsonify({'error': 'Shopping list not found for this week.'}), 404
+    finally:
+        conn.close()
+    return jsonify({'status': 'success'})
 
 
 def _ingredient_category(name):
