@@ -286,13 +286,21 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 <div class="toast-wrap" id="toastWrap"></div>
 </div>
 
+<div id="plannerData" hidden
+  data-recipes='{{ recipes|tojson|forceescape }}'
+  data-plan-items='{{ plan_items|tojson|forceescape }}'
+  data-plan-id="{{ plan_id }}"
+  data-week-start="{{ week_start }}">
+</div>
+
 <script>
-const RX={{ recipes|tojson }};
-const PLAN_ITEMS={{ plan_items|tojson }};
+const plannerData=document.getElementById('plannerData').dataset;
+const RX=JSON.parse(plannerData.recipes);
+const PLAN_ITEMS=JSON.parse(plannerData.planItems);
 const MEALS=['breakfast','lunch','dinner','snack'];
 const MEAL_CLS={breakfast:'mc-b',lunch:'mc-l',dinner:'mc-d',snack:'mc-s'};
-let planId={{ plan_id }};
-let weekStart=new Date('{{ week_start }}T00:00:00');
+let planId=Number(plannerData.planId);
+let weekStart=new Date(`${plannerData.weekStart}T00:00:00`);
 let DAYS=[];
 let plan={};
 let addTarget=null;

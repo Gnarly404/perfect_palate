@@ -1,4 +1,5 @@
 import bcrypt
+import html
 import json
 import os
 import random
@@ -261,9 +262,9 @@ class ApplicationFeaturesTest(unittest.TestCase):
         response = self.client.get('/planner/')
         self.assertEqual(response.status_code, 200)
         page = response.get_data(as_text=True)
-        recipes_match = re.search(r'const RX=(\[.*?\]);', page)
+        recipes_match = re.search(r"data-recipes='(.*?)'", page)
         self.assertIsNotNone(recipes_match)
-        recipes = json.loads(recipes_match.group(1))
+        recipes = json.loads(html.unescape(recipes_match.group(1)))
         self.assertTrue(recipes)
         self.assertTrue(all('img' in recipe for recipe in recipes))
         self.assertIn("r.img?`background-image:url('${r.img}')", page)
@@ -285,9 +286,9 @@ class ApplicationFeaturesTest(unittest.TestCase):
         self.sign_in_session()
         with patch('meal_planner.random.shuffle', side_effect=lambda recipes: recipes.reverse()):
             planner_page = self.client.get('/planner/').get_data(as_text=True)
-        planner_match = re.search(r'const RX=(\[.*?\]);', planner_page)
+        planner_match = re.search(r"data-recipes='(.*?)'", planner_page)
         self.assertIsNotNone(planner_match)
-        planner_recipes = json.loads(planner_match.group(1))
+        planner_recipes = json.loads(html.unescape(planner_match.group(1)))
         self.assertEqual(planner_recipes[0]['id'], original_recipes[-1]['id'])
 
     def test_personalized_recipes_shuffle_and_browser_can_toggle_scopes(self):
