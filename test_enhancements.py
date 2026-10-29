@@ -391,6 +391,16 @@ class SharingAndPagesTest(AppTestCase):
         self.assertIn('Sign in or create an account', html)
         self.assertNotIn('Your kitchen', html)
 
+    def test_footer_wordmark_is_a_real_image_not_a_watermark(self):
+        html = self.client.get('/recipes/tips').get_data(as_text=True)
+        self.assertIn('images/name-1600.webp', html)
+        self.assertIn('alt="Perfect Palate"', html)
+        self.assertNotIn('footer-watermark', html)
+        for w in (800, 1600):
+            r = self.client.get(f'/static/images/name-{w}.webp')
+            self.assertEqual(r.status_code, 200)
+            self.assertLess(len(r.data), 200_000)     # the original PNG is 1.1 MB
+
 
 if __name__ == '__main__':
     unittest.main()
