@@ -8,6 +8,7 @@ import unittest
 from urllib.parse import quote
 
 import database
+import dietary
 import difficulty
 import nutrition
 import recommendations
@@ -135,6 +136,73 @@ class RecipeDataTest(unittest.TestCase):
             if r['nu']:
                 self.assertGreater(r['nu']['k'], 0)
                 self.assertGreaterEqual(r['nu']['cov'], nutrition.MIN_COVERAGE)
+
+    def test_dietary_and_allergen_flags_are_ingredient_derived_and_audited(self):
+        with open(recommendations.CSV_PATH, encoding='utf-8-sig', newline='') as source:
+            rows = list(csv.DictReader(source))
+
+        self.assertTrue(rows)
+        for row in rows:
+            expected = dietary.derive_dietary_flags(
+                row['Recipe Ingredients Quantities'],
+            )
+            for column, flag in dietary.CSV_FLAG_COLUMNS.items():
+                self.assertEqual(
+                    row[column].strip() == '#',
+                    expected[flag],
+                    f"{row['Recipe Title']}: {column} conflicts with its ingredients",
+                )
+
+        named = {
+            row['Recipe Title']: dietary.derive_dietary_flags(
+                row['Recipe Ingredients Quantities'],
+            )
+            for row in rows
+        }
+        self.assertFalse(named['Lemon Garlic Herb Chicken']['vegan'])
+        self.assertFalse(named['Lemon Garlic Herb Chicken']['vegetarian'])
+        self.assertFalse(named['Garlic Butter Prawns']['vegetarian'])
+        self.assertFalse(named['Chicken Caesar Salad']['vegetarian'])
+
+    def test_dietary_classifier_distinguishes_common_ingredients(self):
+        tilapia = dietary.derive_dietary_flags('Tilapia fillets, lemon, garlic')
+        self.assertTrue(tilapia['allergy_safe_meat'])
+        self.assertFalse(tilapia['allergy_safe_fish'])
+        self.assertFalse(tilapia['vegetarian'])
+
+        plant_based = dietary.derive_dietary_flags(
+            'Coconut milk, maize flour, tomatoes, olive oil',
+        )
+        self.assertTrue(plant_based['vegan'])
+        self.assertTrue(plant_based['vegetarian'])
+        self.assertTrue(plant_based['gluten_free'])
+        self.assertTrue(plant_based['lactose_free'])
+
+        dairy = dietary.derive_dietary_flags('Cow milk, butter, all-purpose flour')
+        self.assertFalse(dairy['vegan'])
+        self.assertFalse(dairy['lactose_free'])
+        self.assertFalse(dairy['gluten_free'])
+
+        peanut = dietary.derive_dietary_flags('Groundnut oil, rice')
+        self.assertFalse(peanut['allergy_safe_peanuts'])
+        self.assertFalse(dietary.derive_dietary_flags('Feta, mozzarella balls')['vegan'])
+        self.assertFalse(dietary.derive_dietary_flags('Sausages and meatballs')['vegetarian'])
+        self.assertFalse(dietary.derive_dietary_flags('Squid')['allergy_safe_fish'])
+        self.assertTrue(dietary.derive_dietary_flags('Millet flour')['gluten_free'])
+        self.assertFalse(dietary.derive_dietary_flags('Oats')['gluten_free'])
+        self.assertFalse(any(dietary.derive_dietary_flags('').values()))
+
+    def test_live_recipe_flags_come_from_ingredients(self):
+        recipes = {recipe['t']: recipe for recipe in recommendations.load_recipes(force_reload=True)}
+        for title in ('Lemon Garlic Herb Chicken', 'Garlic Butter Prawns', 'Chicken Caesar Salad'):
+            recipe = recipes[title]
+            actual = {
+                key: value for key, value in recipe['flags'].items()
+                if key in dietary.CSV_FLAG_COLUMNS.values()
+            }
+            self.assertEqual(actual, dietary.derive_dietary_flags(recipe['ing']))
+            self.assertNotIn('veg', recipe['tg'])
+        self.assertNotIn('vg', recipes['Lemon Garlic Herb Chicken']['tg'])
 
     def test_most_recipes_have_nutrition(self):
         recs = recommendations.load_recipes()

@@ -14,6 +14,7 @@ from urllib.parse import quote
 
 from nutrition import estimate_nutrition
 from difficulty import rate_difficulty
+from dietary import derive_dietary_flags
 from tips import tips_for_recipe, tip_payload, TIPS
 
 recommendations_bp = Blueprint('recommendations', __name__, url_prefix='/recipes')
@@ -127,13 +128,15 @@ def load_recipes(force_reload=False):
 
         style = CATEGORY_STYLE.get(category, DEFAULT_STYLE)
 
-        # Dietary/health tags, derived directly from the dataset's own flag columns
+        dietary_flags = derive_dietary_flags(ingredients_raw)
+
+        # Dietary tags are derived from ingredients, not hand-entered CSV flags.
         tags = []
-        if row.get('Vegan', '').strip() == '#':
+        if dietary_flags['vegan']:
             tags.append('vg')
-        if row.get('Vegetarian', '').strip() == '#':
+        if dietary_flags['vegetarian']:
             tags.append('veg')
-        if row.get('Gluten-Free', '').strip() == '#':
+        if dietary_flags['gluten_free']:
             tags.append('gf')
         if row.get('Blood Pressure', '').strip() == '#':
             tags.append('bp')
@@ -179,14 +182,7 @@ def load_recipes(force_reload=False):
                 'blood_sugar': row.get('Blood Sugar', '').strip() == '#',
                 'high_cholesterol': row.get('High Cholesterol', '').strip() == '#',
                 'diabetes': row.get('Diabetes', '').strip() == '#',
-                'allergy_safe_meat': row.get('Allergies_Meat', '').strip() == '#',
-                'allergy_safe_eggs': row.get('Allergies_Eggs', '').strip() == '#',
-                'allergy_safe_fish': row.get('Allergies_Fish', '').strip() == '#',
-                'allergy_safe_peanuts': row.get('Allergies_Peanuts', '').strip() == '#',
-                'gluten_free': row.get('Gluten-Free', '').strip() == '#',
-                'lactose_free': row.get('Lactose-Intolerant', '').strip() == '#',
-                'vegan': row.get('Vegan', '').strip() == '#',
-                'vegetarian': row.get('Vegetarian', '').strip() == '#',
+                **dietary_flags,
             },
         })
 
