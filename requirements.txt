@@ -5,4 +5,4 @@ bcrypt==4.0.1
 Werkzeug>=3.1.0,<4.0
 gunicorn==23.0.0
 Pillow>=10.0
-Flask-Compress==1.17
+Flask-Compress==1.25
