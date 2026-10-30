@@ -6,6 +6,7 @@
   <title>Perfect Palate - Your profile</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  {% include '_csrf.html' %}
 </head>
 <body>
 <style>
@@ -82,6 +83,8 @@ input::placeholder,textarea::placeholder{color:#6b7a84}
 .row{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center}
 .links{display:flex;flex-wrap:wrap;gap:1.4rem;font-size:.85rem;font-weight:700}
 .links a{text-underline-offset:3px}
+.links form{display:inline}
+.links button{padding:0;border:0;background:none;color:var(--b);font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 @media (max-width:560px){.nav{padding:.4rem 1rem}.wrap{padding-top:1.6rem}.emo{width:42px;height:42px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -171,7 +174,10 @@ input::placeholder,textarea::placeholder{color:#6b7a84}
 
   <div class="sect links">
     <a href="{{ url_for('preferences') }}"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i> Health, allergy and diet preferences</a>
-    <a href="{{ url_for('logout') }}">Log out</a>
+    <form action="{{ url_for('logout') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Log out</button>
+    </form>
   </div>
 </main>
 

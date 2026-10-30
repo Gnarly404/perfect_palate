@@ -338,6 +338,14 @@ def init_db():
             UNIQUE (user_id, recipe_id)
         )
     ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS rate_limit_buckets (
+            bucket_key TEXT PRIMARY KEY,
+            window_started INTEGER NOT NULL,
+            hit_count INTEGER NOT NULL
+        )
+    ''')
     
     # Profile columns: added in place so existing databases keep their users.
     _ensure_column(cursor, 'users', 'display_name', "TEXT DEFAULT ''")
@@ -361,6 +369,7 @@ def init_db():
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_recipe_reviews_recipe_id ON recipe_reviews(recipe_id)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_recipe_reviews_user_id ON recipe_reviews(user_id)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_rate_limit_window ON rate_limit_buckets(window_started)')
 
     conn.commit()
     conn.close()

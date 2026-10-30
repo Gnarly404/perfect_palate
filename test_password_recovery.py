@@ -8,6 +8,9 @@ from unittest.mock import MagicMock, patch
 import bcrypt
 import database
 from app import app
+from test_support import CsrfTestClient
+
+app.test_client_class = CsrfTestClient
 
 
 class PasswordRecoveryEndpointsTest(unittest.TestCase):

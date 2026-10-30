@@ -6,6 +6,7 @@
 <title>Perfect Palate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+{% include '_csrf.html' %}
 <style>
 :root {
   --teal: #426e86;
@@ -245,7 +246,7 @@ body { background: var(--ink); font-family: 'Space Grotesk', sans-serif; color: 
 }
 .after-eyebrow {
   font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
-  color: var(--teal); margin-bottom: 16px; opacity: .7;
+  color: var(--teal); margin-bottom: 16px;
 }
 .after-title {
   font-family: 'Bebas Neue', sans-serif;

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% include '_csrf.html' %}
     <title>Perfect Palate - Preferences</title>
 <style>.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}</style>
 </head>
@@ -128,6 +129,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 .footer-info-main{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--tx)}
 .footer-info-sub{font-size:.65rem;color:var(--mu)}
 .acc-actions{display:flex;gap:.75rem;padding:0 1.1rem 1rem}
+.acc-actions form{display:flex;flex:1}
 .acc-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.65rem 1rem;border-radius:10px;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;transition:.18s;border:1.5px solid transparent}
 .acc-logout{background:rgba(66,110,134,.08);border-color:rgba(66,110,134,.2);color:var(--b)}
 .acc-logout:hover{background:var(--b);color:#fff}
@@ -357,9 +359,12 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
           </div>
         </div>
         <div class="acc-actions">
-          <button class="acc-btn acc-logout" onclick="window.location.href='{{ url_for('logout') }}'">
-            <i class="fa-solid fa-right-from-bracket"></i> Log Out
-          </button>
+          <form action="{{ url_for('logout') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="acc-btn acc-logout" type="submit">
+              <i class="fa-solid fa-right-from-bracket"></i> Log Out
+            </button>
+          </form>
           <button class="acc-btn acc-delete" onclick="confirmDeleteAccount()">
             <i class="fa-solid fa-trash-can"></i> Delete Account
           </button>

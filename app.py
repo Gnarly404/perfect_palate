@@ -20,16 +20,20 @@ if not hasattr(pkgutil, 'get_loader'):
 
 import json
 import html
+import hashlib
 import secrets
 import smtplib
 import ssl
 import bcrypt
+import hmac
+import time
 from datetime import date, datetime, timedelta
 from email.message import EmailMessage
 from email.utils import formataddr
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from flask_session import Session
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash
 from urllib.parse import urljoin, urlsplit
 from database import (init_db, get_db_connection, create_password_reset_token, get_valid_password_reset_token,
@@ -41,10 +45,18 @@ from meal_planner import meal_planner_bp
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+debug_enabled = os.getenv('FLASK_DEBUG', 'true').lower() == 'true'
+secret_key = os.getenv('SECRET_KEY')
+if not secret_key and not debug_enabled:
+    raise RuntimeError('SECRET_KEY must be configured when debug mode is disabled.')
+app.config['SECRET_KEY'] = secret_key or secrets.token_hex(32)
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PUBLIC_BASE_URL'] = os.getenv('PUBLIC_BASE_URL', '').strip()
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = not debug_enabled
 Session(app)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 # Initialize database
 init_db()
@@ -99,6 +111,122 @@ def validate_session_user():
         raise
     if user is None:
         session.clear()
+
+
+@app.context_processor
+def inject_csrf_token():
+    """Make the session-bound CSRF token available to every rendered page."""
+    return {'csrf_token': _csrf_token}
+
+
+def _csrf_token():
+    token = session.get('_csrf_token')
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session['_csrf_token'] = token
+    return token
+
+
+@app.before_request
+def protect_state_changes():
+    """Require a session-bound token for every non-safe HTTP method."""
+    if request.method in {'GET', 'HEAD', 'OPTIONS', 'TRACE'}:
+        return
+    expected = session.get('_csrf_token')
+    supplied = request.headers.get('X-CSRF-Token') or request.form.get('csrf_token')
+    if not expected or not supplied or not hmac.compare_digest(expected, supplied):
+        return jsonify({'status': 'error', 'message': 'CSRF validation failed. Refresh the page and try again.'}), 400
+
+
+RATE_LIMITS = {
+    'sign_in': (5, 300),
+    'sign_up': (5, 3600),
+    'forgot_password': (3, 3600),
+    'reset_password_page': (5, 3600),
+    'recommendations.recipe_reviews': (10, 3600),
+}
+
+
+@app.before_request
+def enforce_rate_limits():
+    """Apply persistent, per-IP limits to authentication and review endpoints."""
+    rule = RATE_LIMITS.get(request.endpoint)
+    if not rule:
+        return
+    limit, window_seconds = rule
+    now = int(time.time())
+    client_ip = request.remote_addr or 'unknown'
+    ip_hash = hmac.new(
+        app.config['SECRET_KEY'].encode('utf-8'),
+        client_ip.encode('utf-8'),
+        hashlib.sha256,
+    ).hexdigest()
+    bucket_key = f'{request.endpoint}:{ip_hash}'
+    conn = get_db_connection()
+    try:
+        conn.execute('BEGIN IMMEDIATE')
+        row = conn.execute(
+            'SELECT window_started, hit_count FROM rate_limit_buckets WHERE bucket_key = ?',
+            (bucket_key,),
+        ).fetchone()
+        if not row or now - row['window_started'] >= window_seconds:
+            conn.execute(
+                '''
+                INSERT INTO rate_limit_buckets (bucket_key, window_started, hit_count)
+                VALUES (?, ?, 1)
+                ON CONFLICT(bucket_key) DO UPDATE SET window_started = excluded.window_started, hit_count = 1
+                ''',
+                (bucket_key, now),
+            )
+        elif row['hit_count'] >= limit:
+            retry_after = max(1, window_seconds - (now - row['window_started']))
+            conn.rollback()
+            response = jsonify({
+                'status': 'error',
+                'message': 'Too many requests. Please try again later.',
+            })
+            response.status_code = 429
+            response.headers['Retry-After'] = str(retry_after)
+            return response
+        else:
+            conn.execute(
+                'UPDATE rate_limit_buckets SET hit_count = hit_count + 1 WHERE bucket_key = ?',
+                (bucket_key,),
+            )
+        conn.execute('DELETE FROM rate_limit_buckets WHERE window_started < ?', (now - 86400,))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        app.logger.exception('Failed to enforce a request rate limit.')
+        raise
+    finally:
+        conn.close()
+
+
+@app.after_request
+def add_security_headers(response):
+    """Set browser security headers consistently on application responses."""
+    content_security_policy = (
+        "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
+        "form-action 'self'; img-src 'self' data: https:; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+        "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+        "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+        "connect-src 'self'"
+    )
+    if request.is_secure:
+        content_security_policy += '; upgrade-insecure-requests'
+    response.headers.setdefault(
+        'Content-Security-Policy',
+        content_security_policy,
+    )
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    response.headers.setdefault('X-Frame-Options', 'DENY')
+    response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+    response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    if request.is_secure:
+        response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+    return response
 
 
 # Register blueprints
@@ -567,9 +695,9 @@ def change_password():
     return jsonify({'status': 'ok', 'message': 'Password updated.'})
 
 
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 def logout():
-    """Logout user"""
+    """Log out the current user."""
     session.clear()
     return redirect(url_for('homepage'))
 

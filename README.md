@@ -30,6 +30,8 @@ SMTP_USE_SSL=false
 
 Password reset emails are sent through the configured SMTP server using STARTTLS by default. Configure these variables in the deployment environment (not in source control) with credentials and a sender address authorized by your email provider. Set `PUBLIC_BASE_URL` to the public HTTPS origin of the deployed app so reset links point to the correct site. For implicit TLS providers, use port `465`, set `SMTP_USE_SSL=true`, and set `SMTP_USE_TLS=false`. If the provider does not require authentication, leave both `SMTP_USERNAME` and `SMTP_PASSWORD` empty. Reset requests return an error if SMTP is missing or delivery fails; failed deliveries do not leave a usable reset token.
 
+Set a unique `SECRET_KEY` in every deployment. The app refuses to start without one when debug mode is disabled. Production sessions use secure, HTTP-only, SameSite=Lax cookies. Do not enable Flask debug mode in production.
+
 ### 3. Initialize Database
 
 ```bash
@@ -43,6 +45,15 @@ python app.py
 ```
 
 The application will be available at `http://localhost:5000`
+
+## Security and quality checks
+
+- State-changing requests require a session-bound CSRF token; the shared browser fetch helper adds it to same-origin requests.
+- Sign-in, sign-up, password-reset, and review endpoints are rate limited per client IP using SQLite-backed counters. The app trusts one reverse-proxy hop for client IP and HTTPS metadata; deploy it only behind that proxy.
+- Responses include browser security headers, including a Content Security Policy, frame protections, and MIME-sniffing protection.
+- GitHub Actions runs the Python unit tests, scans Python dependencies with `pip-audit`, and runs axe-core WCAG 2.1 A/AA checks on the public homepage, sign-in, password-reset request, and cooking-tips pages. Dependabot checks Python, npm, and GitHub Actions dependencies weekly.
+
+Run the Python tests with `python -m unittest discover -v`. To run the accessibility checks locally, install Node.js, run `npm ci`, then `npx playwright install chromium` and `npm run test:a11y`.
 
 ## Project Structure
 

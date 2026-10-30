@@ -13,6 +13,9 @@ import nutrition
 import recommendations
 import tips
 from app import app
+from test_support import CsrfTestClient
+
+app.test_client_class = CsrfTestClient
 
 
 class NutritionTableTest(unittest.TestCase):
@@ -158,6 +161,73 @@ class AppTestCase(unittest.TestCase):
         r = self.client.post('/sign-in', json={'email': email, 'password': pw})
         self.assertEqual(r.status_code, 200)
 
+    def test_state_changing_requests_require_csrf_token(self):
+        response = self.client.post(
+            '/sign-up',
+            json={'name': 'Cook', 'email': 'csrf@example.com', 'password': 'secret1'},
+            headers={'X-CSRF-Token': ''},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('CSRF', response.json['message'])
+
+    def test_security_headers_are_set(self):
+        response = self.client.get('/')
+        self.assertEqual(response.headers['X-Content-Type-Options'], 'nosniff')
+        self.assertEqual(response.headers['X-Frame-Options'], 'DENY')
+        self.assertIn('frame-ancestors', response.headers['Content-Security-Policy'])
+        self.assertNotIn('upgrade-insecure-requests', response.headers['Content-Security-Policy'])
+        self.assertNotIn('Strict-Transport-Security', response.headers)
+        self.assertEqual(response.headers['Referrer-Policy'], 'strict-origin-when-cross-origin')
+        session_cookie = response.headers.get('Set-Cookie', '')
+        self.assertIn('HttpOnly', session_cookie)
+        self.assertIn('SameSite=Lax', session_cookie)
+        self.assertIn('name="csrf-token"', response.get_data(as_text=True))
+
+    def test_https_responses_enable_transport_security_headers(self):
+        response = self.client.get('/', base_url='https://localhost')
+        self.assertIn('upgrade-insecure-requests', response.headers['Content-Security-Policy'])
+        self.assertEqual(
+            response.headers['Strict-Transport-Security'],
+            'max-age=31536000; includeSubDomains',
+        )
+
+    def test_sign_in_is_rate_limited(self):
+        for _ in range(5):
+            response = self.client.post('/sign-in', json={
+                'email': 'missing@example.com',
+                'password': 'wrong-password',
+            })
+            self.assertEqual(response.status_code, 401)
+        response = self.client.post('/sign-in', json={
+            'email': 'missing@example.com',
+            'password': 'wrong-password',
+        })
+        self.assertEqual(response.status_code, 429)
+        self.assertGreater(int(response.headers['Retry-After']), 0)
+
+    def test_logout_requires_csrf_and_clears_the_session(self):
+        self.signup_and_login()
+        response = self.client.post('/logout', headers={'X-CSRF-Token': ''})
+        self.assertEqual(response.status_code, 400)
+        response = self.client.post('/logout')
+        self.assertEqual(response.status_code, 302)
+        with self.client.session_transaction() as session:
+            self.assertNotIn('user_id', session)
+
+    def test_recipe_reviews_are_rate_limited(self):
+        self.signup_and_login()
+        for rating in range(1, 11):
+            response = self.client.post('/recipes/1/reviews', json={
+                'rating': (rating % 5) + 1,
+                'review': 'A tasty recipe.',
+            })
+            self.assertEqual(response.status_code, 200)
+        response = self.client.post('/recipes/1/reviews', json={
+            'rating': 5,
+            'review': 'One request too many.',
+        })
+        self.assertEqual(response.status_code, 429)
+
 
 class ProfileTest(AppTestCase):
     def test_signup_stores_name(self):
@@ -206,7 +276,7 @@ class ProfileTest(AppTestCase):
         self.assertEqual(self.client.post('/profile/password', json={'current_password': 'secret1', 'new_password': 'abc'}).status_code, 400)
         self.assertEqual(self.client.post('/profile/password', json={'current_password': 'secret1', 'new_password': 'secret1'}).status_code, 400)
         self.assertEqual(self.client.post('/profile/password', json={'current_password': 'secret1', 'new_password': 'newpass1'}).status_code, 200)
-        self.client.get('/logout')
+        self.client.post('/logout')
         self.assertEqual(self.client.post('/sign-in', json={'email': 'chef@example.com', 'password': 'secret1'}).status_code, 401)
         self.assertEqual(self.client.post('/sign-in', json={'email': 'chef@example.com', 'password': 'newpass1'}).status_code, 200)
 

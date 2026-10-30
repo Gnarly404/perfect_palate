@@ -69,6 +69,18 @@ body {
     align-items: center;
 }
 
+.navbar-menu form {
+    margin: 0;
+}
+
+.navbar-menu button.nav-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    cursor: pointer;
+}
+
 .nav-link {
     text-decoration: none;
     color: var(--text-dark);

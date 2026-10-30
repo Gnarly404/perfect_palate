@@ -41,6 +41,9 @@
 .pn-menu a{display:flex;align-items:center;gap:.6rem;min-height:42px;padding:0 10px;border-radius:10px;font-size:.88rem;color:#1d2b33}
 .pn-menu a:hover,.pn-menu a:focus-visible{background:#eef3f6}
 .pn-menu a.pn-danger{color:#9a2f22}
+.pn-menu form{margin:0}
+.pn-menu form button{display:flex;align-items:center;width:100%;min-height:42px;padding:0 10px;border:0;border-radius:10px;background:transparent;text-align:left;font:inherit;font-size:.88rem;color:#9a2f22;cursor:pointer}
+.pn-menu form button:hover,.pn-menu form button:focus-visible{background:#eef3f6}
 .pn-menu hr{border:0;border-top:1px solid #e6e1d3;margin:6px 0}
 @keyframes pnPop{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:none}}
 
@@ -72,6 +75,9 @@
   .pn-dprofile .pn-av{width:44px;height:44px;font-size:23px}
   .pn-dprofile small{display:block;font-size:.76rem;opacity:.8;font-weight:400}
   .pn-drawer .pn-danger{color:#ffb4a8}
+  .pn-drawer form{margin:0}
+  .pn-drawer form button{display:flex;align-items:center;width:100%;min-height:50px;padding:0 14px;border:0;border-radius:12px;background:transparent;text-align:left;font:inherit;font-size:1rem;color:#ffb4a8;cursor:pointer}
+  .pn-drawer form button:hover{background:rgba(255,255,255,.1)}
 }
 @media (max-width:520px){.pn-signin{display:none}}
 @media (max-width:420px){.pn-brand{font-size:1.15rem}.pn-brand svg{width:22px;height:22px}.pn-cta{padding:.5rem .8rem}}
@@ -117,7 +123,10 @@
           <a href="{{ url_for('profile') }}"{% if _active == 'profile' %} aria-current="page"{% endif %}>Your profile</a>
           <a href="{{ url_for('preferences') }}"{% if _active == 'preferences' %} aria-current="page"{% endif %}>Dietary preferences</a>
           <hr>
-          <a class="pn-danger" href="{{ url_for('logout') }}">Log out</a>
+          <form action="{{ url_for('logout') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="pn-danger" type="submit">Log out</button>
+          </form>
         </div>
       </div>
       <a class="pn-avlink" href="{{ url_for('profile') }}" aria-label="Your profile, {{ me.display_name }}"><span class="pn-av" data-pn-avatar>{{ me.avatar_emoji }}</span></a>
@@ -151,7 +160,10 @@
     {% if _signed_in %}
     <a href="{{ url_for('preferences') }}"{% if _active == 'preferences' %} aria-current="page"{% endif %}>Dietary preferences</a>
     <hr>
-    <a class="pn-danger" href="{{ url_for('logout') }}">Log out</a>
+    <form action="{{ url_for('logout') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="pn-danger" type="submit">Log out</button>
+    </form>
     {% else %}
     <hr>
     <a href="{{ url_for('sign_in') }}">Sign in</a>

@@ -13,6 +13,9 @@ import database
 import recommendations
 from app import app
 from werkzeug.security import generate_password_hash
+from test_support import CsrfTestClient
+
+app.test_client_class = CsrfTestClient
 
 
 class ApplicationFeaturesTest(unittest.TestCase):

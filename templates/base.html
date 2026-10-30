@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Perfect Palate - Personalized Recipe Recommendations{% endblock %}</title>
+    {% include '_csrf.html' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
@@ -22,7 +23,10 @@
                     <a href="{{ url_for('recommendations.recommendations') }}" class="nav-link">Recipes</a>
                     <a href="{{ url_for('meal_planner.meal_planner') }}" class="nav-link">Meal Planner</a>
                     <a href="{{ url_for('meal_planner.favorites') }}" class="nav-link">Favorites</a>
-                    <a href="{{ url_for('logout') }}" class="nav-link logout">Logout</a>
+                    <form action="{{ url_for('logout') }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="nav-link logout" type="submit">Logout</button>
+                    </form>
                 {% else %}
                     <a href="{{ url_for('sign_in') }}" class="nav-link btn-primary">Sign In</a>
                 {% endif %}
