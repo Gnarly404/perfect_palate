@@ -393,6 +393,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--off)}
 const REDUCE={BloodPressure:38,BloodSugar:32,HighCholesterol:44,Diabetes:48,Meat:14,Eggs:20,Fish:17,Peanuts:11};
 const ICONS={BloodPressure:'fa-heart-pulse',BloodSugar:'fa-droplet',HighCholesterol:'fa-fire-flame-curved',Diabetes:'fa-syringe',Meat:'fa-drumstick-bite',Eggs:'fa-egg',Fish:'fa-fish',Peanuts:'fa-seedling',GlutenFree:'fa-bread-slice',LactoseFree:'fa-mug-saucer',Vegan:'fa-leaf',Vegetarian:'fa-carrot'};
 const TOTAL_RECIPES={{ recipe_total|int }};
+const SAVED={{ saved_prefs|tojson }};
 let selected={},matchVal=TOTAL_RECIPES,dirty=false;
 
 function toggle(el){
@@ -445,11 +446,21 @@ function updateAll(){
   document.getElementById('footerMain').textContent=`${t} selected`;
 }
 
+// Show what the person saved last time, so they can untick or add items and save again.
+function applySaved(){
+  const map={h:SAVED.health_conditions||[],a:SAVED.allergies||[],d:SAVED.dietary_restrictions||[]};
+  document.querySelectorAll('.pref-item').forEach(el=>{
+    const t=el.dataset.type;
+    if((map[t]||[]).includes(el.dataset.key)){el.classList.add('sel-'+t);selected[el.dataset.key]=el.dataset.label;}
+  });
+  updateAll();dirty=false;
+}
+
 function resetAll(){
   document.querySelectorAll('.pref-item').forEach(el=>{
     el.className='pref-item';
   });
-  selected={};dirty=false;
+  selected={};dirty=true;
   gsap.fromTo('.pref-grid',{opacity:.6},{opacity:1,duration:.3});
   updateAll();
 }
@@ -477,8 +488,14 @@ function savePrefs(){
     body:JSON.stringify({health_conditions:health,allergies:allergies,dietary_restrictions:dietary})
   })
     .then(res => res.json().catch(() => ({})).then(data => ({ ok: res.ok, data })))
-    .then(({ ok }) => {
+    .then(({ ok, data }) => {
       btn.disabled = false;
+      if (!ok) {
+        btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Preferences';
+        if (window.Swal) Swal.fire({ icon: 'error', title: 'Could not save', text: (data && data.message) || 'Please refresh the page and try again.' });
+        return;
+      }
+      dirty=false;
       btn.classList.add('saved');
       btn.innerHTML='<i class="fa-solid fa-check"></i> Saved!';
       gsap.fromTo(btn,{scale:.95},{scale:1,duration:.25,ease:'back.out(2)'});
@@ -553,6 +570,8 @@ tl.fromTo('#pgEye',{x:-20,opacity:0},{opacity:1,x:0,duration:.65,delay:.1})
   .from('.pref-item',{opacity:0,y:10,stagger:.04,duration:.35},'-=.35');
 
 gsap.to('.pg-deco',{rotation:360,duration:60,repeat:-1,ease:'none',transformOrigin:'70px 70px'});
+
+applySaved();
 </script>  
 {% include '_footer.html' %}
 </body>

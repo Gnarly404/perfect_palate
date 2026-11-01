@@ -648,3 +648,43 @@ class InlineScriptSyntaxTests(unittest.TestCase):
                     handle.write(code)
                 result = subprocess.run([node, '--check', handle.name], capture_output=True, text=True)
                 self.assertEqual(result.returncode, 0, f'{path} script {n}: {result.stderr[:300]}')
+
+
+class SavedPreferencesTests(unittest.TestCase):
+    def setUp(self):
+        import app as app_module
+        from test_support import CsrfTestClient
+        app_module.app.config['TESTING'] = True
+        app_module.app.test_client_class = CsrfTestClient
+        self.client = app_module.app.test_client()
+        import uuid
+        email = f'prefs-{uuid.uuid4().hex[:8]}@example.com'
+        self.client.post('/sign-up', json={'name': 'Pref Tester', 'email': email, 'password': 'Str0ng!Passw0rd#1'})
+        self.client.post('/sign-in', json={'email': email, 'password': 'Str0ng!Passw0rd#1'})
+
+    def test_saved_preferences_come_back_on_the_preferences_page(self):
+        r = self.client.post('/preferences', json={'health_conditions': ['Diabetes'], 'allergies': ['Peanuts'],
+                                                   'dietary_restrictions': ['Vegan']})
+        self.assertEqual(r.status_code, 200)
+        page = self.client.get('/preferences').get_data(as_text=True)
+        self.assertIn('const SAVED={', page)
+        self.assertIn('"Diabetes"', page.split('const SAVED=')[1].split(';')[0])
+        self.assertIn('"Peanuts"', page.split('const SAVED=')[1].split(';')[0])
+        self.assertIn('applySaved();', page)
+
+    def test_preferences_can_be_changed_and_cleared(self):
+        self.client.post('/preferences', json={'health_conditions': ['Diabetes'], 'allergies': [], 'dietary_restrictions': []})
+        self.client.post('/preferences', json={'health_conditions': [], 'allergies': ['Eggs'], 'dietary_restrictions': []})
+        saved = self.client.get('/preferences').get_data(as_text=True).split('const SAVED=')[1].split(';')[0]
+        self.assertNotIn('Diabetes', saved)
+        self.assertIn('Eggs', saved)
+        self.client.post('/preferences', json={'health_conditions': [], 'allergies': [], 'dietary_restrictions': []})
+        saved = self.client.get('/preferences').get_data(as_text=True).split('const SAVED=')[1].split(';')[0]
+        self.assertNotIn('Eggs', saved)
+
+    def test_junk_values_are_dropped(self):
+        self.client.post('/preferences', json={'health_conditions': ['<script>', 'Diabetes', 5, 'Diabetes'], 'allergies': 'Eggs', 'dietary_restrictions': {}})
+        saved = self.client.get('/preferences').get_data(as_text=True).split('const SAVED=')[1].split(';')[0]
+        self.assertNotIn('script', saved)
+        self.assertEqual(saved.count('Diabetes'), 1)
+        self.assertIn('Eggs', saved)

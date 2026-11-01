@@ -19,6 +19,7 @@ if not hasattr(pkgutil, 'get_loader'):
     pkgutil.get_loader = get_loader
 
 import json
+import re
 import html
 import hashlib
 import secrets
@@ -38,7 +39,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash
 from urllib.parse import urljoin, urlsplit
 from database import (init_db, get_db_connection, create_password_reset_token, get_valid_password_reset_token,
-                      consume_password_reset_token, get_user_profile, update_user_profile, ProfileError,
+                      consume_password_reset_token, get_user_profile, update_user_profile, get_user_preferences, ProfileError,
                       AVATAR_EMOJIS, AVATAR_COLORS, COOKING_LEVELS)
 from recommendations import recommendations_bp
 from meal_planner import meal_planner_bp
@@ -655,6 +656,19 @@ def dashboard():
         personalized=bool(prefs),
     )
 
+def _clean_choices(values):
+    """Keep only short alphabetic option keys (e.g. 'BloodPressure'), at most 12, without duplicates."""
+    if isinstance(values, str):
+        values = [values]
+    if not isinstance(values, (list, tuple)):
+        return []
+    cleaned = []
+    for value in values:
+        if isinstance(value, str) and re.fullmatch(r'[A-Za-z]{2,30}', value) and value not in cleaned:
+            cleaned.append(value)
+    return cleaned[:12]
+
+
 @app.route('/preferences', methods=['GET', 'POST'])
 def preferences():
     """User health/allergy/dietary preferences"""
@@ -663,9 +677,10 @@ def preferences():
     
     if request.method == 'POST':
         data = request.get_json(silent=True) or request.form
-        health_conditions = data.get('health_conditions', [])
-        allergies = data.get('allergies', [])
-        dietary_restrictions = data.get('dietary_restrictions', [])
+        getter = data.getlist if hasattr(data, 'getlist') else data.get
+        health_conditions = _clean_choices(getter('health_conditions') or [])
+        allergies = _clean_choices(getter('allergies') or [])
+        dietary_restrictions = _clean_choices(getter('dietary_restrictions') or [])
 
         user_id = session['user_id']
         conn = get_db_connection()
@@ -692,7 +707,7 @@ def preferences():
             return jsonify({'status': 'saved'})
         return redirect(url_for('dashboard'))
 
-    return render_template('preferences.html')
+    return render_template('preferences.html', saved_prefs=get_user_preferences(session['user_id']) or {})
 
 def _require_json():
     """State-changing profile endpoints only accept JSON. A cross-site form post cannot send
