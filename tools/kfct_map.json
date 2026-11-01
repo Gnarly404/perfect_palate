@@ -1,0 +1,4 @@
+{
+  "_help": "Map one of our ingredient names (the first name in nutrition._TABLE) to the exact food name in the Kenya Food Composition Tables. Mapped rows beat automatic matching. Example: \"maize flour\": \"Maize, flour, whole\"",
+  "_example_only": "delete this line"
+}

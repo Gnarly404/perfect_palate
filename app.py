@@ -30,7 +30,8 @@ import time
 from datetime import date, datetime, timedelta
 from email.message import EmailMessage
 from email.utils import formataddr
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, Response
+from i18n import LANGS, LANG_NAMES, COOKIE, best_language, translate, safe_next
 from flask_session import Session
 from dotenv import load_dotenv
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -223,7 +224,7 @@ def add_security_headers(response):
     response.headers.setdefault('X-Content-Type-Options', 'nosniff')
     response.headers.setdefault('X-Frame-Options', 'DENY')
     response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
-    response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()')
     if request.is_secure:
         response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
     return response
@@ -239,6 +240,70 @@ def inject_profile():
     """Expose the signed-in user's profile to templates as `me` (None when signed out)."""
     user_id = session.get('user_id')
     return {'me': get_user_profile(user_id) if user_id else None}
+
+
+@app.context_processor
+def inject_language():
+    """`lang` is the page language; `_()` looks a string up in i18n.py."""
+    lang = best_language(
+        request.cookies.get(COOKIE),
+        [value for value, _quality in request.accept_languages],
+    )
+    return {'lang': lang, '_': lambda key, **vars: translate(key, lang, **vars), 'lang_names': LANG_NAMES}
+
+
+@app.route('/language', methods=['POST'])
+def set_language():
+    """Remember the chosen interface language in a cookie, then go back where the person was."""
+    chosen = (request.form.get('lang') or '').strip()
+    if chosen not in LANGS:
+        return jsonify({'status': 'error', 'message': 'Unsupported language.'}), 400
+    response = redirect(safe_next(request.form.get('next'), url_for('homepage')))
+    response.set_cookie(COOKIE, chosen, max_age=60 * 60 * 24 * 365, samesite='Lax',
+                        secure=request.is_secure, path='/')
+    return response
+
+
+_PRECACHE_DIRS = ('js', 'vendor', 'css')
+
+
+@app.route('/sw.js')
+def service_worker():
+    """Serve the service worker from the site root so it controls every page.
+
+    The version changes whenever a cached static file changes, which makes browsers replace old caches.
+    """
+    static = os.path.join(app.root_path, 'static')
+    files = []
+    digest = hashlib.sha1()
+    for folder in _PRECACHE_DIRS:
+        base = os.path.join(static, folder)
+        if not os.path.isdir(base):
+            continue
+        for name in sorted(os.listdir(base)):
+            path = os.path.join(base, name)
+            if os.path.isfile(path) and not name.endswith('.test.js'):
+                files.append('/static/%s/%s' % (folder, name))
+                digest.update(name.encode())
+                digest.update(str(os.path.getmtime(path)).encode())
+    files += ['/offline', '/static/manifest.webmanifest', '/static/images/pwa-192.png']
+    with open(os.path.join(static, 'sw.js'), encoding='utf-8') as handle:
+        body = handle.read()
+    body = body.replace('__VERSION__', digest.hexdigest()[:10]).replace('__PRECACHE__', json.dumps(files))
+    response = Response(body, mimetype='text/javascript')
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['Service-Worker-Allowed'] = '/'
+    # the worker caches fonts and the icon font from their CDNs, so it may fetch them
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; connect-src 'self' https://cdnjs.cloudflare.com "
+        "https://fonts.googleapis.com https://fonts.gstatic.com"
+    )
+    return response
+
+
+@app.route('/offline')
+def offline_page():
+    return render_template('offline.html')
 
 
 # Compress HTML/JSON/CSS/JS responses (the recipe list embedded in /recipes/ is ~600 KB of JSON).

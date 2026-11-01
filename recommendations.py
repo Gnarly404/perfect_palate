@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from nutrition import estimate_nutrition
+from cost import estimate_cost
 from difficulty import rate_difficulty
 from dietary import derive_dietary_flags
 from tips import tips_for_recipe, tip_payload, TIPS
@@ -176,6 +177,7 @@ def load_recipes(force_reload=False):
             'img': f'/recipes/image/{quote(image_file)}' if image_file else None,
             'df': {'l': difficulty['level'], 'r': difficulty['rank'], 'why': difficulty['reasons']},
             'nu': _compact_nutrition(nutrition),
+            'co': estimate_cost(ingredients_raw, est_servings),
             'tips': tip_ids,
             'flags': {
                 'blood_pressure': row.get('Blood Pressure', '').strip() == '#',

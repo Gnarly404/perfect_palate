@@ -111,3 +111,12 @@ The recipe dataset has no nutrition, difficulty or servings columns, so these ar
 - Servings scaling and a nutrition column in the dataset
 - Per-user ratings and reviews
 - Profile photo uploads
+
+## Cook Mode, offline, Swahili, cost
+
+- **Offline / installable:** `/sw.js` caches the app shell and the recipe book (all recipes are inside `/recipes/`), so recipe links and Cook Mode work without a connection after one online visit. Voice commands still need a connection in Chrome/Edge.
+- **Screen stays on** (Screen Wake Lock) and **voice commands** ("next", "back", "repeat", "start timer", plus Swahili equivalents) in Cook Mode. The Permissions-Policy header allows the microphone for this site only.
+- **Servings scaling** scales ingredient amounts, nutrition and cost together (`static/js/recipe-tools.js`, tested with `node static/js/recipe-tools.test.js`).
+- **Swahili:** interface only (navigation, footer, offline page, recipes page and Cook Mode). Recipe text stays English. Strings are in `i18n.py` and `static/js/i18n.js`; the Swahili is a first draft and needs a native-speaker review.
+- **Cost in KES:** `Dataset/ingredient_prices.csv` + `cost.py`. Each price is tagged verified / reference / rough. Only a few are published prices; replace the rough ones with KAMIS or shop prices.
+- **Nutrition validation:** download the Kenya Food Composition Tables 2018 (Excel) from FAO and run `python tools/validate_nutrition.py --kfct <file>`. Review flagged rows and add exact matches to `tools/kfct_map.json`.

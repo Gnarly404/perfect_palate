@@ -1,0 +1,22 @@
+{
+  "name": "Perfect Palate",
+  "short_name": "Palate",
+  "description": "Kenyan and East African recipes with a Cook Mode that works offline.",
+  "id": "/recipes/",
+  "start_url": "/recipes/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2a4d63",
+  "theme_color": "#2a4d63",
+  "categories": ["food", "lifestyle"],
+  "icons": [
+    {"src": "/static/images/pwa-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/static/images/pwa-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/static/images/pwa-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Recipes", "url": "/recipes/?source=shortcut"},
+    {"name": "Meal planner", "url": "/planner/?source=shortcut"}
+  ]
+}

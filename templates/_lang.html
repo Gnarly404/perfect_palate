@@ -1,0 +1,7 @@
+{#- Language switch. Set `lang_cls` before including. -#}
+{% set _other = 'sw' if lang == 'en' else 'en' %}
+<form class="{{ lang_cls|default('pn-lang') }}" action="{{ url_for('set_language') }}" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+  <button type="submit" name="lang" value="{{ _other }}" lang="{{ _other }}" aria-label="{{ _('nav.language') }}: {{ lang_names[_other] }}">{{ lang_names[_other] }}</button>
+</form>

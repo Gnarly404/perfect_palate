@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
+  {% include '_pwa.html' %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">   
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="/static/vendor/gsap.min.js"></script>
+    <script src="/static/vendor/ScrollTrigger.min.js"></script>
     <h2 class="sr-only">Perfect Palate recipe browser and Cook Mode interface</h2>
     {% if og %}
     <title>{{ og.title }}</title>
@@ -196,6 +197,16 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
 .pp-detail-close:hover{background:rgba(255,255,255,.25)}
 .pp-detail-body{padding:1.5rem 2rem;display:grid;grid-template-columns:1fr 1.5fr;gap:2rem}
 .pp-sec-label{font-size:.6rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--b);border-bottom:2px solid var(--a);padding-bottom:.35rem;margin-bottom:.8rem;display:inline-block}
+.pp-cost{margin-top:1.2rem}.pp-cost-big{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:var(--b);margin:.2rem 0}.pp-cost-per{font-size:.85rem;color:var(--mu);margin:0 0 .4rem}
+.pp-ing-head{font-family:'Syne',sans-serif;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-top:.5rem}
+.pp-ing-head::before{display:none}
+.pp-cook-ing{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);border-radius:14px;padding:.8rem 1rem;margin:0 0 1rem}
+.pp-cook-ing summary{cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;color:#fff;min-height:32px;display:flex;align-items:center}
+.pp-cook-ing .pp-ing-list{margin-top:.6rem}.pp-cook-ing .pp-ing-list li{color:rgba(255,255,255,.85)}
+.pp-cook-ing .pp-nut-note{color:rgba(255,255,255,.6);margin-top:.6rem}
+.pp-cook-status{display:flex;flex-wrap:wrap;gap:.4rem 1rem;padding:.2rem 1.2rem 0;font-size:.74rem;min-height:0}
+.pp-awake{color:var(--a)}.pp-vmsg{color:rgba(255,255,255,.7)}.pp-vmsg.bad{color:#ffb4a8}
+#cookVoice.on{background:var(--a);color:#111;border-color:var(--a)}
 .pp-ing-list{list-style:none;display:flex;flex-direction:column;gap:.42rem}
 .pp-ing-list li{font-size:.9rem;color:var(--tx);display:flex;align-items:flex-start;gap:.45rem;line-height:1.4}
 .pp-ing-list li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--a);flex-shrink:0;margin-top:.4rem}
@@ -218,7 +229,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
 
 /* COOK MODE */
 .pp-cook{display:none;background:var(--cook-bg);min-height:600px;flex-direction:column}
-.pp-cook-bar{display:flex;gap:.75rem;padding:.85rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.06)}
+.pp-cook-bar{display:flex;flex-wrap:wrap;gap:.75rem;padding:.85rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.06)}
 .pp-cook-topbtn{flex:1;background:rgba(255,255,255,.055);border:1.5px solid rgba(255,255,255,.11);border-radius:8px;color:rgba(255,255,255,.65);font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:.58rem .5rem;cursor:pointer;transition:.18s;display:flex;align-items:center;justify-content:center;gap:.45rem}
 .pp-cook-topbtn:hover{background:rgba(255,255,255,.09);color:#fff}
 .pp-cook-topbtn.on{border-color:var(--a);color:var(--a)}
@@ -317,8 +328,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
   <div id="vRecipes">
     <div class="pp-hero">
       <div>
-        <div class="pp-hero-eyebrow" id="heye">Personalised For You</div>
-        <h1 class="pp-hero-h1" id="hh1">Your <em>Curated</em><strong>Recipes</strong></h1>
+        <div class="pp-hero-eyebrow" id="heye" data-i18n="ui.eyebrow">Personalised For You</div>
+        <h1 class="pp-hero-h1" id="hh1" data-i18n-html="ui.h1">Your <em>Curated</em><strong>Recipes</strong></h1>
         <div class="pp-hero-sub" id="hsub">
           <span><b id="recCount">9</b> recipes matched</span>
           <div class="pp-hero-sep"></div>
@@ -342,7 +353,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     <div class="pp-controls" id="ctrls">
       <div class="pp-search">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" placeholder="Search recipes, ingredients…" oninput="doFilter()" id="srch">
+        <input type="text" data-i18n-placeholder="ui.search" placeholder="Search recipes, ingredients…" oninput="doFilter()" id="srch">
       </div>
       <div class="pp-filters">
         <button class="pp-fpill on" onclick="setCat('all',this)">All</button>
@@ -360,10 +371,10 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
       </div>
       <div class="pp-levels" role="group" aria-label="Filter by difficulty">
         <span class="pp-levels-lbl">Difficulty</span>
-        <button class="pp-fpill on" data-lv="all" aria-pressed="true" onclick="setLevel('all',this)">Any</button>
-        <button class="pp-fpill" data-lv="1" aria-pressed="false" onclick="setLevel(1,this)">Easy</button>
-        <button class="pp-fpill" data-lv="2" aria-pressed="false" onclick="setLevel(2,this)">Medium</button>
-        <button class="pp-fpill" data-lv="3" aria-pressed="false" onclick="setLevel(3,this)">Hard</button>
+        <button class="pp-fpill on" data-lv="all" aria-pressed="true" onclick="setLevel('all',this)" data-i18n="ui.any">Any</button>
+        <button class="pp-fpill" data-lv="1" aria-pressed="false" onclick="setLevel(1,this)" data-i18n="ui.easy">Easy</button>
+        <button class="pp-fpill" data-lv="2" aria-pressed="false" onclick="setLevel(2,this)" data-i18n="ui.medium">Medium</button>
+        <button class="pp-fpill" data-lv="3" aria-pressed="false" onclick="setLevel(3,this)" data-i18n="ui.hard">Hard</button>
         <button class="pp-fpill" data-lv="mine" id="lvMine" aria-pressed="false" onclick="setLevel('mine',this)" style="display:none">For my level</button>
       </div>
     </div>
@@ -390,31 +401,34 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     </div>
     <div class="pp-detail-body">
       <div>
-        <div class="pp-sec-label">Ingredients</div>
+        <div class="pp-sec-label" data-i18n-html="ui.ingredients">Ingredients</div>
+        <div id="dtIngSv"></div>
         <ul class="pp-ing-list" id="dtIng"></ul>
+        <p class="pp-nut-note" id="dtIngNote" hidden></p>
       </div>
       <div>
-        <div class="pp-sec-label">Instructions</div>
+        <div class="pp-sec-label" data-i18n-html="ui.instructions">Instructions</div>
         <ol class="pp-steps-list" id="dtSteps"></ol>
       </div>
     </div>
     <div class="pp-extra">
       <div>
-        <div class="pp-sec-label">Nutrition per serving</div>
+        <div class="pp-sec-label" data-i18n-html="ui.nutrition">Nutrition per serving</div>
         <div id="dtNut"></div>
+        <div class="pp-cost" id="dtCost"></div>
       </div>
       <div>
-        <div class="pp-sec-label">Tips for this recipe</div>
+        <div class="pp-sec-label" data-i18n-html="ui.tips">Tips for this recipe</div>
         <ul class="pp-tips" id="dtTips"></ul>
         <a class="pp-more" href="{{ url_for('recommendations.cooking_tips') }}">All cooking tips and techniques →</a>
       </div>
       <div class="full">
-        <div class="pp-sec-label">Share this recipe</div>
+        <div class="pp-sec-label" data-i18n-html="ui.share">Share this recipe</div>
         <div class="pp-share" id="dtShare"></div>
       </div>
     </div>
     <section class="pp-reviews">
-      <div class="pp-sec-label">Ratings &amp; Reviews</div>
+      <div class="pp-sec-label" data-i18n-html="ui.reviews">Ratings &amp; Reviews</div>
       <div id="reviewSummary" class="pp-review-status">Loading reviews…</div>
       <form class="pp-review-form" id="reviewForm">
         <label>Rating
@@ -434,17 +448,19 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
       <div id="reviewList"></div>
     </section>
     <div class="pp-detail-foot">
-      <button class="pp-btnv" onclick="showView('recipes')"><i class="fa-solid fa-arrow-left"></i> Back</button>
-      <button class="pp-btnc" id="dtCookBtn">🔥 Start Cook Mode</button>
+      <button class="pp-btnv" onclick="showView('recipes')"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="ui.back">Back</span></button>
+      <button class="pp-btnc" id="dtCookBtn" data-i18n="ui.startCook">🔥 Start Cook Mode</button>
     </div>
   </div>
 
   <div class="pp-cook" id="vCook">
     <div class="pp-cook-bar">
-      <button class="pp-cook-topbtn on"><i class="fa-solid fa-fire"></i> Cook Mode</button>
-      <button class="pp-cook-topbtn pp-read-btn" onclick="doReadAloud()"><i class="fa-solid fa-volume-high"></i> Read Aloud</button>
-      <button class="pp-cook-topbtn" onclick="if(window.speechSynthesis)window.speechSynthesis.cancel();isReading=false;showView('recipes')">✕ Exit</button>
+      <button class="pp-cook-topbtn on"><i class="fa-solid fa-fire"></i> <span data-i18n="ui.cookMode">Cook Mode</span></button>
+      <button class="pp-cook-topbtn pp-read-btn" onclick="doReadAloud()"><i class="fa-solid fa-volume-high"></i> <span data-i18n="ui.readAloud">Read Aloud</span></button>
+      <button type="button" class="pp-cook-topbtn" id="cookVoice" aria-pressed="false"><i class="fa-solid fa-microphone-slash" aria-hidden="true"></i> Voice commands</button>
+      <button class="pp-cook-topbtn" onclick="if(window.speechSynthesis)window.speechSynthesis.cancel();isReading=false;showView('recipes')" data-i18n="ui.exit">✕ Exit</button>
     </div>
+    <div class="pp-cook-status"><span id="cookAwake" class="pp-awake" hidden></span><span id="cookVoiceMsg" class="pp-vmsg" role="status" aria-live="polite"></span></div>
     <div class="pp-cook-body" id="cookBody"></div>
     <div class="pp-cook-prog">
       <span class="pp-prog-txt" id="pTxt">0 / 0</span>
@@ -452,9 +468,9 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
       <span class="pp-prog-txt" id="pPct">0%</span>
     </div>
     <div class="pp-cook-foot">
-      <button class="pp-cook-nav" onclick="cNav(-1)"><i class="fa-solid fa-chevron-left"></i> Back</button>
-      <button class="pp-cook-nav pp-read-btn" onclick="doReadAloud()"><i class="fa-regular fa-comment"></i> Read Aloud</button>
-      <button class="pp-cook-nav nxt" onclick="cNav(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
+      <button class="pp-cook-nav" onclick="cNav(-1)"><i class="fa-solid fa-chevron-left"></i> <span data-i18n="ui.back">Back</span></button>
+      <button class="pp-cook-nav pp-read-btn" onclick="doReadAloud()"><i class="fa-regular fa-comment"></i> <span data-i18n="ui.readAloud">Read Aloud</span></button>
+      <button class="pp-cook-nav nxt" onclick="cNav(1)"><span data-i18n="ui.next">Next</span> <i class="fa-solid fa-chevron-right"></i></button>
     </div>
   </div>
 
@@ -466,12 +482,15 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
   <span>Top</span>
 </button>
 
+<script src="{{ url_for('static', filename='js/recipe-tools.js') }}"></script>
 <script>
     gsap.registerPlugin(ScrollTrigger);
+    if(PPI18N.lang()!=='en')PPI18N.apply();
 
     let RX = {{ recipes_json | safe }};
     const TIPS = {{ tips_json | safe }};
     const OPEN_RECIPE = {{ open_recipe | tojson }};
+    const BOOT_PATH = location.pathname;   // read before showView() tidies the address
     const ME = {{ ({'level': me.cooking_level, 'goal': me.calorie_goal} if me else None) | tojson }};
     const LEVEL_MAX = {beginner:1, intermediate:2, advanced:3};
     const DV = {k:2000, p:50, c:275, f:78, fi:28, na:2300};   // FDA daily values (2,000 kcal diet)
@@ -592,6 +611,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     c.style.display=v==='cook'?'flex':'none';
     if(v==='recipes'){ScrollTrigger.refresh();if(location.pathname.indexOf('/recipes/recipe/')===0)history.replaceState(null,'','/recipes/');}
     if(v!=='cook'){Object.values(timers).forEach(clearInterval);timers={};}
+    if(window.CookExtras)CookExtras[v==='cook'?'enter':'exit']();
     updateTop();
     }
 
@@ -619,14 +639,14 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     document.getElementById('dtCat').textContent=r.c;
     document.getElementById('dtTitle').textContent=r.t;
     document.getElementById('dtDesc').textContent=r.d;
-    document.getElementById('dtIng').innerHTML=r.ing.split(',').map(i=>`<li>${i.trim()}</li>`).join('');
+    curServings=baseServings(r);renderIngredients(r);
     document.getElementById('dtSteps').innerHTML=parseInstructionSections(r.st).map(section=>
         `${section.title?`<li class="pp-variant-title">${esc(section.title)}</li>`:''}
         ${section.ingredients?`<li class="pp-variant-ingredients"><b>Ingredients:</b> ${esc(section.ingredients)}</li>`:''}
         ${section.steps.map((s,i)=>`<li><span class="pp-snum">${i+1}</span><span>${esc(s)}</span></li>`).join('')}`
     ).join('');
     document.getElementById('dtCookBtn').onclick=()=>startCook(id);
-    renderBadges(r);renderNutrition(r);renderTips(r);renderShare(r);
+    renderBadges(r);renderNutrition(r,curServings);renderCost(r);renderTips(r);renderShare(r);
     history.replaceState(null,'','/recipes/recipe/'+r.id);
     document.title=r.t+' | Perfect Palate';
     showView('detail');
@@ -634,24 +654,58 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     gsap.fromTo('#vDetail',{opacity:0,y:20},{opacity:1,y:0,duration:.38,ease:'power3.out'});
     }
 
+    let curServings=4;
+    function baseServings(r){return (r.nu&&r.nu.sv)||parseInt(r.sv,10)||4;}
+    function svControl(prefix,sv,base){
+    return `<div class="pp-sv"><span id="${prefix}Lbl">${PPI18N.t('ui.servings')}</span><button type="button" id="${prefix}Dn" aria-label="${PPI18N.t('ui.fewer')}"${sv<=1?' disabled':''}>−</button><output aria-labelledby="${prefix}Lbl" id="${prefix}Num">${sv}</output><button type="button" id="${prefix}Up" aria-label="${PPI18N.t('ui.more')}"${sv>=24?' disabled':''}>+</button>${sv!==base?`<button type="button" id="${prefix}Reset" class="pp-sv-reset">${PPI18N.t('ui.reset')}</button>`:''}</div>`;
+    }
+    function ingredientListHtml(r,sv){
+    const f=sv/baseServings(r);
+    return PPTools.scaleIngredients(r.ing,f).map(i=>i.header?`<li class="pp-ing-head">${esc(i.text)}</li>`:`<li${i.scaled?' class="scaled"':''}>${esc(i.text)}</li>`).join('');
+    }
+    function renderIngredients(r){
+    const base=baseServings(r),sv=curServings;
+    document.getElementById('dtIngSv').innerHTML=svControl('ing',sv,base);
+    document.getElementById('dtIng').innerHTML=ingredientListHtml(r,sv);
+    const note=document.getElementById('dtIngNote');
+    note.hidden=sv===base;
+    note.textContent=PPI18N.t('ui.scaled',{a:base,b:sv});
+    const go=v=>setServings(r,v,v>sv?'ingUp':v<sv?'ingDn':'ingReset');
+    document.getElementById('ingDn').onclick=()=>go(sv-1);
+    document.getElementById('ingUp').onclick=()=>go(sv+1);
+    const rs=document.getElementById('ingReset');if(rs)rs.onclick=()=>go(base);
+    }
+    function setServings(r,v,focusId){
+    curServings=Math.min(24,Math.max(1,v));
+    renderIngredients(r);renderNutrition(r,curServings);renderCost(r);
+    const cp=document.getElementById('cookIngList');if(cp)cp.innerHTML=ingredientListHtml(r,curServings);
+    const el=focusId&&document.getElementById(focusId);if(el&&!el.disabled)el.focus();
+    }
+    function renderCost(r){
+    const box=document.getElementById('dtCost'),c=r.co;
+    if(!c){box.innerHTML=`<div class="pp-sec-label">${esc(PPI18N.t('cost.title'))}</div><p class="pp-nut-note">${esc(PPI18N.t('cost.none'))}</p>`;return;}
+    const f=curServings/c.sv,lo=Math.round(c.lo*f/10)*10||Math.round(c.lo*f),hi=Math.round(c.hi*f/10)*10||Math.round(c.hi*f);
+    const plo=c.per_lo,phi=c.per_hi,n=v=>v.toLocaleString('en-KE');
+    box.innerHTML=`<div class="pp-sec-label">${esc(PPI18N.t('cost.title'))}</div><p class="pp-cost-big">${esc(PPI18N.t('cost.total',{lo:n(lo),hi:n(hi),n:curServings}))}</p><p class="pp-cost-per">${esc(PPI18N.t('cost.per',{lo:n(plo),hi:n(phi)}))}</p><p class="pp-nut-note">${esc(PPI18N.t('cost.note',{cov:Math.round(c.cov*100),ver:Math.round(c.verified*100)}))}</p>`;
+    }
     function pct(v,dv){return dv?Math.round(v/dv*100)+'%':'';}
     function renderNutrition(r,servings){
     const box=document.getElementById('dtNut'),n=r.nu;
     if(!n){box.innerHTML='<p class="pp-nut-note">Nutrition information is not available for this recipe yet, because too few of its ingredients could be matched to reference values.</p>';return;}
-    const sv=Math.min(24,Math.max(1,servings||n.sv));
+    const sv=Math.min(24,Math.max(1,servings||curServings||n.sv));
     const f=n.sv/sv,sc=(v,d)=>{const x=v*f;return d?Math.round(x*10)/10:Math.round(x);};
     const row=(label,val,unit,dv,sub)=>`<tr class="${sub?'sub':''}"><th scope="row">${label}</th><td>${val}${unit}</td><td class="dv">${dv?pct(val,dv):''}</td></tr>`;
-    let h=`<div class="pp-sv"><span id="svLbl">Servings</span><button type="button" id="svDn" aria-label="Fewer servings"${sv<=1?' disabled':''}>−</button><output aria-labelledby="svLbl" id="svNum">${sv}</output><button type="button" id="svUp" aria-label="More servings"${sv>=24?' disabled':''}>+</button>${sv!==n.sv?'<button type="button" id="svReset" class="pp-sv-reset">Reset</button>':''}</div>
+    let h=`<div class="pp-sv"><span id="svLbl">${PPI18N.t('ui.servings')}</span><button type="button" id="svDn" aria-label="${PPI18N.t('ui.fewer')}"${sv<=1?' disabled':''}>−</button><output aria-labelledby="svLbl" id="svNum">${sv}</output><button type="button" id="svUp" aria-label="${PPI18N.t('ui.more')}"${sv>=24?' disabled':''}>+</button>${sv!==n.sv?`<button type="button" id="svReset" class="pp-sv-reset">${PPI18N.t('ui.reset')}</button>`:''}</div>
     <table class="pp-nut"><caption class="sr-only">Estimated nutrition per serving, for ${sv} servings</caption><thead><tr><th scope="col">Amount</th><th scope="col">Per serving</th><th scope="col">% daily value</th></tr></thead><tbody>
       ${row('Calories',sc(n.k),' kcal',DV.k)}${row('Protein',sc(n.p,1),' g',DV.p)}${row('Carbohydrate',sc(n.c,1),' g',DV.c)}${row('of which sugars',sc(n.s,1),' g',0,true)}
       ${row('Fat',sc(n.f,1),' g',DV.f)}${row('Fibre',sc(n.fi,1),' g',DV.fi)}${row('Sodium',sc(n.na),' mg',DV.na)}</tbody></table>`;
     if(ME&&ME.goal)h+=`<p class="pp-nut-goal">One serving is about ${Math.round(sc(n.k)/ME.goal*100)}% of your ${ME.goal} kcal daily goal.</p>`;
     h+=`<p class="pp-nut-note">The recipe does not say how many it serves, so ${n.sv} servings is a guess based on its category. Change the number above to match how you divide it. Values come from the ingredient list and USDA-style reference values typed in by hand. ${Math.round(n.cov*100)}% of the ingredients could be counted${n.left&&n.left.length?'; not counted: '+esc(n.left.join(', ')):''}. ${n.notes&&n.notes.length?esc(n.notes.join(' ')):''} Actual values depend on brands, cuts and portions. This is general information, not medical advice.</p>`;
     box.innerHTML=h;
-    const go=v=>{renderNutrition(r,v);const el=document.getElementById(v>sv?'svUp':v<sv?'svDn':'svReset');if(el&&!el.disabled)el.focus();};
+    const go=v=>setServings(r,v,v>sv?'svUp':v<sv?'svDn':'svReset');
     document.getElementById('svDn').onclick=()=>go(sv-1);
     document.getElementById('svUp').onclick=()=>go(sv+1);
-    const rs=document.getElementById('svReset');if(rs)rs.onclick=()=>go(n.sv);
+    const rs=document.getElementById('svReset');if(rs)rs.onclick=()=>go(baseServings(r));
     }
     function tipHtml(id){const t=TIPS[id];return t?`<li><b><span class="pp-tipk ${t.k}">${t.k==='safety'?'Safety':t.k==='kenyan'?'Kenyan kitchen':t.k==='flavour'?'Flavour':'Technique'}</span>${esc(t.t)}</b><span>${esc(t.x)}</span></li>`:'';}
     function renderTips(r){document.getElementById('dtTips').innerHTML=(r.tips||[]).map(tipHtml).join('');}
@@ -734,8 +788,9 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     let html=`<div class="pp-cook-rcard">
         <div class="pp-cook-thumb"${r.img?` style="background-image:url('${r.img}?w=480');background-size:cover;background-position:center"`:''}>${r.img?'':r.em}</div>
         <div><div class="pp-cook-rtitle">${r.t}</div>
-        <div class="pp-cook-rmeta">${r.c} · ${r.tm} · ${r.sv} servings</div>
+        <div class="pp-cook-rmeta">${r.c} · ${r.tm} · ${curServings} ${PPI18N.t('ui.servingsWord')}</div>
         <div class="pp-cook-tags">${r.tg.map(t=>`<span class="pp-cook-tag">${TAG_L[t]}</span>`).join('')}</div></div></div>`;
+    html+=`<details class="pp-cook-ing" open><summary>${esc(PPI18N.t('cook.ingredients',{n:curServings}))}</summary><ul class="pp-ing-list" id="cookIngList">${ingredientListHtml(r,curServings)}</ul>${curServings!==baseServings(r)?`<p class="pp-nut-note">${esc(PPI18N.t('cook.scaledNote',{n:baseServings(r)}))}</p>`:''}</details>`;
     const safety=(r.tips||[]).filter(t=>TIPS[t]&&TIPS[t].k==='safety');
     safety.forEach(t=>{html+=`<div class="pp-chef pp-cook-safety"><div class="pp-chef-av">⚠️</div><p><b>${esc(TIPS[t].t)}.</b> ${esc(TIPS[t].x)}</p></div>`;});
     let stepIndex=0;
@@ -747,8 +802,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         let hi=s;
         ings.forEach(ing=>{if(ing.length>3){const re=new RegExp(`(${ing.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}[s]?)`, 'gi');hi=hi.replace(re,'<span class="hi">$1</span>');}});
         const tm=s.match(/(\d+)\s*(min|minute|second|sec)/i);
-        const timerH=tm?`<div class="pp-timer" id="tm${i}" onclick="doTimer(${i},${tm[2].startsWith('sec')?parseInt(tm[1]):parseInt(tm[1])*60})"><div class="pp-tbox"></div><span id="td${i}">${tm[2].startsWith('sec')?tm[1]+'s':tm[1]+' min'}</span><span>start timer</span></div>`:'';
-        html+=`<div class="pp-step${i===0?' cur':''}" id="ps${i}"><div class="pp-step-lbl">STEP ${i+1}</div><div class="pp-step-txt">${hi}</div>${timerH}</div>`;
+        const timerH=tm?`<div class="pp-timer" id="tm${i}" onclick="doTimer(${i},${tm[2].startsWith('sec')?parseInt(tm[1]):parseInt(tm[1])*60})"><div class="pp-tbox"></div><span id="td${i}">${tm[2].startsWith('sec')?tm[1]+'s':tm[1]+' min'}</span><span>${PPI18N.t('ui.startTimer')}</span></div>`:'';
+        html+=`<div class="pp-step${i===0?' cur':''}" id="ps${i}"><div class="pp-step-lbl">${PPI18N.t('ui.step')} ${i+1}</div><div class="pp-step-txt">${hi}</div>${timerH}</div>`;
       });
     });
     (r.tips||[]).filter(t=>TIPS[t]&&TIPS[t].k!=='safety').forEach(t=>{html+=`<div class="pp-chef"><div class="pp-chef-av">🍴</div><p><b>${esc(TIPS[t].t)}.</b> ${esc(TIPS[t].x)}</p></div>`;});
@@ -780,11 +835,11 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     }
     function doTimer(idx,secs){
     const d=document.getElementById(`td${idx}`),b=document.getElementById(`tm${idx}`);
-    if(timers[idx]){clearInterval(timers[idx]);delete timers[idx];b.classList.remove('run');b.querySelector('span:last-child').textContent='start timer';return;}
-    let rem=secs;b.classList.add('run');b.querySelector('span:last-child').textContent='tap to pause';
+    if(timers[idx]){clearInterval(timers[idx]);delete timers[idx];b.classList.remove('run');b.querySelector('span:last-child').textContent=PPI18N.t('ui.startTimer');return;}
+    let rem=secs;b.classList.add('run');b.querySelector('span:last-child').textContent=PPI18N.t('ui.pauseTimer');
     timers[idx]=setInterval(()=>{
         rem--;d.textContent=rem>=60?Math.floor(rem/60)+' min '+(rem%60?rem%60+'s':''):rem+'s';
-        if(rem<=0){clearInterval(timers[idx]);delete timers[idx];b.classList.remove('run');d.textContent='Done!';b.querySelector('span:last-child').textContent='✓';toast('⏰ Timer complete!');}
+        if(rem<=0){clearInterval(timers[idx]);delete timers[idx];b.classList.remove('run');d.textContent=PPI18N.t('ui.done');b.querySelector('span:last-child').textContent='✓';toast(PPI18N.t('ui.timerDone'));if(window.CookExtras)CookExtras.alarm();}
     },1000);
     }
     let isReading = false;
@@ -810,8 +865,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     function setReadButtons(reading){
     document.querySelectorAll('.pp-read-btn').forEach(b=>{
         b.innerHTML = reading
-        ? '<i class="fa-solid fa-stop"></i> Stop Reading'
-        : (b.classList.contains('pp-cook-nav') ? '<i class="fa-regular fa-comment"></i> Read Aloud' : '<i class="fa-solid fa-volume-high"></i> Read Aloud');
+        ? '<i class="fa-solid fa-stop"></i> '+PPI18N.t('ui.stopReading')
+        : (b.classList.contains('pp-cook-nav') ? '<i class="fa-regular fa-comment"></i> '+PPI18N.t('ui.readAloud') : '<i class="fa-solid fa-volume-high"></i> '+PPI18N.t('ui.readAloud'));
         b.classList.toggle('reading', reading);
     });
     }
@@ -936,12 +991,15 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     if(ME&&ME.level){document.getElementById('lvMine').style.display='';}
     (function openFromUrl(){
     let id=OPEN_RECIPE,cook=false;
+    // the saved offline copy of this page is the plain recipe book, so read the recipe from the address
+    const pm=BOOT_PATH.match(/^\/recipes\/recipe\/(\d+)\/?$/);if(!id&&pm)id=+pm[1];
     const m=location.hash.match(/^#(cook|recipe)-(\d+)$/);
     if(!id&&m){id=+m[2];cook=m[1]==='cook';}
     if(!id||!FULL_RX.some(x=>x.id===id))return;
     if(cook)startCook(id);else openDetail(id);
     })();
 </script>
+<script src="{{ url_for('static', filename='js/cook-extras.js') }}"></script>
  
 {% include '_footer.html' %}
 </body>

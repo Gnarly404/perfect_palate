@@ -59,6 +59,7 @@
 .pf-meta{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem 1.1rem}
 .pf-made{display:inline-flex;align-items:center;gap:.4rem}
 .pf-made svg{width:15px;height:15px;color:#e8946a}
+.pf-lang{margin:0}.pf-lang button{min-height:36px;padding:0 .9rem;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:transparent;color:inherit;font:600 .78rem 'Syne',sans-serif;cursor:pointer}.pf-lang button:hover{background:rgba(255,255,255,.12)}
 .pf-top-btn{display:inline-flex;align-items:center;gap:.5rem;min-height:44px;padding:0 1rem 0 .85rem;border-radius:999px;background:transparent;color:var(--pf-ink);border:1.5px solid rgba(246,241,231,.35);font:600 .82rem 'Syne',sans-serif;cursor:pointer;transition:border-color .2s,color .2s,transform .2s var(--pf-ease)}
 .pf-top-btn svg{width:16px;height:16px;transition:transform .25s var(--pf-ease)}
 .pf-top-btn:hover{border-color:var(--pf-gold);color:var(--pf-gold-soft)}
@@ -100,47 +101,48 @@
   <div class="pf-wrap">
     <div class="pf-top">
       <div>
-        <h2 class="pf-line pf-rise" style="--r:0">Taste the <em>origin.</em></h2>
-        <p class="pf-lede pf-rise" style="--r:0">{{ recipe_total }} Kenyan and East African recipes, each rated for difficulty and nutrition, and read aloud one step at a time while you cook.</p>
+        <h2 class="pf-line pf-rise" style="--r:0">{{ _("foot.taste") }} <em>{{ _("foot.origin") }}</em></h2>
+        <p class="pf-lede pf-rise" style="--r:0">{{ _("foot.lede", n=recipe_total) }}</p>
         <div class="pf-actions pf-rise" style="--r:1">
           <a class="pf-btn pf-btn-gold" href="{{ url_for('recommendations.recommendations') }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 13.9A5.5 5.5 0 0 1 7.2 3.1 5 5 0 0 1 12 1.5a5 5 0 0 1 4.8 1.6 5.5 5.5 0 0 1 1.2 10.8V20a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 20z"/><path d="M6 17h12"/></svg>
-            Browse recipes
+            {{ _("foot.browse") }}
           </a>
           <button type="button" class="pf-btn pf-btn-line" id="pfShare">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
-            <span id="pfShareLabel">Share Perfect Palate</span>
+            <span id="pfShareLabel">{{ _("foot.share") }}</span>
           </button>
+          <button type="button" class="pf-btn pf-btn-line" data-pp-install hidden>{{ _("foot.install") }}</button>
           <span class="sr-only" role="status" aria-live="polite" id="pfShareStatus" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)"></span>
         </div>
       </div>
 
       <nav class="pf-cols pf-rise" style="--r:2" aria-label="Footer">
         <div>
-          <h2>Cook</h2>
+          <h2>{{ _("foot.cook") }}</h2>
           <ul>
-            <li><a href="{{ url_for('recommendations.recommendations') }}">Recipes</a></li>
-            <li><a href="{{ url_for('recommendations.cooking_tips') }}">Cooking tips</a></li>
+            <li><a href="{{ url_for('recommendations.recommendations') }}">{{ _("nav.recipes") }}</a></li>
+            <li><a href="{{ url_for('recommendations.cooking_tips') }}">{{ _("foot.tips") }}</a></li>
             {% if _in %}
-            <li><a href="{{ url_for('meal_planner.meal_planner') }}">Meal planner</a></li>
-            <li><a href="{{ url_for('meal_planner.shopping_list') }}">Shopping list</a></li>
+            <li><a href="{{ url_for('meal_planner.meal_planner') }}">{{ _("foot.planner") }}</a></li>
+            <li><a href="{{ url_for('meal_planner.shopping_list') }}">{{ _("foot.shopping") }}</a></li>
             {% endif %}
           </ul>
         </div>
         <div>
           {% if _in %}
-          <h2>Your kitchen</h2>
+          <h2>{{ _("foot.kitchen") }}</h2>
           <ul>
-            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-            <li><a href="{{ url_for('meal_planner.favorites') }}">Favourites</a></li>
-            <li><a href="{{ url_for('profile') }}">Your profile</a></li>
-            <li><a href="{{ url_for('preferences') }}">Dietary preferences</a></li>
+            <li><a href="{{ url_for('dashboard') }}">{{ _("nav.dashboard") }}</a></li>
+            <li><a href="{{ url_for('meal_planner.favorites') }}">{{ _("nav.favourites") }}</a></li>
+            <li><a href="{{ url_for('profile') }}">{{ _("nav.profile") }}</a></li>
+            <li><a href="{{ url_for('preferences') }}">{{ _("nav.prefs") }}</a></li>
           </ul>
           {% else %}
-          <h2>Get started</h2>
+          <h2>{{ _("foot.start") }}</h2>
           <ul>
-            <li><a href="{{ url_for('sign_in') }}">Sign in or create an account</a></li>
-            <li><a href="{{ url_for('homepage') }}">About Perfect Palate</a></li>
+            <li><a href="{{ url_for('sign_in') }}">{{ _("foot.signin_up") }}</a></li>
+            <li><a href="{{ url_for('homepage') }}">{{ _("foot.about") }}</a></li>
           </ul>
           {% endif %}
         </div>
@@ -149,18 +151,19 @@
 
     <div class="pf-note pf-rise" style="--r:3" role="note">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-      <p><strong>Good to know.</strong> Nutrition figures are estimates worked out from each ingredient list, and diet and allergy filters are a guide, not a guarantee. Always check the ingredients yourself, and ask a doctor or dietitian about medical diets. Perfect Palate is not medical advice.</p>
+      <p><strong>{{ _("foot.good") }}</strong> {{ _("foot.note") }}</p>
     </div>
 
     <div class="pf-bar pf-rise" style="--r:4">
       <div class="pf-meta">
         <span>© {{ current_year }} Perfect Palate</span>
-        <span class="pf-made">Made in Kenya with
+        {% with lang_cls='pf-lang' %}{% include '_lang.html' %}{% endwith %}
+        <span class="pf-made">{{ _("foot.made") }}
           <svg viewBox="0 0 24 24" fill="currentColor" aria-label="love"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.3 3 4.5 6.7 4.5c2 0 3.7 1 5.3 3 1.6-2 3.3-3 5.3-3 3.7 0 5.8 3.8 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>
-          in Nairobi</span>
+          {{ _("foot.in") }}</span>
       </div>
       <button type="button" class="pf-top-btn" id="pfTop">
-        Back to top
+        {{ _("foot.top") }}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
       </button>
     </div>
@@ -205,13 +208,13 @@
     clearTimeout(timer); timer = setTimeout(function () { label.textContent = idle; status.textContent = ''; }, 2200);
   }
   shareBtn.addEventListener('click', function () {
-    var data = { title: 'Perfect Palate', text: 'Kenyan and East African recipes, read aloud as you cook.', url: location.origin + '/' };
+    var data = { title: 'Perfect Palate', text: {{ _('foot.share_text')|tojson }}, url: location.origin + '/' };
     if (navigator.share) {
       navigator.share(data).catch(function () { /* dismissed */ });
     } else if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(data.url).then(function () { said('Link copied'); }, function () { window.prompt('Copy this link:', data.url); });
+      navigator.clipboard.writeText(data.url).then(function () { said({{ _('foot.copied')|tojson }}); }, function () { window.prompt({{ _('foot.copy_prompt')|tojson }}, data.url); });
     } else {
-      window.prompt('Copy this link:', data.url);
+      window.prompt({{ _('foot.copy_prompt')|tojson }}, data.url);
     }
   });
 })();

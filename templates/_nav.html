@@ -47,6 +47,12 @@
 .pn-menu hr{border:0;border-top:1px solid #e6e1d3;margin:6px 0}
 @keyframes pnPop{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:none}}
 
+/* Language switch */
+.pn-lang{margin:0}
+.pn-lang button{min-height:36px;padding:0 .85rem;border-radius:999px;border:1px solid rgba(255,255,255,.45);background:transparent;color:#fff;font:600 .78rem 'Syne','Segoe UI',system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.pn-lang button:hover{background:rgba(255,255,255,.14)}
+.pn-lang-drawer{display:none}
+.pn-drawer .pn-lang-drawer button{width:100%;min-height:50px;justify-content:flex-start;text-align:left;border-radius:12px;border:0;padding:0 14px;font-size:1rem}
 /* Mobile pieces, hidden on desktop */
 .pn-avlink{display:none;place-items:center;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--pn-gold);background:rgba(255,255,255,.14)}
 .pn-burger{display:none;place-items:center;width:44px;height:44px;border-radius:12px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1);color:#fff;cursor:pointer;padding:0}
@@ -60,7 +66,8 @@
 .pn a:focus-visible,.pn button:focus-visible{outline:2px solid var(--pn-gold);outline-offset:2px}
 
 @media (max-width:900px){
-  .pn-links,.pn-user{display:none}
+  .pn-links,.pn-user,.pn-lang-bar{display:none}
+  .pn-lang-drawer{display:block}
   .pn-right{margin-left:auto}
   .pn-avlink{display:grid}
   .pn-burger{display:grid}
@@ -87,7 +94,7 @@
 
 <header class="pn{% if nav_overlay %} pn-overlay{% endif %}" id="pn"{% if _signed_in %} style="--pn-avatar:{{ me.avatar_hex }}"{% endif %}>
   <div class="pn-in">
-    <a class="pn-brand" href="{{ url_for('dashboard') if _signed_in else url_for('homepage') }}" aria-label="Perfect Palate home">
+    <a class="pn-brand" href="{{ url_for('dashboard') if _signed_in else url_for('homepage') }}" aria-label="{{ _('nav.home_label') }}">
       <svg viewBox="0 0 26 26" fill="none" aria-hidden="true">
         <circle cx="13" cy="13" r="12" stroke="rgba(226,186,46,.55)" stroke-width="1"/>
         <path d="M13 3C13 3 7 7 7 13C7 19 13 23 13 23C13 23 19 19 19 13C19 7 13 3 13 3Z" fill="rgba(226,186,46,.2)" stroke="#e2ba2e" stroke-width="1"/>
@@ -96,18 +103,19 @@
       <span>Perfect Palate</span>
     </a>
 
-    <nav class="pn-links" aria-label="Main">
-      {% if _signed_in %}<a href="{{ url_for('dashboard') }}"{% if _active == 'dashboard' %} aria-current="page"{% endif %}>Dashboard</a>{% endif %}
-      <a href="{{ url_for('recommendations.recommendations') }}"{% if _active == 'recipes' %} aria-current="page"{% endif %}>Recipes</a>
+    <nav class="pn-links" aria-label="{{ _('nav.main') }}">
+      {% if _signed_in %}<a href="{{ url_for('dashboard') }}"{% if _active == 'dashboard' %} aria-current="page"{% endif %}>{{ _("nav.dashboard") }}</a>{% endif %}
+      <a href="{{ url_for('recommendations.recommendations') }}"{% if _active == 'recipes' %} aria-current="page"{% endif %}>{{ _("nav.recipes") }}</a>
       {% if _signed_in %}
-      <a href="{{ url_for('meal_planner.meal_planner') }}"{% if _active == 'plan' %} aria-current="page"{% endif %}>Meal Plan</a>
-      <a href="{{ url_for('meal_planner.favorites') }}"{% if _active == 'favourites' %} aria-current="page"{% endif %}>Favourites</a>
-      <a href="{{ url_for('meal_planner.shopping_list') }}"{% if _active == 'shopping' %} aria-current="page"{% endif %}>Shopping</a>
+      <a href="{{ url_for('meal_planner.meal_planner') }}"{% if _active == 'plan' %} aria-current="page"{% endif %}>{{ _("nav.plan") }}</a>
+      <a href="{{ url_for('meal_planner.favorites') }}"{% if _active == 'favourites' %} aria-current="page"{% endif %}>{{ _("nav.favourites") }}</a>
+      <a href="{{ url_for('meal_planner.shopping_list') }}"{% if _active == 'shopping' %} aria-current="page"{% endif %}>{{ _("nav.shopping") }}</a>
       {% endif %}
-      <a href="{{ url_for('recommendations.cooking_tips') }}"{% if _active == 'tips' %} aria-current="page"{% endif %}>Tips</a>
+      <a href="{{ url_for('recommendations.cooking_tips') }}"{% if _active == 'tips' %} aria-current="page"{% endif %}>{{ _("nav.tips") }}</a>
     </nav>
 
     <div class="pn-right">
+      {% with lang_cls='pn-lang pn-lang-bar' %}{% include '_lang.html' %}{% endwith %}
       {% if _signed_in %}
       <div class="pn-user">
         <button type="button" class="pn-chip" id="pnChip" aria-haspopup="true" aria-expanded="false" aria-controls="pnMenu">
@@ -118,23 +126,23 @@
         <div class="pn-menu" id="pnMenu" hidden>
           <div class="pn-menu-head">
             <span class="pn-av" data-pn-avatar>{{ me.avatar_emoji }}</span>
-            <div><div class="pn-menu-name" data-pn-name>{{ me.display_name }}</div><div class="pn-menu-sub">Signed in</div></div>
+            <div><div class="pn-menu-name" data-pn-name>{{ me.display_name }}</div><div class="pn-menu-sub">{{ _("nav.signed_in") }}</div></div>
           </div>
-          <a href="{{ url_for('profile') }}"{% if _active == 'profile' %} aria-current="page"{% endif %}>Your profile</a>
-          <a href="{{ url_for('preferences') }}"{% if _active == 'preferences' %} aria-current="page"{% endif %}>Dietary preferences</a>
+          <a href="{{ url_for('profile') }}"{% if _active == 'profile' %} aria-current="page"{% endif %}>{{ _("nav.profile") }}</a>
+          <a href="{{ url_for('preferences') }}"{% if _active == 'preferences' %} aria-current="page"{% endif %}>{{ _("nav.prefs") }}</a>
           <hr>
           <form action="{{ url_for('logout') }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="pn-danger" type="submit">Log out</button>
+            <button class="pn-danger" type="submit">{{ _("nav.logout") }}</button>
           </form>
         </div>
       </div>
-      <a class="pn-avlink" href="{{ url_for('profile') }}" aria-label="Your profile, {{ me.display_name }}"><span class="pn-av" data-pn-avatar>{{ me.avatar_emoji }}</span></a>
+      <a class="pn-avlink" href="{{ url_for('profile') }}" aria-label="{{ _('nav.profile') }}, {{ me.display_name }}"><span class="pn-av" data-pn-avatar>{{ me.avatar_emoji }}</span></a>
       {% else %}
-      <a class="pn-signin" href="{{ url_for('sign_in') }}">Sign in</a>
-      <a class="pn-cta" href="{{ url_for('recommendations.recommendations') }}">Cook now</a>
+      <a class="pn-signin" href="{{ url_for('sign_in') }}">{{ _("nav.signin") }}</a>
+      <a class="pn-cta" href="{{ url_for('recommendations.recommendations') }}">{{ _("nav.cook_now") }}</a>
       {% endif %}
-      <button type="button" class="pn-burger" id="pnBurger" aria-label="Open menu" aria-expanded="false" aria-controls="pnDrawer">
+      <button type="button" class="pn-burger" id="pnBurger" aria-label="{{ _('nav.open_menu') }}" aria-expanded="false" aria-controls="pnDrawer">
         <svg class="pn-bars" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
         <svg class="pn-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
@@ -142,31 +150,32 @@
   </div>
 
   <div class="pn-drawer" id="pnDrawer" hidden>
+    {% with lang_cls='pn-lang pn-lang-drawer' %}{% include '_lang.html' %}{% endwith %}
     {% if _signed_in %}
     <a class="pn-dprofile" href="{{ url_for('profile') }}"{% if _active == 'profile' %} aria-current="page"{% endif %}>
       <span class="pn-av" data-pn-avatar>{{ me.avatar_emoji }}</span>
-      <span><span data-pn-name>{{ me.display_name }}</span><small>View and edit your profile</small></span>
+      <span><span data-pn-name>{{ me.display_name }}</span><small>{{ _("nav.profile_edit") }}</small></span>
     </a>
     <hr>
-    <a href="{{ url_for('dashboard') }}"{% if _active == 'dashboard' %} aria-current="page"{% endif %}>Dashboard</a>
+    <a href="{{ url_for('dashboard') }}"{% if _active == 'dashboard' %} aria-current="page"{% endif %}>{{ _("nav.dashboard") }}</a>
     {% endif %}
-    <a href="{{ url_for('recommendations.recommendations') }}"{% if _active == 'recipes' %} aria-current="page"{% endif %}>Recipes</a>
+    <a href="{{ url_for('recommendations.recommendations') }}"{% if _active == 'recipes' %} aria-current="page"{% endif %}>{{ _("nav.recipes") }}</a>
     {% if _signed_in %}
-    <a href="{{ url_for('meal_planner.meal_planner') }}"{% if _active == 'plan' %} aria-current="page"{% endif %}>Meal Plan</a>
-    <a href="{{ url_for('meal_planner.favorites') }}"{% if _active == 'favourites' %} aria-current="page"{% endif %}>Favourites</a>
-    <a href="{{ url_for('meal_planner.shopping_list') }}"{% if _active == 'shopping' %} aria-current="page"{% endif %}>Shopping</a>
+    <a href="{{ url_for('meal_planner.meal_planner') }}"{% if _active == 'plan' %} aria-current="page"{% endif %}>{{ _("nav.plan") }}</a>
+    <a href="{{ url_for('meal_planner.favorites') }}"{% if _active == 'favourites' %} aria-current="page"{% endif %}>{{ _("nav.favourites") }}</a>
+    <a href="{{ url_for('meal_planner.shopping_list') }}"{% if _active == 'shopping' %} aria-current="page"{% endif %}>{{ _("nav.shopping") }}</a>
     {% endif %}
-    <a href="{{ url_for('recommendations.cooking_tips') }}"{% if _active == 'tips' %} aria-current="page"{% endif %}>Tips</a>
+    <a href="{{ url_for('recommendations.cooking_tips') }}"{% if _active == 'tips' %} aria-current="page"{% endif %}>{{ _("nav.tips") }}</a>
     {% if _signed_in %}
-    <a href="{{ url_for('preferences') }}"{% if _active == 'preferences' %} aria-current="page"{% endif %}>Dietary preferences</a>
+    <a href="{{ url_for('preferences') }}"{% if _active == 'preferences' %} aria-current="page"{% endif %}>{{ _("nav.prefs") }}</a>
     <hr>
     <form action="{{ url_for('logout') }}" method="post">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button class="pn-danger" type="submit">Log out</button>
+      <button class="pn-danger" type="submit">{{ _("nav.logout") }}</button>
     </form>
     {% else %}
     <hr>
-    <a href="{{ url_for('sign_in') }}">Sign in</a>
+    <a href="{{ url_for('sign_in') }}">{{ _("nav.signin") }}</a>
     {% endif %}
   </div>
 </header>
@@ -185,7 +194,7 @@
   }
   function setDrawer(open) {
     burger.setAttribute('aria-expanded', open ? 'true' : 'false');
-    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    burger.setAttribute('aria-label', open ? {{ _('nav.close_menu')|tojson }} : {{ _('nav.open_menu')|tojson }});
     drawer.hidden = !open;
   }
   if (chip) chip.addEventListener('click', function () { setMenu(menu.hidden); });

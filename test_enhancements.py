@@ -551,3 +551,100 @@ class SharingAndPagesTest(AppTestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class CostTests(unittest.TestCase):
+    def test_every_table_ingredient_has_a_labelled_price(self):
+        import nutrition, cost
+        prices = cost.load_prices(True)
+        for entry in nutrition.INGREDIENTS:
+            row = prices.get(entry['name'])
+            self.assertIsNotNone(row, entry['name'])
+            self.assertIn(row['confidence'], cost.TIERS)
+            self.assertTrue(row['source'].strip() and row['as_of'].strip())
+            self.assertTrue(5 <= float(row['kes_per_kg']) <= 12000, entry['name'])
+
+    def test_cost_is_a_range_and_scales_with_prices(self):
+        import cost
+        c = cost.estimate_cost('Sukuma Wiki (200g), Rice (1 cup), Onion (1), Tomatoes (2)', 4)
+        self.assertIsNotNone(c)
+        self.assertLess(c['lo'], c['hi'])
+        self.assertLessEqual(c['per_lo'], c['per_hi'])
+        self.assertGreaterEqual(c['cov'], 0.7)
+
+    def test_too_few_priced_ingredients_gives_no_cost(self):
+        import cost
+        self.assertIsNone(cost.estimate_cost('1 cup of dragonfruit nectar, 2 cups of moon dust, 3 spoons of unobtainium', 4))
+
+
+class OfflineAndLanguageTests(unittest.TestCase):
+    def setUp(self):
+        import app as app_module
+        from test_support import CsrfTestClient
+        app_module.app.config['TESTING'] = True
+        app_module.app.test_client_class = CsrfTestClient
+        self.client = app_module.app.test_client()
+
+    def test_service_worker_is_served_from_root_with_versioned_precache(self):
+        r = self.client.get('/sw.js')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.headers['Service-Worker-Allowed'], '/')
+        body = r.get_data(as_text=True)
+        self.assertNotIn('__VERSION__', body)
+        self.assertNotIn('__PRECACHE__', body)
+        self.assertIn('/static/js/cook-extras.js', body)
+        self.assertIn('/offline', body)
+
+    def test_manifest_icons_exist_and_offline_page_renders(self):
+        import json, os
+        m = json.load(open('static/manifest.webmanifest'))
+        for icon in m['icons']:
+            self.assertTrue(os.path.exists(icon['src'].lstrip('/')), icon['src'])
+        self.assertEqual(self.client.get('/offline').status_code, 200)
+
+    def test_microphone_allowed_for_own_pages_only(self):
+        self.assertIn('microphone=(self)', self.client.get('/').headers['Permissions-Policy'])
+
+    def test_language_switch_sets_cookie_and_translates_nav(self):
+        r = self.client.post('/language', data={'lang': 'sw', 'next': '/recipes/'})
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('pp_lang=sw', r.headers['Set-Cookie'])
+        page = self.client.get('/recipes/').get_data(as_text=True)
+        self.assertIn('<html lang="sw"', page)
+        self.assertIn('Mapishi', page)
+
+    def test_language_switch_rejects_unknown_language_and_open_redirects(self):
+        self.assertEqual(self.client.post('/language', data={'lang': 'xx'}).status_code, 400)
+        r = self.client.post('/language', data={'lang': 'en', 'next': 'https://evil.example/'})
+        self.assertTrue(r.headers['Location'].endswith('/'))
+        self.assertNotIn('evil', r.headers['Location'])
+
+    def test_every_swahili_string_has_an_english_twin_and_placeholders_match(self):
+        import re, i18n
+        en, sw = i18n.STRINGS['en'], i18n.STRINGS['sw']
+        self.assertEqual(set(en), set(sw))
+        for k in en:
+            self.assertEqual(sorted(re.findall(r'\{\w+\}', en[k])), sorted(re.findall(r'\{\w+\}', sw[k])), k)
+
+    def test_recipes_page_carries_cost_and_scaling_assets(self):
+        page = self.client.get('/recipes/').get_data(as_text=True)
+        for needle in ('js/recipe-tools.js', 'js/cook-extras.js', 'id="dtCost"', 'id="cookVoice"', 'rel="manifest"'):
+            self.assertIn(needle, page)
+
+
+class InlineScriptSyntaxTests(unittest.TestCase):
+    """A stray quote inside a template literal once broke the whole recipes page; parse every inline script."""
+
+    def test_inline_scripts_parse(self):
+        import re, shutil, subprocess, tempfile
+        node = shutil.which('node')
+        if not node:
+            self.skipTest('node is not installed')
+        import app as app_module
+        for path in ('/recipes/', '/recipes/tips', '/'):
+            html = app_module.app.test_client().get(path).get_data(as_text=True)
+            for n, code in enumerate(re.findall(r'<script>(.*?)</script>', html, re.S)):
+                with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False) as handle:
+                    handle.write(code)
+                result = subprocess.run([node, '--check', handle.name], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, f'{path} script {n}: {result.stderr[:300]}')

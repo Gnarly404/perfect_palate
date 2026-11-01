@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ _('offline.title') }} | Perfect Palate</title>
+  <meta name="theme-color" content="#2a4d63">
+  <style>
+    :root{--bg:#2a4d63;--ink:#faf8f4;--gold:#e2ba2e}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font-family:Georgia,'Times New Roman',serif;padding:24px}
+    main{max-width:30rem}h1{font-size:clamp(2rem,7vw,2.8rem);margin:0 0 .6rem;line-height:1.1}h1 em{color:var(--gold)}
+    p{line-height:1.55;opacity:.9;margin:0 0 1.4rem}
+    a,button{display:inline-block;min-height:44px;padding:.7rem 1.3rem;border-radius:999px;font:700 .85rem/1.2 system-ui,sans-serif;text-decoration:none;border:1px solid var(--gold);cursor:pointer}
+    a.pri{background:var(--gold);color:#1a2a33}button{background:transparent;color:var(--ink);margin-left:.4rem}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>{{ _('offline.head1') }} <em>{{ _('offline.head2') }}</em></h1>
+    <p>{{ _('offline.body') }}</p>
+    <a class="pri" href="/recipes/">{{ _('offline.recipes') }}</a><button type="button" onclick="location.reload()">{{ _('offline.retry') }}</button>
+  </main>
+</body>
+</html>
