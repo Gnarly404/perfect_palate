@@ -521,6 +521,11 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
     });
     }
 
+    // Card photos load only when a card is near the screen (about 600px ahead), not all 257 at once.
+    const lazyBg=('IntersectionObserver' in window)?new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(!e.isIntersecting)return;const el=e.target;lazyBg.unobserve(el);paintBg(el);});
+    },{rootMargin:'600px 0px'}):null;
+    function paintBg(el){const u=el.dataset.bg;if(!u)return;el.style.backgroundImage=`url('${u}')`;el.style.backgroundSize='cover';el.style.backgroundPosition='center';el.removeAttribute('data-bg');}
     function buildGrid(data){
     const g=document.getElementById('ppGrid');
     g.innerHTML='';
@@ -533,7 +538,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
         const tagH=r.tg.map(t=>`<span class="pp-ctag ${t}">${TAG_L[t]}</span>`).join('');
         d.innerHTML=`
         <div class="pp-cimg">
-            <div class="pp-cimg-bg" style="${r.img?`background-image:url('${r.img}?w=480');background-size:cover;background-position:center`:`background:${r.g}`}">${r.img?'':r.em}</div>
+            <div class="pp-cimg-bg"${r.img?` data-bg="${r.img}?w=480"`:''} style="background:${r.g}">${r.img?'':r.em}</div>
             <div class="pp-cimg-grad"></div>
             <div class="pp-cnum">0${i+1}</div>
             <div class="pp-ctags">${tagH}</div>
@@ -555,7 +560,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:transparent;overfl
             <button class="pp-btnc" onclick="startCook(${r.id})">🔥 Cook</button>
             <button class="pp-btni" onclick="toggleFav(this,${r.id})" title="Favourite"><i class="fa-solid fa-heart"></i></button>
         </div>`;
-        g.appendChild(d);
+        g.appendChild(d);d.querySelectorAll("[data-bg]").forEach(el=>lazyBg?lazyBg.observe(el):paintBg(el));
     });
     animCards();
     }
