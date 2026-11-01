@@ -23,15 +23,20 @@
   if (!navigator.onLine) window.addEventListener('DOMContentLoaded', () => { connection(); if (toastEl) toastEl.dataset.off = '1'; });
 
   // ---- install ----
+  // Chrome/Edge/Android fire beforeinstallprompt when the app is installable; iPhone Safari never does,
+  // so there the button explains Share > Add to Home Screen instead. Installed apps and other browsers see no button.
   let deferred = null;
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault(); deferred = e;
-    document.querySelectorAll('[data-pp-install]').forEach(b => { b.hidden = false; });
-  });
-  window.addEventListener('appinstalled', () => { deferred = null; document.querySelectorAll('[data-pp-install]').forEach(b => { b.hidden = true; }); });
+  const buttons = () => document.querySelectorAll('[data-pp-install]');
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios|edgios/i.test(navigator.userAgent);
+  const show = on => buttons().forEach(b => { b.hidden = !on; });
+  if (!standalone && ios) window.addEventListener('DOMContentLoaded', () => show(true));
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; if (!standalone) show(true); });
+  window.addEventListener('appinstalled', () => { deferred = null; show(false); note(T('install.done')); });
   document.addEventListener('click', e => {
-    const b = e.target.closest('[data-pp-install]'); if (!b || !deferred) return;
-    deferred.prompt(); deferred.userChoice.finally(() => { deferred = null; b.hidden = true; });
+    const b = e.target.closest('[data-pp-install]'); if (!b) return;
+    if (deferred) { const d = deferred; deferred = null; d.prompt(); d.userChoice.finally(() => show(false)); }
+    else note(T(ios ? 'install.ios' : 'install.manual'), null, null, false);
   });
 
   // ---- logging out forgets the saved pages that were personalised ----
