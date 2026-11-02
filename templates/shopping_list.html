@@ -82,6 +82,25 @@
     .cat-dairy   .cb.checked{background:var(--cpd);border-color:var(--cpd);color:#fff}
 
     .sl-info{flex:1;min-width:0}
+    button.sl-open{background:none;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer;border-radius:10px;padding:.15rem .3rem;margin:-.15rem -.3rem;display:block}
+    button.sl-open:hover{background:var(--bl)}button.sl-open:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+    button.sl-open .sl-name,button.sl-open .sl-qty{display:block}
+    #ingDlg{border:0;border-radius:18px;padding:0;max-width:min(560px,calc(100vw - 24px));width:100%;box-shadow:var(--shh);background:var(--card);color:var(--tx)}
+    #ingDlg::backdrop{background:rgba(20,35,44,.55)}
+    .dlg-in{padding:1.3rem 1.4rem 1.5rem;max-height:min(80vh,640px);overflow-y:auto}
+    .dlg-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;margin-bottom:.8rem}
+    .dlg-eye{font-size:.6rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--ad)}
+    #ingDlgTitle{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:600;color:var(--bd);line-height:1.1}
+    .dlg-qty{font-size:.8rem;color:var(--mu);margin-top:.2rem}
+    .dlg-x{min-width:44px;min-height:44px;border-radius:50%;border:1px solid #d8d2c4;background:transparent;font-size:1rem;cursor:pointer;color:var(--tx)}
+    .dlg-recipe{border-top:1px solid #ece7da;padding-top:.9rem;margin-top:.9rem}
+    .dlg-recipe h3{font-size:.85rem;font-weight:700;color:var(--b);margin-bottom:.6rem}
+    .dlg-list{list-style:none;counter-reset:ing;display:flex;flex-direction:column;gap:.4rem}
+    .dlg-list li{counter-increment:ing;display:flex;gap:.7rem;font-size:.85rem;line-height:1.4;padding:.35rem .5rem;border-radius:8px}
+    .dlg-list li::before{content:counter(ing);flex:none;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--bl);color:var(--bd);font-size:.7rem;font-weight:800;display:grid;place-items:center}
+    .dlg-list li.hit{background:rgba(226,186,46,.18);font-weight:700}
+    .dlg-open{display:inline-block;margin-top:.8rem;font-size:.78rem;font-weight:700;color:var(--b)}
+    .dlg-none{font-size:.85rem;color:var(--mu)}
     .sl-name{font-size:.8rem;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;display:inline-block;transition:opacity .25s}
     .sl-name.struck{text-decoration:line-through;color:var(--mu)}
     .sl-qty{font-size:.65rem;color:var(--mu);margin-top:.1rem}
@@ -169,10 +188,17 @@
     </div>
     </div>
 
+    <dialog id="ingDlg" aria-labelledby="ingDlgTitle" onclick="if(event.target===this)closeItem()">
+      <div class="dlg-in">
+        <div class="dlg-head"><div><div class="dlg-eye">Ingredients</div><h2 id="ingDlgTitle"></h2><div class="dlg-qty" id="ingDlgQty"></div></div>
+        <button type="button" class="dlg-x" onclick="closeItem()" aria-label="Close">✕</button></div>
+        <div id="ingDlgBody"></div>
+      </div>
+    </dialog>
     <div class="toast-wrap" id="toastWrap"></div>
     </div>
 
-    <script id="shoppingListData" type="application/json">{{ {'items': items, 'week_start': week_start}|tojson }}</script>
+    <script id="shoppingListData" type="application/json">{{ {'items': items, 'week_start': week_start, 'recipes': recipe_lists|default({})}|tojson }}</script>
 
     <script>
     const CATS={
@@ -228,11 +254,11 @@
                 <button class="cb-wrap" type="button" aria-label="Mark ${escapeHtml(item.name)} ${item.done?'not done':'done'}" aria-pressed="${item.done}" onclick="toggleItem(${item.id})">
                 <div class="cb${item.done?' checked':''}"><i class="fa-solid fa-check"></i></div>
                 </button>
-                <div class="sl-info">
-                <div class="sl-name${item.done?' struck':''}">${escapeHtml(item.name)}</div>
-                <div class="sl-qty">${escapeHtml(item.qty)}</div>
+                <button type="button" class="sl-info sl-open" onclick="openItem(${item.id})" aria-haspopup="dialog" aria-label="Show the ingredient list for ${escapeHtml(item.name)}">
+                <span class="sl-name${item.done?' struck':''}">${escapeHtml(item.name)}</span>
+                <span class="sl-qty">${escapeHtml(item.qty)}</span>
                 <span class="sl-src">${escapeHtml(item.src)}</span>
-                </div>
+                </button>
                 <button class="sl-del" onclick="deleteItem(${item.id})" title="Remove"><i class="fa-solid fa-xmark"></i></button>
             </li>`).join('')}
         </ul>`;
@@ -241,6 +267,23 @@
     updateProgress();
     }
 
+    // Tapping a tile opens the full, numbered ingredient list of the recipe(s) it came from.
+    const RECIPES=shoppingListData.recipes||{};
+    let lastTile=null;
+    function openItem(id){
+    const item=items.find(i=>i.id===id);if(!item)return;
+    lastTile=document.querySelector(`#item-${id} .sl-open`);
+    const dlg=document.getElementById('ingDlg');
+    const rids=(item.rids||[]).filter(r=>RECIPES[r]);
+    document.getElementById('ingDlgTitle').textContent=item.name;
+    document.getElementById('ingDlgQty').textContent=item.qty||'';
+    document.getElementById('ingDlgBody').innerHTML=rids.length?rids.map(rid=>{
+        const r=RECIPES[rid];
+        return `<section class="dlg-recipe"><h3>${escapeHtml(r.title)}</h3><ol class="dlg-list">${r.lines.map(l=>`<li${l.k===item.key?' class="hit"':''}>${escapeHtml(l.text)}</li>`).join('')}</ol><a class="dlg-open" href="/recipes/recipe/${r.id}">Open this recipe</a></section>`;
+    }).join(''):'<p class="dlg-none">This item was added by hand, so there is no recipe to show.</p>';
+    if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','');
+    }
+    function closeItem(){const dlg=document.getElementById('ingDlg');if(dlg.close)dlg.close();else dlg.removeAttribute('open');if(lastTile)lastTile.focus();}
     function toggleItem(id){
     const item=items.find(i=>i.id===id);
     if(!item)return;

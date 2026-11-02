@@ -476,3 +476,48 @@ class ApplicationFeaturesTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ClearMealsTests(unittest.TestCase):
+    def setUp(self):
+        import uuid
+        import app as app_module
+        from test_support import CsrfTestClient
+        app_module.app.config['TESTING'] = True
+        app_module.app.test_client_class = CsrfTestClient
+        self.client = app_module.app.test_client()
+        email = f'clear-{uuid.uuid4().hex[:8]}@example.com'
+        self.client.post('/sign-up', json={'name': 'Clear Tester', 'email': email, 'password': 'Str0ng!Passw0rd#1'})
+        self.client.post('/sign-in', json={'email': email, 'password': 'Str0ng!Passw0rd#1'})
+
+    def _plan(self, week='2026-10-26'):
+        plan = self.client.post('/planner/create', json={'week_start_date': week}).json['id']
+        for day, recipe in (('Mon', 1), ('Tue', 4), ('Wed', 2)):
+            self.client.post('/planner/add-meal', json={'meal_plan_id': plan, 'day_of_week': day,
+                                                        'meal_type': 'dinner', 'recipe_id': recipe})
+        return plan
+
+    def test_clear_meals_empties_only_that_plan(self):
+        plan = self._plan()
+        other = self._plan('2026-11-02')
+        result = self.client.post('/planner/clear-meals', json={'meal_plan_id': plan})
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.json['removed'], 3)
+        again = self.client.post('/planner/create', json={'week_start_date': '2026-10-26'}).json
+        self.assertEqual(again['items'], [])
+        other_again = self.client.post('/planner/create', json={'week_start_date': '2026-11-02'}).json
+        self.assertEqual(len(other_again['items']), 3)
+        self.assertNotEqual(plan, other)
+
+    def test_cannot_clear_someone_elses_plan_or_when_signed_out(self):
+        plan = self._plan()
+        self.client.post('/logout')
+        self.assertEqual(self.client.post('/planner/clear-meals', json={'meal_plan_id': plan}).status_code, 401)
+        import uuid
+        email = f'other-{uuid.uuid4().hex[:8]}@example.com'
+        self.client.post('/sign-up', json={'name': 'Other', 'email': email, 'password': 'Str0ng!Passw0rd#1'})
+        self.client.post('/sign-in', json={'email': email, 'password': 'Str0ng!Passw0rd#1'})
+        self.assertEqual(self.client.post('/planner/clear-meals', json={'meal_plan_id': plan}).status_code, 404)
+
+    def test_planner_page_has_the_button(self):
+        self.assertIn('id="clearMealsBtn"', self.client.get('/planner/').get_data(as_text=True))

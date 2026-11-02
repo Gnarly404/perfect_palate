@@ -294,6 +294,39 @@ def remove_meal_from_plan():
         conn.close()
     return jsonify({'status': 'success'})
 
+@meal_planner_bp.route('/clear-meals', methods=['POST'])
+def clear_meals_from_plan():
+    """Remove every meal from one week's plan (the plan itself, favourites and other weeks are untouched)."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({'error': 'A JSON object is required.'}), 400
+    try:
+        meal_plan_id = int(data.get('meal_plan_id'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'A valid meal plan is required.'}), 400
+
+    conn = get_db_connection()
+    try:
+        owned = conn.execute(
+            'SELECT id FROM meal_plans WHERE id = ? AND user_id = ?',
+            (meal_plan_id, session['user_id']),
+        ).fetchone()
+        if not owned:
+            return jsonify({'error': 'Meal plan not found.'}), 404
+        cursor = conn.execute('DELETE FROM meal_plan_items WHERE meal_plan_id = ?', (meal_plan_id,))
+        removed = cursor.rowcount
+        conn.execute(
+            'UPDATE meal_plans SET shopping_list_cleared = 0 WHERE id = ? AND user_id = ?',
+            (meal_plan_id, session['user_id']),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return jsonify({'status': 'success', 'removed': removed})
+
+
 @meal_planner_bp.route('/shopping-list')
 def shopping_list():
     """Generate a categorized shopping list from this week's planned recipes."""
@@ -320,40 +353,50 @@ def shopping_list():
     if plan['shopping_list_cleared']:
         return render_template('shopping_list.html', items=[], week_start=week_start)
 
+    from ingredient_text import split_lines, parse_line, shopping_name
+
     recipes_by_id = {str(recipe['id']): recipe for recipe in load_recipes()}
     aggregated = {}
+    recipe_lists = {}
     for item in _plan_items(plan_id):
         recipe = recipes_by_id.get(str(item['recipe_id']))
         if not recipe:
             continue
-        for ingredient in re.split(r',\s*(?=[A-Za-z])', recipe['ing']):
-            ingredient = ingredient.strip()
-            if not ingredient:
-                continue
-            match = re.match(r'^(.*?)\s*\((.*?)\)\s*$', ingredient)
-            name = (match.group(1) if match else ingredient).strip()
-            quantity = match.group(2).strip() if match else ''
-            normalized = name.casefold()
-            entry = aggregated.setdefault(normalized, {
-                'name': name,
+        rid = str(recipe['id'])
+        lines = recipe_lists.setdefault(rid, {'id': recipe['id'], 'title': recipe['t'], 'lines': []})
+        if lines['lines']:
+            continue          # the same recipe planned twice adds its ingredients once
+        for line in split_lines(recipe['ing']):
+            quantity, rest = parse_line(line)
+            name = shopping_name(rest)
+            key = name.casefold()
+            lines['lines'].append({'text': line, 'k': key})
+            entry = aggregated.setdefault(key, {
+                'name': name[:1].upper() + name[1:],
+                'key': key,
                 'quantities': [],
                 'sources': [],
+                'rids': [],
                 'category': _ingredient_category(name),
             })
             if quantity and quantity not in entry['quantities']:
                 entry['quantities'].append(quantity)
             if recipe['t'] not in entry['sources']:
                 entry['sources'].append(recipe['t'])
+            if rid not in entry['rids']:
+                entry['rids'].append(rid)
 
     items = [{
         'id': index + 1,
         'name': entry['name'],
+        'key': entry['key'],
         'qty': ', '.join(entry['quantities']),
         'src': ', '.join(entry['sources']),
+        'rids': entry['rids'],
         'cat': entry['category'],
         'done': False,
     } for index, entry in enumerate(aggregated.values())]
-    return render_template('shopping_list.html', items=items, week_start=week_start)
+    return render_template('shopping_list.html', items=items, week_start=week_start, recipe_lists=recipe_lists)
 
 
 @meal_planner_bp.route('/shopping-list/clear', methods=['POST'])
